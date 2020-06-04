@@ -30,6 +30,7 @@
   "engines": {
     "node": "10.x"
   },
+  "types": "./src/types.d.ts",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.1.0",
     "@rollup/plugin-multi-entry": "^3.0.0",

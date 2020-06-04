@@ -1,15 +1,37 @@
 // example declaration file - remove these and add your own custom typings
 
-// memory extension samples
-interface CreepMemory {
-  role: string;
-  room: string;
-  working: boolean;
-}
+import { Dictionary } from "lodash";
 
-interface Memory {
-  uuid: number;
-  log: any;
+declare global {
+  interface CreepMemory {
+    role: string;
+    working: boolean;
+    born: number;
+    targetSource: string;
+    targetStore: string;
+    homeRoom: string;
+    targetRoom: string;
+    workTarget: string;
+    refuelTarget: string;
+    dropOffTarget: string;
+  }
+  interface CreepRecipie {
+    template: BodyPartConstant[];
+    memory: CreepMemory;
+  }
+  interface RoomType {
+    sources: string[];
+    controllerId: string;
+    minerals: string[];
+    nextSpawn: CreepRecipie | null;
+  }
+  interface Memory {
+    uuid: number;
+    log: any;
+    roomStore: {
+      [key: string]: RoomType;
+    };
+  }
 }
 
 // `global` extension samples
