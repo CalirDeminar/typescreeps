@@ -16,6 +16,7 @@ export class Harvester {
     const working = creep.memory.working;
     if (!working && creep.carry.energy === 0) {
       creep.memory.working = true;
+      creep.memory.dropOffTarget = "";
     } else if (working && creep.carry.energy === creep.carryCapacity) {
       creep.memory.working = false;
     }

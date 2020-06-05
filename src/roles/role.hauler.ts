@@ -16,6 +16,7 @@ export class Hauler {
       creep.memory.working = true;
     } else if (working && creep.carry.energy === creep.carryCapacity) {
       creep.memory.working = false;
+      creep.memory.dropOffTarget = "";
     }
     if (creep.memory.working) {
       const container: StructureContainer | null = Game.getObjectById(creep.memory.targetSource);
