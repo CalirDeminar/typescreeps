@@ -1,0 +1,13 @@
+
+        Creeps -> [Harvester, Upgrader, Builder, Hauler]
+Game ->
+        Rooms -> RoomManager
+
+                Memory -> [MemorySetup, MemoryCleanup]
+RoomManager ->  CreepManagers -> BuildingManager, UpgraderManager
+                SourceManager
+                ConstructionManager
+
+ConstructionManager ->  BuildExtensions
+                        BuildContainers
+                        BuildRoads

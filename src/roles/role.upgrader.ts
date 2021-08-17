@@ -1,22 +1,12 @@
-export class Upgrader {
+import { CreepBase } from "./role.creep";
+export class Upgrader extends CreepBase {
   private static pathColour(): string {
     return "green";
-  }
-  private static getSourceTarget(creep: Creep): Structure | null {
-    return creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) =>
-        (s.structureType === STRUCTURE_SPAWN ||
-          s.structureType === STRUCTURE_EXTENSION ||
-          s.structureType === STRUCTURE_STORAGE) &&
-        s.store.energy > 0 &&
-        Memory.roomStore[creep.room.name].nextSpawn === null
-    });
   }
   public static run(creep: Creep): void {
     const working = creep.memory.working;
     if (working && creep.carry.energy === 0) {
       creep.memory.working = false;
-      creep.memory.workTarget = "";
     } else if (!working && creep.carry.energy === creep.carryCapacity) {
       creep.memory.working = true;
       creep.memory.targetSource = "";

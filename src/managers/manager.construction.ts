@@ -14,7 +14,6 @@ const placeExtension = (room: Room) => {
         const isOnPattern = Math.abs(x + y) % 4 === 0 && x % 2 === 0 && y % 2 === 0;
         if (!isReserved && !hasObstructions && isOnPattern) {
           room.createConstructionSite(base.pos.x + x, base.pos.y + y, STRUCTURE_EXTENSION);
-          console.log(`${x}, ${y}`);
           done = true;
           break;
         }
@@ -33,7 +32,7 @@ const placeContainers = (room: Room): void => {
     const containerSites = source.pos.findInRange(FIND_CONSTRUCTION_SITES, 1, {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER
     });
-    if (source.room.controller && source.room.controller.level >= 2 && containers.length + containerSites.length < 1) {
+    if (containers.length + containerSites.length < 1) {
       const creepInRange = source.pos.findInRange(FIND_MY_CREEPS, 1, {
         filter: (c: Creep) => c.memory.role === "harvester"
       })[0];
@@ -42,6 +41,27 @@ const placeContainers = (room: Room): void => {
       }
     }
   }
+};
+const buildRoads = (room: Room): void => {
+  const sources = room.find(FIND_SOURCES);
+  const base = room.find(FIND_FLAGS, { filter: (f: Flag) => f.name.includes("base") })[0];
+  for (const sourceName in sources) {
+    const source = sources[sourceName];
+    const pathToSource = source.pos.findPathTo(base.pos);
+    _.map(pathToSource, (step: PathStep) => {
+      room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+    });
+  }
+  const controller = room.controller;
+  if (controller) {
+    const pathToController = controller.pos.findPathTo(base.pos);
+    _.map(pathToController, (step: PathStep) => {
+      if (step.x !== controller.pos.x && step.y !== controller.pos.y) {
+        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
+      }
+    });
+  }
+  Memory.roomStore[room.name].sourceRoadsQueued = true;
 };
 export class ConstructionManager {
   public static run(room: Room) {
@@ -55,6 +75,14 @@ export class ConstructionManager {
     if (builtExtensions.length + buildingExtensions.length < maxExtensions[rcl]) {
       placeExtension(room);
     }
-    placeContainers(room);
+    if (
+      room.controller &&
+      room.controller.my &&
+      room.controller.level > 2 &&
+      !Memory.roomStore[room.name].sourceRoadsQueued
+    ) {
+      placeContainers(room);
+      buildRoads(room);
+    }
   }
 }
