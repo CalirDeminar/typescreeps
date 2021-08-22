@@ -14,32 +14,47 @@ export class Builder extends CreepBase {
           !Object.keys(roomMemory.buildQueue).includes(site.id)
       })
       .sort((s1: ConstructionSite, s2: ConstructionSite) => s2.progress - s1.progress);
-    console.log(JSON.stringify(sites));
+    //console.log(JSON.stringify(sites));
     const target = sites[0];
     if (target) {
       const targetWork = Memory.roomStore[room.name].buildQueue[target.id] || target.progressTotal;
-      Memory.roomStore[room.name].buildQueue[target.id] = targetWork - creep.carryCapacity;
+      Memory.roomStore[room.name].buildQueue[target.id] = targetWork - creep.store.getUsedCapacity();
     }
     return target ? target.id : "";
   }
   public static run(creep: Creep): void {
     const working = creep.memory.working;
-    if (working && creep.carry.energy === 0) {
-      creep.memory.working = false;
-    } else if (!working && creep.carry.energy === creep.carryCapacity) {
-      creep.memory.working = true;
-      creep.memory.workTarget = this.getWorkTarget(creep);
-    } else if (creep.memory.workTarget === "") {
-      creep.memory.workTarget = this.getWorkTarget(creep);
+    const empty = creep.store.getUsedCapacity() === 0;
+    const full = creep.store.getUsedCapacity() === creep.store.getCapacity();
+    const hasTarget = creep.memory.workTarget !== "";
+    const lastTickAlive = creep.ticksToLive === 1;
+    switch(true) {
+      case working && empty:
+        creep.memory.working = false;
+        break;
+      case !working && full:
+        creep.memory.working = true;
+        creep.memory.workTarget = this.getWorkTarget(creep);
+        const currTarget: ConstructionSite | STRUCTURE_CONTROLLER | null = Game.getObjectById(creep.memory.workTarget);
+        if (currTarget && Object.keys(currTarget).includes("isPowerEnabled")) {
+          creep.memory.workTarget === "";
+        }
+        break;
+      case !hasTarget:
+        creep.memory.workTarget = this.getWorkTarget(creep);
+        break;
+      default:
+        true;
     }
-    if (creep.ticksToLive === 1) {
+    if (lastTickAlive) {
       Memory.roomStore[Room.name].buildQueue[creep.memory.workTarget] += creep.carryCapacity;
     }
-    if (creep.memory.working) {
+    if (working) {
       const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
       if (buildTarget && creep.build(buildTarget) !== 0) {
         creep.moveTo(buildTarget, { visualizePathStyle: { stroke: this.pathColour() } });
       } else if (!buildTarget) {
+        console.log("Builder Running Upgrade")
         Upgrader.run(creep);
       }
     } else {

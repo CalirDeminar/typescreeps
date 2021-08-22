@@ -12,6 +12,7 @@ declare global {
     homeRoom: string;
     targetRoom: string;
     workTarget: string;
+    upgradeTarget: string;
     refuelTarget: string;
     dropOffTarget: string;
   }

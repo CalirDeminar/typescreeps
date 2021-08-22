@@ -11,8 +11,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
   console.log(`Current game tick is ${Game.time}`);
   Logger.log(Game);
 
-  // Automatically delete memory of missing creeps
   for (const name in Memory.creeps) {
+    // Automatically delete memory of missing creeps
     if (!(name in Game.creeps)) {
       delete Memory.creeps[name];
     } else {

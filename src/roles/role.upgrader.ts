@@ -5,6 +5,9 @@ export class Upgrader extends CreepBase {
   }
   public static run(creep: Creep): void {
     const working = creep.memory.working;
+    if (!creep.memory.upgradeTarget && creep.room.controller) {
+      creep.memory.upgradeTarget = creep.room.controller.id
+    }
     if (working && creep.carry.energy === 0) {
       creep.memory.working = false;
     } else if (!working && creep.carry.energy === creep.carryCapacity) {
@@ -12,7 +15,7 @@ export class Upgrader extends CreepBase {
       creep.memory.targetSource = "";
     }
     if (creep.memory.working) {
-      const controller: StructureController | null = Game.getObjectById(creep.memory.workTarget);
+      const controller: StructureController | null = Game.getObjectById(creep.memory.upgradeTarget);
       if (controller && creep.upgradeController(controller) !== 0) {
         creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
       }

@@ -2,6 +2,9 @@ import { ConstructionManager } from "./manager.construction";
 import { SourceManager } from "./manager.source";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { TowerR } from "../roles/role.tower";
+import { Constants } from "utils/constants";
+const maxBuilders = Constants.builders;
+const maxUpgraders = Constants.upgraders;
 export class RoomManager {
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
@@ -39,8 +42,7 @@ export class RoomManager {
     return count;
   }
   private static ManageUpgraders(room: Room) {
-    const upgraderCount = 2;
-    if (this.sumRoomRole("upgrader", room.name) < upgraderCount && room.controller && room.controller.my) {
+    if (this.sumRoomRole("upgrader", room.name) < maxUpgraders && room.controller && room.controller.my) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
         memory: {
@@ -50,7 +52,8 @@ export class RoomManager {
           targetSource: "",
           homeRoom: room.name,
           targetRoom: room.name,
-          workTarget: room.controller.id,
+          workTarget: "",
+          upgradeTarget: room.controller.id,
           refuelTarget: "",
           dropOffTarget: "",
           targetStore: ""
@@ -59,8 +62,7 @@ export class RoomManager {
     }
   }
   private static ManageBuilders(room: Room) {
-    const builderCount = 2;
-    if (this.sumRoomRole("builder", room.name) < builderCount && room.controller && room.controller.my) {
+    if (this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my && room.controller.level > 1) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
         memory: {
@@ -71,6 +73,7 @@ export class RoomManager {
           homeRoom: room.name,
           targetRoom: room.name,
           workTarget: "",
+          upgradeTarget: "",
           refuelTarget: "",
           dropOffTarget: "",
           targetStore: ""
@@ -98,8 +101,11 @@ export class RoomManager {
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];
         if (mainSpawn != null) {
-          mainSpawn.createCreep(toSpawn.template, undefined, toSpawn.memory);
-          Memory.roomStore[room.name].nextSpawn = null;
+          const resp = mainSpawn.spawnCreep(toSpawn.template, `${toSpawn.memory.role}-${Game.time}`, {memory: toSpawn.memory});
+          if (resp === OK) {
+            console.log("Nulling Nextspawn")
+            Memory.roomStore[room.name].nextSpawn = null;
+          }
         }
       }
     }

@@ -1,3 +1,5 @@
+import { Logger } from "utils/logger";
+
 export class Hauler {
   private static pathColour(): string {
     return "blue";
@@ -5,9 +7,10 @@ export class Hauler {
   private static getStoreTarget(creep: Creep): Structure | null {
     return creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_SPAWN ||
-        (s.structureType === STRUCTURE_EXTENSION && s.store.energy < s.energyCapacity) ||
-        s.structureType === STRUCTURE_STORAGE
+        s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
+        s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
+        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
+        s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
   }
   public static run(creep: Creep): void {
