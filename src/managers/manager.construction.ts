@@ -12,7 +12,6 @@
 // Terminal - 1, 0
 // Nuker - -1, 1
 
-import { Position } from "source-map";
 import { Constants } from "utils/constants";
 const maxExtensions = Constants.maxExtensions;
 const maxTowers = Constants.maxTowers;
@@ -59,47 +58,7 @@ const placeContainers = (room: Room): void => {
     }
   }
 };
-const placeTowers = (room: Room): void => {
-  // TODO - handle > 4 towers
-  if (room.controller) {
-    const base = room.find(FIND_FLAGS, { filter: (f: Flag) => f.name.includes("base") })[0];
-    let currentTowerCount = room.find(FIND_STRUCTURES, {filter: (s) => s.structureType === STRUCTURE_TOWER}).length
-    let hasBuiltThisPass = currentTowerCount >= maxTowers[room.controller.level];
-    for(let x=-1; x <= 1; x+=2) {
-      for(let y=-1; y <=1; y+=2) {
-        const hasObstructions =
-          _.filter(room.lookAt(base.pos.x + x, base.pos.y + y), (t: { type: string }) => {
-            return t.type === "structure" || t.type === "constructionSite";
-          }).length > 0;
-          if (!hasBuiltThisPass && !hasObstructions) {
-            room.createConstructionSite(base.pos.x + x, base.pos.y + y, STRUCTURE_TOWER)
-            hasBuiltThisPass = true;
-          }
-      }
-    }
-  }
-}
-const buildRoads = (room: Room): void => {
-  const sources = room.find(FIND_SOURCES);
-  const base = room.find(FIND_FLAGS, { filter: (f: Flag) => f.name.includes("base") })[0];
-  for (const sourceName in sources) {
-    const source = sources[sourceName];
-    const pathToSource = source.pos.findPathTo(base.pos);
-    _.map(pathToSource, (step: PathStep) => {
-      room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-    });
-  }
-  const controller = room.controller;
-  if (controller) {
-    const pathToController = controller.pos.findPathTo(base.pos);
-    _.map(pathToController, (step: PathStep) => {
-      if (step.x !== controller.pos.x && step.y !== controller.pos.y) {
-        room.createConstructionSite(step.x, step.y, STRUCTURE_ROAD);
-      }
-    });
-  }
-  Memory.roomStore[room.name].sourceRoadsQueued = true;
-};
+
 export class ConstructionManager {
   public static run(room: Room) {
     const builtExtensions = room.find(FIND_STRUCTURES, {
@@ -121,21 +80,49 @@ export class ConstructionManager {
       placeContainers(room);
       //buildRoads(room);
     }
-    placeTowers(room);
   }
-  private static placeExtensionBlock(room: Room, anchor: RoomPosition, xMult: number, yMult: number): void {
-    const baseX = anchor.x += (2*xMult);
-    const baseY = anchor.y += (2*yMult);
-    [
-      RoomPosition(baseX + (-1*xMult), baseY + (1*yMult), room.name),
-      RoomPosition(baseX, baseY + (1*yMult), room.name),
-      RoomPosition(baseX, baseY, room.name),
-      RoomPosition(baseX + (1*xMult), baseY, room.name),
-      RoomPosition(baseX + (1*xMult), baseY + (-1*yMult), room.name)
-    ].map((pos: RoomPosition) => pos.createConstructionSite(STRUCTURE_EXTENSION))
+  private static getTowerList(room: Room, anchor: RoomPosition): RoomPosition[] {
+    if (room.controller) {
+      const output =  _.range(0, 6).map((i) => {
+        const pos = Constants.towerOffsets[i];
+        return new RoomPosition(anchor.x + pos.x, anchor.y + pos.y, room.name);
+      })
+      return output;
+    }
+    return [];
   }
-  private static placeExtensions(room: Room, anchor: RoomPosition): void {
-    this.placeExtensionBlock(room, anchor, 1, 1);
+  private static getRoadList(room: Room, anchor: RoomPosition): RoomPosition[] {
+    const output = _.range(-3, 4).map((x) => {
+      return _.range(-3, 4).map((y) => {
+        if (Math.abs(x) + Math.abs(y) === 3) {
+          return new RoomPosition(anchor.x + x, anchor.y + y, room.name);
+        } else {
+          return null;
+        }
+      }).filter((item): item is RoomPosition => item != null)
+    }).flat()
+    return output;
+  }
+  private static getExtensionBlock(room: Room, anchor: RoomPosition, xMult: number, yMult: number): RoomPosition[] {
+    const baseX = anchor.x + (2*xMult);
+    const baseY = anchor.y + (2*yMult);
+    return [
+      new RoomPosition(baseX + (-1*xMult), baseY + (1*yMult), room.name),
+      new RoomPosition(baseX, baseY + (1*yMult), room.name),
+      new RoomPosition(baseX, baseY, room.name),
+      new RoomPosition(baseX + (1*xMult), baseY, room.name),
+      new RoomPosition(baseX + (1*xMult), baseY + (-1*yMult), room.name),
+      new RoomPosition(baseX + (1*xMult), baseY + (1*yMult), room.name),
+      new RoomPosition(baseX, baseY + (2*yMult), room.name),
+      new RoomPosition(baseX + (2*xMult), baseY, room.name)
+    ];
+  }
+  private static getExtensionList(room: Room, anchor: RoomPosition): RoomPosition[] {
+    return [...this.getExtensionBlock(room, anchor, 1, 1),
+      ...this.getExtensionBlock(room, anchor, 1, -1),
+      ...this.getExtensionBlock(room, anchor, -1, 1),
+      ...this.getExtensionBlock(room, anchor, -1, -1)
+    ];
   }
   private static getRoomAnchor(room: Room): Flag | null {
     const anchor: Flag | null = room.find(FIND_FLAGS, {filter: (f) => f.name === `${room.name}-Anchor`})[0];
@@ -145,15 +132,41 @@ export class ConstructionManager {
       const spawn = room.find(FIND_MY_SPAWNS)[0]
       if (spawn) {
         const pos = spawn.pos;
-        room.createFlag(pos.x, pos.y-1, `${room.name}-Anchor`)
+        room.createFlag(pos.x, pos.y+1, `${room.name}-Anchor`)
       }
       return null;
     }
   }
   public static run2(room: Room) {
     const anchor = this.getRoomAnchor(room);
-    if (anchor) {
-      this.placeExtensions(room, anchor.pos);
+    const controller = room.controller;
+    let activeConstructionSite = room.find(FIND_MY_CONSTRUCTION_SITES).length > 0;
+    if (anchor && controller && !activeConstructionSite) {
+      const level = controller.level;
+      const structures = room.find(FIND_MY_STRUCTURES);
+      // Extensions
+      const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length
+      if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
+        const extensionList = this.getExtensionList(room, anchor.pos);
+        const nextExtensionPos = extensionList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION)
+        activeConstructionSite = true;
+      }
+      // Towers
+      const towerCount = structures.filter((s) => s.structureType === STRUCTURE_TOWER).length
+      if (Constants.maxTowers[level] > towerCount && !activeConstructionSite) {
+        const towerList = this.getTowerList(room, anchor.pos);
+        const nextTowerPos = towerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        nextTowerPos?.createConstructionSite(STRUCTURE_EXTENSION)
+        activeConstructionSite = true;
+      }
+      // Roads
+      if (!activeConstructionSite) {
+        const roadList = this.getRoadList(room, anchor.pos);
+        const nextRoadPos = roadList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        nextRoadPos?.createConstructionSite(STRUCTURE_ROAD)
+        activeConstructionSite = true;
+      }
     }
   }
 }

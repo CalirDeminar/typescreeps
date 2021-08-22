@@ -93,7 +93,7 @@ export class RoomManager {
       }
       this.memorySetup(room);
       this.memoryCleanup(room);
-      ConstructionManager.run(room);
+      ConstructionManager.run2(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
       SourceManager.run(room);

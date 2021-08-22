@@ -5,7 +5,7 @@ export class CreepBase {
         (s.structureType === STRUCTURE_SPAWN ||
           s.structureType === STRUCTURE_EXTENSION ||
           s.structureType === STRUCTURE_STORAGE) &&
-        s.store.energy > 0 &&
+        s.store && s.store[RESOURCE_ENERGY] > 10 &&
         Memory.roomStore[creep.room.name].nextSpawn === null
     });
   }

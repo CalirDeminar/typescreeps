@@ -7,10 +7,6 @@ export class SourceManager {
       Game.creeps,
       (creep: Creep) => creep.memory.role === "harvester" && creep.memory.targetSource === source.id
     );
-    console.log(`---------- Source: ${source.id}`)
-    console.log(`Current Source Harvesters: ${activeHarvesters.length}`)
-    console.log(`Current Room Harvester Min: ${currentMinimumCount}`)
-    console.log(`Build new harvester: ${activeHarvesters.length < maxShuttleHarvesters && activeHarvesters.length <= currentMinimumCount}`)
     if (activeHarvesters.length < maxShuttleHarvesters && activeHarvesters.length <= currentMinimumCount) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(source.room.energyCapacityAvailable),
@@ -44,7 +40,7 @@ export class SourceManager {
       (activeHarvesters.length == 1 && activeHarvesters[0] && activeHarvesters[0].ticksToLive && activeHarvesters[0].ticksToLive < 100)
     ) {
       Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(source.room.energyCapacityAvailable),
+        template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
         memory: {
           role: "harvester",
           working: false,
