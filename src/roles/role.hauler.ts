@@ -11,14 +11,22 @@ export class Hauler {
         s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     }) || creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
+        s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
+  }
+  private static getContainerTarget(creep: Creep): string {
+    const container: StructureContainer | null = Game.getObjectById(creep.memory.targetSource);
+    return container ? container.id : "";
   }
   public static run(creep: Creep): void {
     const working = creep.memory.working;
-    if (!working && creep.carry.energy === 0) {
+    const empty = creep.store[RESOURCE_ENERGY] === 0;
+    const full = creep.store.getFreeCapacity() === 0;
+    if (!working && empty) {
       creep.memory.working = true;
-    } else if (working && creep.carry.energy === creep.carryCapacity) {
+      creep.memory.workTarget = this.getContainerTarget(creep);
+    } else if (working && full) {
       creep.memory.working = false;
       creep.memory.dropOffTarget = "";
     }

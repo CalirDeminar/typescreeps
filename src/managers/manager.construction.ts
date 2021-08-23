@@ -13,73 +13,9 @@
 // Nuker - -1, 1
 
 import { Constants } from "utils/constants";
-const maxExtensions = Constants.maxExtensions;
-const maxTowers = Constants.maxTowers;
-const placeExtension = (room: Room) => {
-  const base = room.find(FIND_FLAGS, { filter: (f: Flag) => f.name.includes("base") })[0];
-  let done = false;
-  let rad = 2;
-  while (!done) {
-    for (let x = rad * -1; x <= rad; x++) {
-      for (let y = rad * -1; y <= rad; y++) {
-        const isReserved = Math.abs(x) < 2 && Math.abs(y) < 2;
-        const hasObstructions =
-          _.filter(room.lookAt(base.pos.x + x, base.pos.y + y), (t: { type: string }) => {
-            return t.type === "structure" || t.type === "constructionSite";
-          }).length > 0;
-        const isOnPattern = Math.abs(x + y) % 4 === 0 && x % 2 === 0 && y % 2 === 0;
-        if (!isReserved && !hasObstructions && isOnPattern) {
-          room.createConstructionSite(base.pos.x + x, base.pos.y + y, STRUCTURE_EXTENSION);
-          done = true;
-          break;
-        }
-      }
-    }
-    rad += 2;
-  }
-};
-const placeContainers = (room: Room): void => {
-  const sources = room.find(FIND_SOURCES);
-  for (const sourceName in sources) {
-    const source = sources[sourceName];
-    const containers = source.pos.findInRange(FIND_STRUCTURES, 1, {
-      filter: (s: Structure) => s.structureType === STRUCTURE_CONTAINER
-    });
-    const containerSites = source.pos.findInRange(FIND_CONSTRUCTION_SITES, 1, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER
-    });
-    if (containers.length + containerSites.length < 1) {
-      const creepInRange = source.pos.findInRange(FIND_MY_CREEPS, 1, {
-        filter: (c: Creep) => c.memory.role === "harvester"
-      })[0];
-      if (creepInRange != null) {
-        source.room.createConstructionSite(creepInRange.pos, STRUCTURE_CONTAINER);
-      }
-    }
-  }
-};
-
 export class ConstructionManager {
-  public static run(room: Room) {
-    const builtExtensions = room.find(FIND_STRUCTURES, {
-      filter: (s: Structure) => s.structureType === STRUCTURE_EXTENSION
-    });
-    const buildingExtensions = room.find(FIND_CONSTRUCTION_SITES, {
-      filter: (c: ConstructionSite) => c.structureType === STRUCTURE_EXTENSION
-    });
-    const rcl = room.controller ? room.controller.level : 0;
-    if (builtExtensions.length + buildingExtensions.length < maxExtensions[rcl]) {
-      placeExtension(room);
-    }
-    if (
-      room.controller &&
-      room.controller.my &&
-      room.controller.level > 2 &&
-      !Memory.roomStore[room.name].sourceRoadsQueued
-    ) {
-      placeContainers(room);
-      //buildRoads(room);
-    }
+  private static getStoragePos(room: Room, anchor: RoomPosition): RoomPosition {
+    return new RoomPosition(anchor.x - 1, anchor.y, room.name);
   }
   private static getTowerList(room: Room, anchor: RoomPosition): RoomPosition[] {
     if (room.controller) {
@@ -91,7 +27,7 @@ export class ConstructionManager {
     }
     return [];
   }
-  private static getRoadList(room: Room, anchor: RoomPosition): RoomPosition[] {
+  private static getSurrondingRoadList(room: Room, anchor: RoomPosition): RoomPosition[] {
     const output = _.range(-3, 4).map((x) => {
       return _.range(-3, 4).map((y) => {
         if (Math.abs(x) + Math.abs(y) === 3) {
@@ -100,8 +36,20 @@ export class ConstructionManager {
           return null;
         }
       }).filter((item): item is RoomPosition => item != null)
-    }).flat()
+    }).reduce((acc, arr) => acc.concat(arr),[]);
     return output;
+  }
+  private static getRoadListToSources(room: Room, anchor: RoomPosition): RoomPosition[] {
+    return room.find(FIND_SOURCES).map((s) => {
+      const path = anchor.findPathTo(s, {ignoreCreeps: true});
+      return path.map((p) => new RoomPosition(p.x, p.y, room.name))
+    }).reduce((acc, arr) => acc.concat(arr),[]);
+  }
+  private static getRoadListToController(room: Room, anchor: RoomPosition): RoomPosition[] {
+    if (room.controller) {
+      return room.controller.pos.findPathTo(anchor, {ignoreCreeps: true}).map((p) => new RoomPosition(p.x, p.y, room.name));
+    }
+    return [];
   }
   private static getExtensionBlock(room: Room, anchor: RoomPosition, xMult: number, yMult: number): RoomPosition[] {
     const baseX = anchor.x + (2*xMult);
@@ -137,13 +85,40 @@ export class ConstructionManager {
       return null;
     }
   }
+  private static getSourceContainerList(room: Room): RoomPosition[] {
+    const sources = room.find(FIND_SOURCES);
+    const spawn = room.find(FIND_MY_SPAWNS)[0]
+    return sources.map((source) => {
+      const terrain = room.getTerrain();
+      const surroundings = _.range(-1, 2).map((x) => {
+        return _.range(-1, 2).map((y) => {
+          return {x: x, y: y};
+        })
+      }).reduce((acc, arr) => acc.concat(arr),[]);
+
+      const rangeList = surroundings.filter((tile: {x: number; y: number}) => {
+        return terrain.get(source.pos.x + tile.x, source.pos.y + tile.y) === 0;
+      }).sort((tile: {x: number, y: number}): number => {
+        if (spawn) {
+          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name).getRangeTo(spawn));
+        }
+        return Infinity;
+      });
+      const rtn = rangeList[0];
+      if (rtn) {
+        return new RoomPosition(source.pos.x + rtn.x, source.pos.y + rtn.y, room.name)
+      } else {
+        return source.pos;
+      }
+    })
+  }
   public static run2(room: Room) {
     const anchor = this.getRoomAnchor(room);
     const controller = room.controller;
     let activeConstructionSite = room.find(FIND_MY_CONSTRUCTION_SITES).length > 0;
     if (anchor && controller && !activeConstructionSite) {
       const level = controller.level;
-      const structures = room.find(FIND_MY_STRUCTURES);
+      const structures = room.find(FIND_STRUCTURES);
       // Extensions
       const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length
       if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
@@ -152,21 +127,40 @@ export class ConstructionManager {
         nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION)
         activeConstructionSite = true;
       }
+      // Containers
+      const containerCount = structures.filter((s) => s.structureType === STRUCTURE_CONTAINER).length
+      if (level > 2 && containerCount < room.find(FIND_SOURCES).length) {
+        console.log("Need More Containers");
+        const containerList = this.getSourceContainerList(room);
+        console.log(containerList);
+        const nextContainerPos = containerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        nextContainerPos?.createConstructionSite(STRUCTURE_CONTAINER);
+        activeConstructionSite = true;
+      }
       // Towers
       const towerCount = structures.filter((s) => s.structureType === STRUCTURE_TOWER).length
       if (Constants.maxTowers[level] > towerCount && !activeConstructionSite) {
         const towerList = this.getTowerList(room, anchor.pos);
         const nextTowerPos = towerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
-        nextTowerPos?.createConstructionSite(STRUCTURE_EXTENSION)
+        nextTowerPos?.createConstructionSite(STRUCTURE_TOWER);
+        activeConstructionSite = true;
+      }
+      // Storage
+      const needsStorage = level >= 4 && room.find(FIND_STRUCTURES, {filter: (s) => s.structureType === STRUCTURE_STORAGE}).length === 0
+      if (!activeConstructionSite && needsStorage) {
+        this.getStoragePos(room, anchor.pos).createConstructionSite(STRUCTURE_STORAGE);
         activeConstructionSite = true;
       }
       // Roads
-      if (!activeConstructionSite) {
-        const roadList = this.getRoadList(room, anchor.pos);
-        const nextRoadPos = roadList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+      if (!activeConstructionSite && level > 1) {
+        const roadList = this.getSurrondingRoadList(room, anchor.pos)
+          .concat(this.getRoadListToSources(room, anchor.pos))
+          .concat(this.getRoadListToController(room, anchor.pos));
+        const nextRoadPos = roadList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0 && e.lookFor(LOOK_SOURCES).length === 0)
         nextRoadPos?.createConstructionSite(STRUCTURE_ROAD)
         activeConstructionSite = true;
       }
+      //  Generalise some code for the fixed position buildings?
     }
   }
 }
