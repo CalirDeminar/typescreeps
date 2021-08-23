@@ -19,6 +19,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
     } else {
       const creep = Game.creeps[name];
       switch (creep.memory.role) {
+        case "harvesterShuttle":
+        case "harvesterStatic":
         case "harvester":
           Harvester.run(creep);
           break;

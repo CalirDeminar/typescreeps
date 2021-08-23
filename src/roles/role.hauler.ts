@@ -30,7 +30,7 @@ export class Hauler {
     const full = creep.store.getFreeCapacity() === 0;
     let container: StructureContainer | null = Game.getObjectById(creep.memory.workTarget) || Game.getObjectById(creep.memory.targetSource);
     switch(true) {
-      case withdrawing && container?.store.getUsedCapacity() === 0:
+      case withdrawing && container?.store.getFreeCapacity() === 0:
       case !withdrawing && empty:
         creep.memory.working = true;
         creep.memory.workTarget = this.getContainerTarget(creep);
