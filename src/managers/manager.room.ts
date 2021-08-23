@@ -2,7 +2,6 @@ import { ConstructionManager } from "./manager.construction";
 import { SourceManager } from "./manager.source";
 import { DefenseManager } from "./manager.defense";
 import { CreepBuilder } from "../utils/creepBuilder";
-import { TowerR } from "../roles/role.tower";
 import { Constants } from "utils/constants";
 const maxBuilders = Constants.builders;
 const maxUpgraders = Constants.upgraders;
