@@ -24,7 +24,7 @@ export class Harvester {
       const source: Source | null = Game.getObjectById(creep.memory.targetSource);
       if (source && creep.harvest(source) !== 0) {
         const container = source.pos.findInRange(FIND_STRUCTURES, 1, {
-          filter: (s) => s.structureType === STRUCTURE_CONTAINER
+          filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.lookFor(LOOK_CREEPS).length === 0
         })[0];
         creep.moveTo(container || source, {
           visualizePathStyle: { stroke: this.pathColour() }
