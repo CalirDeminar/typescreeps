@@ -32,7 +32,7 @@ export class Hauler {
     }
     if (creep.memory.working) {
       const container: StructureContainer | null = Game.getObjectById(creep.memory.targetSource);
-      if (container && creep.withdraw(container, RESOURCE_ENERGY) !== 0) {
+      if (container && creep.withdraw(container, RESOURCE_ENERGY) !== 0 && creep.pos.getRangeTo(container) > 1) {
         creep.moveTo(container, { visualizePathStyle: { stroke: this.pathColour() } });
       }
     } else {
