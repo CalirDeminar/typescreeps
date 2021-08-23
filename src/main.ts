@@ -9,6 +9,7 @@ import { Logger } from "./utils/logger";
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
   console.log(`Current game tick is ${Game.time}`);
+  console.log(`Bucket: ${Game.cpu.bucket}`)
   Logger.log(Game);
 
   for (const name in Memory.creeps) {
@@ -35,5 +36,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
   }
   for (const room in Game.rooms) {
     RoomManager.run(Game.rooms[room]);
+  }
+  if (Game.cpu.bucket >= 10000) {
+    const cpu: any = Game.cpu;
+    cpu.generatePixel();
   }
 });
