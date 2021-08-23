@@ -100,7 +100,7 @@ export class ConstructionManager {
         return terrain.get(source.pos.x + tile.x, source.pos.y + tile.y) === 0;
       }).sort((tile: {x: number, y: number}): number => {
         if (spawn) {
-          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name).getRangeTo(spawn));
+          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name).findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length);
         }
         return Infinity;
       });
@@ -152,7 +152,7 @@ export class ConstructionManager {
         activeConstructionSite = true;
       }
       // Roads
-      if (!activeConstructionSite && level > 1) {
+      if (!activeConstructionSite && level > 2) {
         const roadList = this.getSurrondingRoadList(room, anchor.pos)
           .concat(this.getRoadListToSources(room, anchor.pos))
           .concat(this.getRoadListToController(room, anchor.pos));
