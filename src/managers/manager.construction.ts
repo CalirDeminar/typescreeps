@@ -41,7 +41,7 @@ export class ConstructionManager {
   }
   private static getRoadListToSources(room: Room, anchor: RoomPosition): RoomPosition[] {
     return room.find(FIND_SOURCES).map((s) => {
-      const path = anchor.findPathTo(s, {ignoreCreeps: true});
+      const path = anchor.findPathTo(s, {ignoreCreeps: true, swampCost: 1});
       return path.map((p) => new RoomPosition(p.x, p.y, room.name))
     }).reduce((acc, arr) => acc.concat(arr),[]);
   }
