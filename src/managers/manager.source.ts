@@ -1,13 +1,12 @@
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
-const maxShuttleHarvesters = Constants.maxShuttles
 export class SourceManager {
   private static runShuttle(source: Source, currentMinimumCount: number): void {
     const activeHarvesters = _.filter(
       Game.creeps,
       (creep: Creep) => creep.memory.role === "harvester" && creep.memory.targetSource === source.id
     );
-    if (activeHarvesters.length < maxShuttleHarvesters && activeHarvesters.length <= currentMinimumCount) {
+    if (activeHarvesters.length < Constants.maxShuttles && activeHarvesters.length <= currentMinimumCount) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(source.room.energyCapacityAvailable),
         memory: {
@@ -36,7 +35,7 @@ export class SourceManager {
       (c: Creep) => c.memory.role === "hauler" && c.memory.targetSource === container.id
     );
     if (
-      activeHarvesters.length < 1 ||
+      activeHarvesters.length < Constants.maxStatic ||
       (activeHarvesters.length == 1 && activeHarvesters[0] && activeHarvesters[0].ticksToLive && activeHarvesters[0].ticksToLive < 100)
     ) {
       Memory.roomStore[source.room.name].nextSpawn = {
@@ -55,7 +54,7 @@ export class SourceManager {
           upgradeTarget: "",
         }
       };
-    } else if (haulers.length < 1 || (haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 100)) {
+    } else if (haulers.length < Constants.maxHaulers || (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 100)) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(source.room.energyCapacityAvailable),
         memory: {
