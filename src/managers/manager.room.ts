@@ -1,5 +1,6 @@
 import { ConstructionManager } from "./manager.construction";
 import { SourceManager } from "./manager.source";
+import { DefenseManager } from "./manager.defense";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { TowerR } from "../roles/role.tower";
 import { Constants } from "utils/constants";
@@ -83,20 +84,13 @@ export class RoomManager {
   }
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
-      const towers = room.find(FIND_STRUCTURES, {
-        filter: (s) => s.structureType === STRUCTURE_TOWER
-      });
-      for (const tower of towers) {
-        if (tower.structureType === STRUCTURE_TOWER) {
-          TowerR.run(tower);
-        }
-      }
       this.memorySetup(room);
       this.memoryCleanup(room);
       ConstructionManager.run2(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
       SourceManager.run(room);
+      DefenseManager.run(room);
       const toSpawn = Memory.roomStore[room.name].nextSpawn;
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];
