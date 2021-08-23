@@ -47,7 +47,7 @@ export class Builder extends CreepBase {
         true;
     }
     if (lastTickAlive) {
-      Memory.roomStore[Room.name].buildQueue[creep.memory.workTarget] += creep.carryCapacity;
+      Memory.roomStore[Room.name].buildQueue[creep.memory.workTarget] += creep.store.getCapacity();
     }
     if (working) {
       const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
