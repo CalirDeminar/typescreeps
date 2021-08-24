@@ -8,17 +8,13 @@ export class Builder extends CreepBase {
     const room = creep.room;
     const roomMemory = Memory.roomStore[room.name];
     const sites = room
-      .find(FIND_CONSTRUCTION_SITES, {
-        filter: (site: ConstructionSite) =>
-          (Object.keys(roomMemory.buildQueue).includes(site.id) && roomMemory.buildQueue[site.id] > 0) ||
-          !Object.keys(roomMemory.buildQueue).includes(site.id)
-      })
+      .find(FIND_CONSTRUCTION_SITES)
       .sort((s1: ConstructionSite, s2: ConstructionSite) => s2.progress - s1.progress);
     //console.log(JSON.stringify(sites));
     const target = sites[0];
     if (target) {
       const targetWork = Memory.roomStore[room.name].buildQueue[target.id] || target.progressTotal;
-      Memory.roomStore[room.name].buildQueue[target.id] = targetWork - creep.store.getUsedCapacity();
+      //Memory.roomStore[room.name].buildQueue[target.id] = targetWork - creep.store.getUsedCapacity();
     }
     return target ? target.id : "";
   }
