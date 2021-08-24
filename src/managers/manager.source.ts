@@ -35,7 +35,7 @@ export class SourceManager {
       Game.creeps,
       (c: Creep) => c.memory.role === "hauler" && c.memory.targetSource === container.id
     );
-    if (haulers.length < Constants.maxHaulers || (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 100)) {
+    if (haulers.length < Constants.maxHaulers || (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 125)) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(Math.min(source.room.energyCapacityAvailable, 750)),
         memory: {
