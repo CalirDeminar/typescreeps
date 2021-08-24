@@ -1,12 +1,12 @@
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
 export class SourceManager {
-  private static runShuttle(source: Source, currentMinimumCount: number): void {
-    const activeHarvesters = _.filter(
-      Game.creeps,
-      (creep: Creep) => creep.memory.role === "harvesterShuttle" && creep.memory.targetSource === source.id
-    );
-    if (activeHarvesters.length < Constants.maxShuttles && activeHarvesters.length <= currentMinimumCount) {
+  private static getCreepRoleAt(role: string, sourceId: string): Creep[] {
+    return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
+  }
+  private static runShuttle(source: Source, maxMissingHarvesters: number): void {
+    const missingHarvesters = this.getMissingHarvesters(source);
+    if (missingHarvesters > 0 && missingHarvesters >= maxMissingHarvesters) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(source.room.energyCapacityAvailable),
         memory: {
@@ -26,14 +26,8 @@ export class SourceManager {
     }
   }
   private static runContainer(source: Source, container: Structure): void {
-    const activeHarvesters = _.filter(
-      Game.creeps,
-      (creep: Creep) => creep.memory.role === "harvesterStatic" && creep.memory.targetSource === source.id
-    );
-    const oldHarvesters = _.filter(
-      Game.creeps,
-      (creep: Creep) => creep.memory.role === "harvesterShuttle" && creep.memory.targetSource === source.id
-    );
+    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
+    const oldHarvesters = this.getCreepRoleAt("harvesterShuttle", source.id);
     if (activeHarvesters.length > 0 && oldHarvesters.length > 0) {
       oldHarvesters.map((h) => h.suicide());
     }
@@ -43,7 +37,7 @@ export class SourceManager {
     );
     if (haulers.length < Constants.maxHaulers || (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 100)) {
       Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildHaulingCreep(source.room.energyCapacityAvailable),
+        template: CreepBuilder.buildHaulingCreep(Math.min(source.room.energyCapacityAvailable, 750)),
         memory: {
           role: "hauler",
           working: false,
@@ -88,17 +82,31 @@ export class SourceManager {
     const sources = room.find(FIND_SOURCES);
     return Math.min(...sources.map((source: Source) => activeHarvesters.filter((harv: Creep) => harv.memory.targetSource === source.id).length));
   }
+  private static getSourceContainer(source: Source): AnyStructure | null {
+    return source.pos.findInRange(FIND_STRUCTURES, 1, {
+      filter: (s: Structure) => s.structureType === STRUCTURE_CONTAINER
+    })[0];
+  }
+  private static getMissingHarvesters(source: Source): number {
+    const container = this.getSourceContainer(source);
+    const maxHarvesters = container ? Constants.maxStatic : Constants.maxShuttles;
+    const creepCount = _.filter(Game.creeps, (c) => c.memory.targetSource === source.id && (c.memory.role === "harvesterShuttle" || c.memory.role === "harvesterStatic")).length;
+    return maxHarvesters - creepCount;
+  }
+  private static getMostMissingHarvesters(room: Room): number {
+    return Math.max(...room.find(FIND_SOURCES).map((s) => {
+      return this.getMissingHarvesters(s);
+    }));
+  }
   public static run(room: Room): void {
+    const maxMissingHarvesters = this.getMostMissingHarvesters(room);
     _.map(room.find(FIND_SOURCES), (source: Source) => {
-      const container = source.pos.findInRange(FIND_STRUCTURES, 1, {
-        filter: (s: Structure) => s.structureType === STRUCTURE_CONTAINER
-      })[0];
+      const container = this.getSourceContainer(source);
       if (container) {
         this.runContainer(source, container);
         // assign hauler store targets
       } else {
-        const currentMinimumCount = this.getRoomHarvesterMinimum(room)
-        this.runShuttle(source, currentMinimumCount);
+        this.runShuttle(source, maxMissingHarvesters);
         // assign shuttle store targets
       }
     });
