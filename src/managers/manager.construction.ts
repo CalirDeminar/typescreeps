@@ -13,6 +13,7 @@
 // Nuker - -1, 1
 
 import { Constants } from "utils/constants";
+import { UtilPosition } from "utils/util.position";
 export class ConstructionManager {
   private static getStoragePos(room: Room, anchor: RoomPosition): RoomPosition {
     return new RoomPosition(anchor.x - 1, anchor.y, room.name);
@@ -89,27 +90,7 @@ export class ConstructionManager {
     const sources = room.find(FIND_SOURCES);
     const spawn = room.find(FIND_MY_SPAWNS)[0]
     return sources.map((source) => {
-      const terrain = room.getTerrain();
-      const surroundings = _.range(-1, 2).map((x) => {
-        return _.range(-1, 2).map((y) => {
-          return {x: x, y: y};
-        })
-      }).reduce((acc, arr) => acc.concat(arr),[]);
-
-      const rangeList = surroundings.filter((tile: {x: number; y: number}) => {
-        return terrain.get(source.pos.x + tile.x, source.pos.y + tile.y) === 0;
-      }).map((tile: {x: number, y: number}): RoomPosition => {
-          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name));
-      }).sort((p1, p2) => {
-        const len = p1.findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length - p2.findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length;
-        return len;
-      });
-      const rtn = rangeList[0];
-      if (rtn) {
-        return rtn
-      } else {
-        return source.pos;
-      }
+      return UtilPosition.getClosestSurroundingTo(source.pos, spawn.pos);
     })
   }
   public static run2(room: Room) {
