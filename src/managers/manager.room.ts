@@ -36,7 +36,7 @@ export class RoomManager {
   private static ManageUpgraders(room: Room) {
     if (this.sumRoomRole("upgrader", room.name) < maxUpgraders && room.controller && room.controller.my) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+        template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 400)),
         memory: {
           role: "upgrader",
           working: false,
@@ -54,9 +54,9 @@ export class RoomManager {
     }
   }
   private static ManageBuilders(room: Room) {
-    if (this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my && room.controller.level > 1) {
+    if (this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+        template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 1_000)),
         memory: {
           role: "builder",
           working: false,
