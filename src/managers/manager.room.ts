@@ -19,16 +19,8 @@ export class RoomManager {
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
         sourceRoadsQueued: false,
-        buildQueue: {}
+        controllerContainer: ""
       };
-    }
-  }
-  private static memoryCleanup(room: Room): void {
-    const constIds: string[] = room.find(FIND_CONSTRUCTION_SITES).map((c: ConstructionSite) => c.id);
-    for (const id in Memory.roomStore[room.name].buildQueue) {
-      if (!constIds.includes(id)) {
-        delete Memory.roomStore[room.name].buildQueue[id];
-      }
     }
   }
   private static sumRoomRole(role: string, roomName: string): number {
@@ -84,7 +76,6 @@ export class RoomManager {
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
       this.memorySetup(room);
-      this.memoryCleanup(room);
       ConstructionManager.run2(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
