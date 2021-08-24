@@ -98,15 +98,15 @@ export class ConstructionManager {
 
       const rangeList = surroundings.filter((tile: {x: number; y: number}) => {
         return terrain.get(source.pos.x + tile.x, source.pos.y + tile.y) === 0;
-      }).sort((tile: {x: number, y: number}): number => {
-        if (spawn) {
-          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name).findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length);
-        }
-        return Infinity;
+      }).map((tile: {x: number, y: number}): RoomPosition => {
+          return (new RoomPosition(source.pos.x + tile.x, source.pos.y + tile.y, room.name));
+      }).sort((p1, p2) => {
+        const len = p1.findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length - p2.findPathTo(spawn, {ignoreCreeps: true, swampCost: 1}).length;
+        return len;
       });
       const rtn = rangeList[0];
       if (rtn) {
-        return new RoomPosition(source.pos.x + rtn.x, source.pos.y + rtn.y, room.name)
+        return rtn
       } else {
         return source.pos;
       }
@@ -122,9 +122,7 @@ export class ConstructionManager {
       // Containers
       const containerCount = structures.filter((s) => s.structureType === STRUCTURE_CONTAINER).length
       if (level > 2 && containerCount < room.find(FIND_SOURCES).length) {
-        console.log("Need More Containers");
         const containerList = this.getSourceContainerList(room);
-        console.log(containerList);
         const nextContainerPos = containerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
         nextContainerPos?.createConstructionSite(STRUCTURE_CONTAINER);
         activeConstructionSite = true;
