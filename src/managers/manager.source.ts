@@ -1,4 +1,5 @@
 import { CreepBuilder } from "../utils/creepBuilder";
+import { CreepBase } from "roles/role.creep";
 import { Constants } from "utils/constants";
 export class SourceManager {
   private static getCreepRoleAt(role: string, sourceId: string): Creep[] {
@@ -10,17 +11,13 @@ export class SourceManager {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(source.room.energyCapacityAvailable),
         memory: {
+          ...CreepBase.baseMemory,
           role: "harvesterShuttle",
           working: false,
           born: Game.time,
           targetSource: source.id,
           homeRoom: source.room.name,
-          targetRoom: source.room.name,
-          workTarget: "",
-          refuelTarget: "",
-          dropOffTarget: "",
-          targetStore: "",
-          upgradeTarget: "",
+          targetRoom: source.room.name
         }
       };
     }
@@ -39,17 +36,13 @@ export class SourceManager {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(Math.min(source.room.energyCapacityAvailable, 750)),
         memory: {
+          ...CreepBase.baseMemory,
           role: "hauler",
           working: false,
           born: Game.time,
           targetSource: container.id,
           homeRoom: source.room.name,
-          targetRoom: source.room.name,
-          workTarget: "",
-          refuelTarget: "",
-          dropOffTarget: "",
-          targetStore: "",
-          upgradeTarget: ""
+          targetRoom: source.room.name
         }
       };
     } else if (
@@ -59,28 +52,17 @@ export class SourceManager {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
         memory: {
+          ...CreepBase.baseMemory,
           role: "harvesterStatic",
           working: false,
           born: Game.time,
           targetSource: source.id,
           homeRoom: source.room.name,
           targetRoom: source.room.name,
-          workTarget: "",
-          refuelTarget: "",
-          dropOffTarget: "",
-          targetStore: container.id,
-          upgradeTarget: "",
+          targetStore: container.id
         }
       };
     }
-  }
-  private static getRoomHarvesterMinimum(room: Room): number {
-    const activeHarvesters = _.filter(
-      Game.creeps,
-      (creep: Creep) => creep.memory.role === "harvesterShuttle"
-    );
-    const sources = room.find(FIND_SOURCES);
-    return Math.min(...sources.map((source: Source) => activeHarvesters.filter((harv: Creep) => harv.memory.targetSource === source.id).length));
   }
   private static getSourceContainer(source: Source): AnyStructure | null {
     return source.pos.findInRange(FIND_STRUCTURES, 1, {

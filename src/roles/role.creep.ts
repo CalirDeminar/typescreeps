@@ -2,6 +2,20 @@ export class CreepBase {
   private static filterStructures(type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION, energyLimit: number) {
     return ((s: AnyStructure) => s.structureType === type && s.store[RESOURCE_ENERGY] > energyLimit);
   }
+  public static baseMemory: CreepMemory = {
+    role: "",
+    working: false,
+    born: 0,
+    targetSource: "",
+    targetStore: "",
+    homeRoom: "",
+    targetRoom: "",
+    workTarget: "",
+    upgradeTarget: "",
+    refuelTarget: "",
+    dropOffTarget: "",
+    scoutPositions: []
+  }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
     if(!isSpawning) {

@@ -15,6 +15,7 @@ declare global {
     upgradeTarget: string;
     refuelTarget: string;
     dropOffTarget: string;
+    scoutPositions: RoomPosition[];
   }
   interface CreepRecipie {
     template: BodyPartConstant[];
@@ -25,8 +26,7 @@ declare global {
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
-    sourceRoadsQueued: boolean;
-    controllerContainer: string;
+    hasScouted: boolean;
   }
   interface Memory {
     uuid: number;

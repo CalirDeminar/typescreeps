@@ -3,13 +3,24 @@ import { SourceManager } from "./manager.source";
 import { DefenseManager } from "./manager.defense";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
+import { CreepBase } from "roles/role.creep";
 const maxBuilders = Constants.builders;
 const maxUpgraders = Constants.upgraders;
 export class RoomManager {
+  public static baseMemory: RoomType = {
+    sources: [],
+    minerals: [],
+    controllerId: "",
+    nextSpawn: null,
+    hasScouted: false
+  }
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
       console.log("Initialising roomStore");
       Memory.roomStore = {};
+    }
+    if (!("hasScouted" in Memory.roomStore[room.name])) {
+      Memory.roomStore[room.name].hasScouted = false;
     }
     if (Memory.roomStore[room.name] === undefined) {
       console.log(`Initialising roomStore for ${room.name}`);
@@ -18,8 +29,7 @@ export class RoomManager {
         minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id),
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
-        sourceRoadsQueued: false,
-        controllerContainer: ""
+        hasScouted: false
       };
     }
   }
@@ -38,17 +48,13 @@ export class RoomManager {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 400)),
         memory: {
+          ...CreepBase.baseMemory,
           role: "upgrader",
           working: false,
           born: Game.time,
-          targetSource: "",
           homeRoom: room.name,
           targetRoom: room.name,
-          workTarget: "",
-          upgradeTarget: room.controller.id,
-          refuelTarget: "",
-          dropOffTarget: "",
-          targetStore: ""
+          upgradeTarget: room.controller.id
         }
       };
     }
@@ -58,23 +64,18 @@ export class RoomManager {
     const creepNearDeath = _.filter(Game.creeps, (c: Creep) => c.ticksToLive && c.ticksToLive < 100 && c.memory.role !== "builder").length > 0;
     const towersNeedEnergy = _.filter(room.find(FIND_MY_STRUCTURES, {filter: (s) => {return s.structureType === STRUCTURE_TOWER && s.store[RESOURCE_ENERGY] <= 500}})).length > 0
     const builderCountLow = this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my;
-    // RHS of or spawns builders on demand, as energy allows
+    // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
     if (builderCountLow || (energyFull && !creepNearDeath && !towersNeedEnergy)) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
         memory: {
+          ...CreepBase.baseMemory,
           role: "builder",
           working: false,
           born: Game.time,
-          targetSource: "",
           homeRoom: room.name,
-          targetRoom: room.name,
-          workTarget: "",
-          upgradeTarget: "",
-          refuelTarget: "",
-          dropOffTarget: "",
-          targetStore: ""
+          targetRoom: room.name
         }
       };
     }
