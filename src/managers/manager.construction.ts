@@ -119,14 +119,6 @@ export class ConstructionManager {
     if (anchor && controller && !activeConstructionSite) {
       const level = controller.level;
       const structures = room.find(FIND_STRUCTURES);
-      // Extensions
-      const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length
-      if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
-        const extensionList = this.getExtensionList(room, anchor.pos);
-        const nextExtensionPos = extensionList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
-        nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION)
-        activeConstructionSite = true;
-      }
       // Containers
       const containerCount = structures.filter((s) => s.structureType === STRUCTURE_CONTAINER).length
       if (level > 2 && containerCount < room.find(FIND_SOURCES).length) {
@@ -135,6 +127,14 @@ export class ConstructionManager {
         console.log(containerList);
         const nextContainerPos = containerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
         nextContainerPos?.createConstructionSite(STRUCTURE_CONTAINER);
+        activeConstructionSite = true;
+      }
+      // Extensions
+      const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length
+      if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
+        const extensionList = this.getExtensionList(room, anchor.pos);
+        const nextExtensionPos = extensionList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION)
         activeConstructionSite = true;
       }
       // Towers
