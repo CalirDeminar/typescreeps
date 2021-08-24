@@ -42,7 +42,6 @@ export class Builder extends CreepBase {
       if (buildTarget && creep.build(buildTarget) !== 0) {
         creep.moveTo(buildTarget, { visualizePathStyle: { stroke: this.pathColour() } });
       } else if (!buildTarget) {
-        console.log("Builder Running Upgrade")
         Upgrader.run(creep);
       }
     } else {
