@@ -26,9 +26,7 @@ declare global {
     minerals: string[];
     nextSpawn: CreepRecipie | null;
     sourceRoadsQueued: boolean;
-    buildQueue: {
-      [key: string]: number;
-    };
+    controllerContainer: string;
   }
   interface Memory {
     uuid: number;
