@@ -14,10 +14,13 @@ export class Harvester {
   }
   public static run(creep: Creep): void {
     const working = creep.memory.working;
-    if (!working && creep.carry.energy === 0) {
+    const workParts = creep.body.filter((p) => p.type === WORK).length
+    const full = creep.store.getFreeCapacity() >= (creep.store.getCapacity() - (workParts * 2));
+    const empty = creep.store.getFreeCapacity() === 0
+    if (!working && empty) {
       creep.memory.working = true;
       creep.memory.dropOffTarget = "";
-    } else if (working && creep.carry.energy === creep.carryCapacity) {
+    } else if (working && full) {
       creep.memory.working = false;
     }
     if (creep.memory.working) {
