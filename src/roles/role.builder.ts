@@ -12,10 +12,6 @@ export class Builder extends CreepBase {
       .sort((s1: ConstructionSite, s2: ConstructionSite) => s2.progress - s1.progress);
     //console.log(JSON.stringify(sites));
     const target = sites[0];
-    if (target) {
-      const targetWork = Memory.roomStore[room.name].buildQueue[target.id] || target.progressTotal;
-      //Memory.roomStore[room.name].buildQueue[target.id] = targetWork - creep.store.getUsedCapacity();
-    }
     return target ? target.id : "";
   }
   public static run(creep: Creep): void {
@@ -23,7 +19,6 @@ export class Builder extends CreepBase {
     const empty = creep.store.getUsedCapacity() === 0;
     const full = creep.store.getUsedCapacity() === creep.store.getCapacity();
     const hasTarget = creep.memory.workTarget !== "";
-    const lastTickAlive = creep.ticksToLive === 1;
     switch(true) {
       case working && empty:
         creep.memory.working = false;
@@ -41,9 +36,6 @@ export class Builder extends CreepBase {
         break;
       default:
         true;
-    }
-    if (lastTickAlive) {
-      Memory.roomStore[Room.name].buildQueue[creep.memory.workTarget] += creep.store.getCapacity();
     }
     if (working) {
       const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
