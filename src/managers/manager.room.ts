@@ -54,7 +54,12 @@ export class RoomManager {
     }
   }
   private static ManageBuilders(room: Room) {
-    if (this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my) {
+    const energyFull = (room.energyCapacityAvailable - room.energyAvailable) === 0;
+    const creepNearDeath = _.filter(Game.creeps, (c: Creep) => c.ticksToLive && c.ticksToLive < 100).length > 0;
+    const builderCountLow = this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my;
+    // RHS of or spawns builders on demand, as energy allows
+    //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
+    if (builderCountLow || (energyFull && !creepNearDeath)) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 1_000)),
         memory: {
