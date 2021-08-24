@@ -15,8 +15,8 @@ export class Harvester {
   public static run(creep: Creep): void {
     const working = creep.memory.working;
     const workParts = creep.body.filter((p) => p.type === WORK).length
-    const full = creep.store.getFreeCapacity() >= (creep.store.getCapacity() - (workParts * 2));
-    const empty = creep.store.getFreeCapacity() === 0
+    const full = creep.store.getFreeCapacity() < (workParts * 2);
+    const empty = creep.store.getUsedCapacity() === 0
     if (!working && empty) {
       creep.memory.working = true;
       creep.memory.dropOffTarget = "";
