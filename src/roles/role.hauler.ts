@@ -11,8 +11,10 @@ export class Hauler {
         s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     }) || creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
         s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+    }) || creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s: AnyStructure) =>
+        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
   }
   private static getContainerTarget(creep: Creep): string {
