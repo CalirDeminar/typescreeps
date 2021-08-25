@@ -19,7 +19,7 @@ export class RemoteManager {
     public static run(room: Room) {
         const spawn = room.find(FIND_MY_SPAWNS)[0];
         const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
-        if(room.controller && room.controller.level > 1 && spawn  && scouts.length === 0) {
+        if(Game.time % 3_000 === 0 && room.controller && room.controller.level > 1 && spawn  && scouts.length === 0) {
             const initialTargets = this.getSurroundingRoomNames(room);
             spawn.spawnCreep(
                 [MOVE],
