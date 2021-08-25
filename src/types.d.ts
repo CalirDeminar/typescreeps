@@ -21,12 +21,17 @@ declare global {
     template: BodyPartConstant[];
     memory: CreepMemory;
   }
+  interface remoteRoom {
+    sources: RoomPosition[];
+    minerals: RoomPosition[];
+    hostile: boolean;
+  }
   interface RoomType {
     sources: string[];
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
-    hasScouted: boolean;
+    remoteRooms: {[roomid: string]: remoteRoom}
   }
   interface Memory {
     uuid: number;

@@ -4,6 +4,7 @@ import { Harvester } from "./roles/role.harvester";
 import { Hauler } from "./roles/role.hauler";
 import { Upgrader } from "./roles/role.upgrader";
 import { Builder } from "./roles/role.builder";
+import { Scout } from "roles/role.scout";
 import { Logger } from "./utils/logger";
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
@@ -33,6 +34,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
         case "hauler":
           Hauler.run(creep);
           break;
+        case "scout":
+          Scout.run(creep);
+          break;
       }
     }
   }
@@ -41,6 +45,6 @@ export const loop = ErrorMapper.wrapLoop(() => {
   }
   if (Game.cpu.bucket >= 10000) {
     const cpu: any = Game.cpu;
-    cpu.generatePixel();
+    //cpu.generatePixel();
   }
 });

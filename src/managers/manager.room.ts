@@ -1,6 +1,7 @@
 import { ConstructionManager } from "./manager.construction";
 import { SourceManager } from "./manager.source";
 import { DefenseManager } from "./manager.defense";
+import { RemoteManager } from "./manager.remote";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { CreepBase } from "roles/role.creep";
@@ -12,15 +13,15 @@ export class RoomManager {
     minerals: [],
     controllerId: "",
     nextSpawn: null,
-    hasScouted: false
+    remoteRooms: {}
   }
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
       console.log("Initialising roomStore");
       Memory.roomStore = {};
     }
-    if (!("hasScouted" in Memory.roomStore[room.name])) {
-      Memory.roomStore[room.name].hasScouted = false;
+    if (!("remoteRooms" in Memory.roomStore[room.name])) {
+      Memory.roomStore[room.name].remoteRooms = {};
     }
     if (Memory.roomStore[room.name] === undefined) {
       console.log(`Initialising roomStore for ${room.name}`);
@@ -29,7 +30,7 @@ export class RoomManager {
         minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id),
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
-        hasScouted: false
+        remoteRooms: {}
       };
     }
   }
@@ -88,6 +89,7 @@ export class RoomManager {
       this.ManageUpgraders(room);
       SourceManager.run(room);
       DefenseManager.run(room);
+      RemoteManager.run(room);
       const toSpawn = Memory.roomStore[room.name].nextSpawn;
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];
