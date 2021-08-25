@@ -14,7 +14,8 @@ export class CreepBase {
     upgradeTarget: "",
     refuelTarget: "",
     dropOffTarget: "",
-    scoutPositions: []
+    scoutPositions: [],
+    targetSourcePos: null
   }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;

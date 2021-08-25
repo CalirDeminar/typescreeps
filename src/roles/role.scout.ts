@@ -1,7 +1,7 @@
 export class Scout {
     public static recordCurrentRoom(creep: Creep): void {
-        const sources = creep.room.find(FIND_SOURCES).map((s) => s.pos);
-        const minerals = creep.room.find(FIND_MINERALS).map((m) => m.pos);
+        const sources = creep.room.find(FIND_SOURCES);
+        const minerals = creep.room.find(FIND_MINERALS);
         const hostile = creep.room.find(FIND_HOSTILE_CREEPS).length > 0 || creep.room.find(FIND_HOSTILE_STRUCTURES).length > 0;
         Memory.roomStore[creep.memory.homeRoom].remoteRooms[creep.pos.roomName] = {
             sources: sources,
@@ -26,7 +26,6 @@ export class Scout {
         const positions = creep.memory.scoutPositions;
         const target = positions[0];
         //const path = creep.pos.findPathTo(target, {maxRooms: 2})
-        // TODO - scout currently gets stuck on room boundaries
         if (creep.room.name !== creep.memory.homeRoom) {
             this.recordCurrentRoom(creep);
         }

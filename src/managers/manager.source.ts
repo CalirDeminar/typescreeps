@@ -17,6 +17,7 @@ export class SourceManager {
           working: false,
           born: Game.time,
           targetSource: source.id,
+          targetSourcePos: source.pos,
           homeRoom: source.room.name,
           targetRoom: source.room.name
         }
@@ -42,6 +43,7 @@ export class SourceManager {
           working: false,
           born: Game.time,
           targetSource: container.id,
+          targetSourcePos: container.pos,
           homeRoom: source.room.name,
           targetRoom: source.room.name
         }

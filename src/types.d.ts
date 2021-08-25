@@ -8,6 +8,7 @@ declare global {
     working: boolean;
     born: number;
     targetSource: string;
+    targetSourcePos: RoomPosition | null;
     targetStore: string;
     homeRoom: string;
     targetRoom: string;
@@ -22,8 +23,8 @@ declare global {
     memory: CreepMemory;
   }
   interface remoteRoom {
-    sources: RoomPosition[];
-    minerals: RoomPosition[];
+    sources: Source[];
+    minerals: Mineral[];
     hostile: boolean;
   }
   interface RoomType {

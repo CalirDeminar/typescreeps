@@ -2,6 +2,18 @@ export class Harvester {
   private static pathColour(): string {
     return "orange";
   }
+  private static setWorkingState(creep: Creep) {
+    const working = creep.memory.working;
+    const workParts = creep.body.filter((p) => p.type === WORK).length
+    const full = creep.store.getFreeCapacity() < (workParts * 2);
+    const empty = creep.store.getUsedCapacity() === 0;
+    if (!working && empty) {
+      creep.memory.working = true;
+      creep.memory.dropOffTarget = "";
+    } else if (working && full) {
+      creep.memory.working = false;
+    }
+  }
   private static getStoreTarget(creep: Creep): Structure | null {
     return creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s: AnyStructure) =>
@@ -13,33 +25,38 @@ export class Harvester {
     });
   }
   public static run(creep: Creep): void {
+    this.setWorkingState(creep);
     const working = creep.memory.working;
-    const workParts = creep.body.filter((p) => p.type === WORK).length
-    const full = creep.store.getFreeCapacity() < (workParts * 2);
-    const empty = creep.store.getUsedCapacity() === 0
-    if (!working && empty) {
-      creep.memory.working = true;
-      creep.memory.dropOffTarget = "";
-    } else if (working && full) {
-      creep.memory.working = false;
-    }
-    if (creep.memory.working) {
-      const source: Source | null = Game.getObjectById(creep.memory.targetSource);
-      if (source && creep.harvest(source) !== 0) {
-        const container = source.pos.findInRange(FIND_STRUCTURES, 1, {
-          filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.lookFor(LOOK_CREEPS).length === 0
-        })[0];
-        creep.moveTo(container || source, {
-          visualizePathStyle: { stroke: this.pathColour() }
-        });
-      }
-    } else {
-      const storeTarget: Structure | null =
-        creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
-      if (storeTarget && creep.transfer(storeTarget, RESOURCE_ENERGY) !== 0) {
-        creep.moveTo(storeTarget, {
-          visualizePathStyle: { stroke: this.pathColour() }
-        });
+    let sourcePos = creep.memory.targetSourcePos;
+    if (sourcePos){
+      sourcePos = new RoomPosition(sourcePos.x, sourcePos.y, sourcePos.roomName);
+      switch(true) {
+        case working:
+          // move to source or harvest source
+          if (!creep.pos.isNearTo(sourcePos)) {
+            creep.moveTo(sourcePos, { visualizePathStyle: {stroke: this.pathColour() }});
+          } else {
+            const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
+            creep.harvest(source);
+          }
+          break;
+        case creep.pos.roomName != creep.memory.homeRoom:
+          // returning to home room
+          const homeController = Game.rooms[creep.memory.homeRoom].controller;
+          if (homeController) {
+            creep.moveTo(homeController.pos, { visualizePathStyle: {stroke: this.pathColour() }});
+          }
+          break;
+        default:
+          // store in container in home room
+          const storeTarget = this.getStoreTarget(creep);
+          if (storeTarget) {
+            if(creep.pos.isNearTo(storeTarget.pos)) {
+              creep.transfer(storeTarget, RESOURCE_ENERGY);
+            } else {
+              creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
+            }
+          }
       }
     }
   }
