@@ -20,9 +20,12 @@ export class RoomManager {
       console.log("Initialising roomStore");
       Memory.roomStore = {};
     }
-    if (!("remoteRooms" in Memory.roomStore[room.name])) {
-      Memory.roomStore[room.name].remoteRooms = {};
-    }
+    const currentRooms = Object.keys(Game.rooms);
+    _.map(Object.keys(Memory.roomStore), (roomKey) => {
+      if (!currentRooms.includes(roomKey)) {
+        delete Memory.roomStore[roomKey]
+      }
+    })
     if (Memory.roomStore[room.name] === undefined) {
       console.log(`Initialising roomStore for ${room.name}`);
       Memory.roomStore[room.name] = {
