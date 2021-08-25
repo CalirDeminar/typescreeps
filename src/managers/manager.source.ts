@@ -10,7 +10,7 @@ export class SourceManager {
     const harvestersEmpty = missingHarvesters >= Constants.maxShuttles;
     if (missingHarvesters > 0 && missingHarvesters >= maxMissingHarvesters) {
       Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(harvestersEmpty ? 200 : source.room.energyCapacityAvailable),
+        template: CreepBuilder.buildShuttleCreep(harvestersEmpty ? 250 : source.room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
           role: "harvesterShuttle",
@@ -60,6 +60,7 @@ export class SourceManager {
           working: false,
           born: Game.time,
           targetSource: source.id,
+          targetSourcePos: source.pos,
           homeRoom: source.room.name,
           targetRoom: source.room.name,
           targetStore: container.id

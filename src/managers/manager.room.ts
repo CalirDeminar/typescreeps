@@ -50,7 +50,7 @@ export class RoomManager {
   private static ManageUpgraders(room: Room) {
     if (this.sumRoomRole("upgrader", room.name) < maxUpgraders && room.controller && room.controller.my) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 400)),
+        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 400)),
         memory: {
           ...CreepBase.baseMemory,
           role: "upgrader",
@@ -72,7 +72,7 @@ export class RoomManager {
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
     if (builderCountLow || (energyFull && !creepNearDeath && !towersNeedEnergy)) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+        template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
           role: "builder",

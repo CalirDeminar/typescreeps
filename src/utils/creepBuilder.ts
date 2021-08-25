@@ -1,9 +1,9 @@
 export class CreepBuilder {
   public static buildShuttleCreep(energy: number): (WORK | CARRY | MOVE)[] {
-    const noParts = Math.floor(energy / 200);
+    const noParts = Math.floor(energy / 250);
     let body: (WORK | CARRY | MOVE)[] = [];
     for (let i = 0; i < noParts; i++) {
-      body = body.concat([WORK, CARRY, MOVE]);
+      body = body.concat([WORK, CARRY, CARRY, MOVE]);
     }
     return body;
   }
@@ -30,7 +30,7 @@ export class CreepBuilder {
   public static buildScaledBalanced(energy: number): (WORK | CARRY | MOVE)[] {
     const noParts = Math.floor(energy / 200);
     let body: (WORK | CARRY | MOVE)[] = [];
-    for (let i = 0; i < noParts && i < 12; i++) {
+    for (let i = 0; i < noParts; i++) {
       body = body.concat([WORK, CARRY, MOVE]);
     }
     return body;

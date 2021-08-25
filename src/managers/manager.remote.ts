@@ -18,7 +18,7 @@ export class RemoteManager {
         const spawn = room.find(FIND_MY_SPAWNS)[0];
         const anchor = room.find(FIND_FLAGS, {filter: (f) => f.name === `${room.name}-Anchor`})[0];
         const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
-        const shouldSpawnScout = Game.time % 3_000 === 0 && room.controller && room.controller.level > 1 && spawn  && scouts.length === 0;
+        const shouldSpawnScout = Game.time % 1500 === 0 && room.controller && room.controller.level > 1 && spawn  && scouts.length === 0;
         if(shouldSpawnScout) {
             const initialTargets = this.getSurroundingRoomNames(room);
             Memory.roomStore[room.name].nextSpawn = {
@@ -31,48 +31,34 @@ export class RemoteManager {
                 }
             };
         }
-        _.map(Memory.roomStore[room.name].remoteRooms, ((rRoom) => {
-            // find scouted sources in range
-            const sourcesInRange = rRoom.sources.filter((s) => {
-                if (s.pos) {
-                    const pos = new RoomPosition(s.pos.x, s.pos.y, s.pos.roomName)
-                    return anchor.pos.findPathTo(pos, {maxRooms: 2}).length < 25;
-                }
-                return false;
-            });
-            // console.log(`sourcesInRange: ${sourcesInRange.length}`)
-            // for each source in range, spawn 2 remote harvesters if some missing
-            sourcesInRange.map((s) => {
-                if (!rRoom.hostile) {
-                    const activeShuttles = _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === s.id).length
-                    const needsMoreShuttles = activeShuttles < 2;
-                    if (needsMoreShuttles) {
-                        Memory.roomStore[room.name].nextSpawn = {
-                            template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
-                            memory: {
-                                ...CreepBase.baseMemory,
-                                role: "harvesterShuttle",
-                                homeRoom: room.name,
-                                targetSource: s.id,
-                                targetSourcePos: s.pos
-                            }
-                        };
+        if (Game.time % 100 === 0) {
+            const remoteSources = _.reduce(Memory.roomStore[room.name].remoteRooms, (acc: {source: Source, hostile: boolean}[], rRoom) => {
+                const rtn = rRoom.sources.filter((s) => {
+                    if (s.pos) {
+                        const pos = new RoomPosition(s.pos.x, s.pos.y, s.pos.roomName)
+                        const path = anchor.pos.findPathTo(pos, {maxRooms: 1, ignoreCreeps: true, });
+                        return path.length < 30;
                     }
+                    return false;
+                }).map((s) => {return {source: s, hostile: rRoom.hostile}});
+                return acc.concat(rtn);
+            }, []);
+            console.log(`Remote Source Count: ${remoteSources.length}`)
+            remoteSources.map((t) => {
+                if(!t.hostile && _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === t.source.id).length < 1) {
+                    const creepMemory = {
+                        ...CreepBase.baseMemory,
+                        role: "harvesterShuttle",
+                        homeRoom: room.name,
+                        targetSource: t.source.id,
+                        targetSourcePos: t.source.pos
+                    };
+                    Memory.roomStore[room.name].nextSpawn = {
+                        template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+                        memory: creepMemory
+                    };
                 }
-            })
-            // check if room is close enough
-            // check if room has sources
-            // run source manager? / shuttle
-        }))
-        // needs an initial hasScouted flag
-        //      just start off with scouting a single time
-        // store a set of roomNames
-        //  along with source and controller ids
-
-        // get a distance to spawn for each remote source
-        // calculate expected lifetime trips and carry back for creep
-        // calulate cost of creep
-        // if profit for creep over lifetime > N, build remote harvester
-        // might need to have far more move parts than normal shuttle creep
+            });
+        }
     }
 }

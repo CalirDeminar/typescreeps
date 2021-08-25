@@ -53,6 +53,5 @@ export class Scout {
                     const moveToResp = creep.moveTo(exit);
                 }
         }
-        console.log("-----")
     }
 }
