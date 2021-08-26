@@ -104,7 +104,13 @@ export class ConstructionManager {
       const containerCount = structures.filter((s) => s.structureType === STRUCTURE_CONTAINER).length
       if (level > 2 && containerCount < room.find(FIND_SOURCES).length) {
         const containerList = this.getSourceContainerList(room);
-        const nextContainerPos = containerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        const nextContainerPos = containerList
+          .find((e) =>
+            e.lookFor(LOOK_STRUCTURES)
+            .filter(
+              (s) => s.structureType !== STRUCTURE_ROAD
+            ).length === 0
+          )
         nextContainerPos?.createConstructionSite(STRUCTURE_CONTAINER);
         activeConstructionSite = true;
       }
@@ -112,7 +118,13 @@ export class ConstructionManager {
       const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length
       if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
         const extensionList = this.getExtensionList(room, anchor.pos);
-        const nextExtensionPos = extensionList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        const nextExtensionPos = extensionList
+          .find((e) =>
+            e.lookFor(LOOK_STRUCTURES)
+            .filter(
+              (s) => s.structureType !== STRUCTURE_ROAD
+            ).length === 0
+          )
         nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION)
         activeConstructionSite = true;
       }
@@ -120,12 +132,18 @@ export class ConstructionManager {
       const towerCount = structures.filter((s) => s.structureType === STRUCTURE_TOWER).length
       if (Constants.maxTowers[level] > towerCount && !activeConstructionSite) {
         const towerList = this.getTowerList(room, anchor.pos);
-        const nextTowerPos = towerList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0)
+        const nextTowerPos = towerList
+          .find((e) =>
+            e.lookFor(LOOK_STRUCTURES)
+            .filter(
+                (s) => s.structureType !== STRUCTURE_ROAD
+            ).length === 0
+          )
         nextTowerPos?.createConstructionSite(STRUCTURE_TOWER);
         activeConstructionSite = true;
       }
       // Storage
-      const needsStorage = level >= 4 && room.find(FIND_STRUCTURES, {filter: (s) => s.structureType === STRUCTURE_STORAGE}).length === 0
+      const needsStorage = level >= 4 && room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_STORAGE}).length === 0
       if (!activeConstructionSite && needsStorage) {
         this.getStoragePos(room, anchor.pos).createConstructionSite(STRUCTURE_STORAGE);
         activeConstructionSite = true;
@@ -135,7 +153,12 @@ export class ConstructionManager {
         const roadList = this.getSurrondingRoadList(room, anchor.pos)
           .concat(this.getRoadListToSources(room, anchor.pos))
           .concat(this.getRoadListToController(room, anchor.pos));
-        const nextRoadPos = roadList.find((e) => e.lookFor(LOOK_STRUCTURES).length === 0 && e.lookFor(LOOK_SOURCES).length === 0)
+        const nextRoadPos = roadList
+          .find(
+              (e) => e.lookFor(LOOK_STRUCTURES)
+          .filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0
+          && e.lookFor(LOOK_SOURCES).length === 0
+          )
         nextRoadPos?.createConstructionSite(STRUCTURE_ROAD)
         activeConstructionSite = true;
       }
