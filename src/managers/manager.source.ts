@@ -30,28 +30,7 @@ export class SourceManager {
     if (activeHarvesters.length > 0 && oldHarvesters.length > 0) {
       oldHarvesters.map((h) => h.suicide());
     }
-    const haulers = _.filter(
-      Game.creeps,
-      (c: Creep) => c.memory.role === "hauler" && c.memory.targetSource === container.id
-    );
     if (
-      haulers.length < Constants.maxHaulers ||
-      (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 125)
-    ) {
-      Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildHaulingCreep(Math.min(source.room.energyCapacityAvailable, 750)),
-        memory: {
-          ...CreepBase.baseMemory,
-          role: "hauler",
-          working: false,
-          born: Game.time,
-          targetSource: container.id,
-          targetSourcePos: container.pos,
-          homeRoom: source.room.name,
-          targetRoom: source.room.name
-        }
-      };
-    } else if (
       activeHarvesters.length < Constants.maxStatic ||
       (activeHarvesters.length == 1 &&
         activeHarvesters[0] &&

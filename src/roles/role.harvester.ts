@@ -15,15 +15,23 @@ export class Harvester extends CreepBase {
       creep.memory.working = false;
     }
   }
-  private static getStoreTarget(creep: Creep): Structure | null {
+  private static findContainer(creep: Creep): Structure | null {
     return creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) =>
-        (s.structureType === STRUCTURE_SPAWN ||
-          s.structureType === STRUCTURE_EXTENSION ||
-          s.structureType === STRUCTURE_CONTAINER) &&
-        s.store.energy <
-          (s.structureType === STRUCTURE_EXTENSION || s.structureType === STRUCTURE_SPAWN ? s.energyCapacity : 2000)
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store.energy < s.store.getCapacity()
     });
+  }
+  private static findSpawn(creep: Creep): Structure | null {
+    return creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_SPAWN && s.store.energy < s.energyCapacity
+    });
+  }
+  private static findExtension(creep: Creep): Structure | null {
+    return creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_EXTENSION && s.store.energy < s.energyCapacity
+    });
+  }
+  private static getStoreTarget(creep: Creep): Structure | null {
+    return this.findContainer(creep) || this.findSpawn(creep) || this.findExtension(creep);
   }
   public static run(creep: Creep): void {
     this.setWorkingState(creep);

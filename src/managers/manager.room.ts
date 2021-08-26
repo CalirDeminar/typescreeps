@@ -63,6 +63,32 @@ export class RoomManager {
       };
     }
   }
+  private static ManageHaulers(room: Room) {
+    room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }).map((container) => {
+      const haulers = _.filter(
+        Game.creeps,
+        (c: Creep) => c.memory.role === "hauler" && c.memory.targetSource === container.id
+      );
+      const haulerNearDeath =
+        haulers.length <= Constants.maxHaulers &&
+        _.filter(haulers, (h) => h.ticksToLive && h.ticksToLive < 125).length > 0;
+      if (Memory.roomStore[room.name].nextSpawn != null && (haulers.length < Constants.maxHaulers || haulerNearDeath)) {
+        Memory.roomStore[room.name].nextSpawn = {
+          template: CreepBuilder.buildHaulingCreep(Math.min(room.energyCapacityAvailable, 750)),
+          memory: {
+            ...CreepBase.baseMemory,
+            role: "hauler",
+            working: false,
+            born: Game.time,
+            targetSource: container.id,
+            targetSourcePos: container.pos,
+            homeRoom: room.name,
+            targetRoom: room.name
+          }
+        };
+      }
+    });
+  }
   private static ManageBuilders(room: Room) {
     const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0;
     //const creepNearDeath = _.filter(Game.creeps, (c: Creep) => c.ticksToLive && c.ticksToLive < 100 && c.memory.role !== "builder").length > 0;
@@ -98,6 +124,7 @@ export class RoomManager {
       ConstructionManager.run2(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
+      this.ManageHaulers(room);
       SourceManager.run(room);
       DefenseManager.run(room);
       RemoteManager.run(room);

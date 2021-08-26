@@ -2,8 +2,10 @@ export class Constants {
   public static upgraders = 1;
   public static builders = 0;
   public static maxShuttles = 4;
+  public static maxRemoteRoomDistance = 1;
+  public static maxRemoteShuttles = 2;
   public static maxStatic = 1;
-  public static maxHaulers = 2;
+  public static maxHaulers = 1;
   public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
   public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
   public static towerOffsets = [
