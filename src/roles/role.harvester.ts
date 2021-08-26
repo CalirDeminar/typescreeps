@@ -60,6 +60,7 @@ export class Harvester extends CreepBase {
                 const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
                 creep.harvest(source);
               }
+              creep.memory.working = true;
             } else {
               // creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
               this.travelTo(creep, storeTarget, this.pathColour());
