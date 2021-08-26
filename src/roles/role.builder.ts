@@ -39,18 +39,31 @@ export class Builder extends CreepBase {
     }
     if (working) {
       const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
-      if (buildTarget && creep.build(buildTarget) !== 0) {
-        creep.moveTo(buildTarget, { visualizePathStyle: { stroke: this.pathColour() } });
-      } else if (!buildTarget) {
-        Upgrader.run(creep);
+      const buildTargetInRange = buildTarget && creep.pos.getRangeTo(buildTarget) <= 3;
+      switch(true) {
+        case buildTarget && buildTargetInRange:
+          if(buildTarget) {
+            creep.build(buildTarget)
+          }
+          break;
+        case buildTarget && !buildTargetInRange:
+          if (buildTarget) {
+            this.travelTo(creep, buildTarget, this.pathColour());
+          }
+          break;
+        default:
+          Upgrader.run(creep);
       }
     } else {
       const sourceTarget: Structure | null =
         creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetSource) : this.getSourceTarget(creep);
-      if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
-        creep.moveTo(sourceTarget, {
-          visualizePathStyle: { stroke: this.pathColour() }
-        });
+      if (sourceTarget){
+        const sourceTargetRange = creep.pos.getRangeTo(sourceTarget);
+        if(sourceTargetRange > 1) {
+          this.travelTo(creep, sourceTarget, this.pathColour());
+        } else {
+          creep.withdraw(sourceTarget, RESOURCE_ENERGY);
+        }
       }
     }
   }

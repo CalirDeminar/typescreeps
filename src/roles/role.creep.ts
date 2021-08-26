@@ -17,6 +17,23 @@ export class CreepBase {
     scoutPositions: [],
     targetSourcePos: null
   }
+  public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string) {
+    const targetPos = "pos" in target ? target.pos : target;
+    if (creep.fatigue <= 0) {
+      if (creep.room.name === targetPos.roomName) {
+        const rangeToTarget = creep.pos.getRangeTo(target);
+        if(rangeToTarget > 1) {
+          creep.moveTo(targetPos, { visualizePathStyle: {stroke: pathColour }});
+        }
+      } else {
+        const dir = creep.room.findExitTo(targetPos.roomName);
+        if (dir !== -2 && dir !== -10) {
+          const exit = creep.room.find(dir)[0];
+          creep.moveTo(exit, { visualizePathStyle: {stroke: pathColour }});
+        }
+      }
+    }
+  }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
     if(!isSpawning) {

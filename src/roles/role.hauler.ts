@@ -1,6 +1,6 @@
 import { Logger } from "utils/logger";
-
-export class Hauler {
+import { CreepBase } from "./role.creep";
+export class Hauler extends CreepBase{
   private static pathColour(): string {
     return "blue";
   }
@@ -44,17 +44,23 @@ export class Hauler {
         creep.memory.dropOffTarget = "";
         break;
     }
-    if (withdrawing) {
-      if (container && creep.withdraw(container, RESOURCE_ENERGY) !== 0 && creep.pos.getRangeTo(container) > 1) {
-        creep.moveTo(container, { visualizePathStyle: { stroke: this.pathColour() } });
+    if (withdrawing && container) {
+      const rangeToContainer = creep.pos.getRangeTo(container);
+      if(rangeToContainer > 1) {
+        this.travelTo(creep, container, this.pathColour());
+      } else {
+        creep.withdraw(container, RESOURCE_ENERGY)
       }
     } else {
       const storeTarget: Structure | null =
         creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
-      if (storeTarget && creep.transfer(storeTarget, RESOURCE_ENERGY) !== 0) {
-        creep.moveTo(storeTarget, {
-          visualizePathStyle: { stroke: this.pathColour() }
-        });
+      if (storeTarget) {
+        const rangeToStore = creep.pos.getRangeTo(storeTarget);
+        if (rangeToStore > 1) {
+          this.travelTo(creep, storeTarget, this.pathColour());
+        } else {
+          creep.transfer(storeTarget, RESOURCE_ENERGY)
+        }
       }
     }
   }

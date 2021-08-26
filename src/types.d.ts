@@ -22,6 +22,7 @@ declare global {
     template: BodyPartConstant[];
     memory: CreepMemory;
   }
+  interface HasPos {pos: RoomPosition}
   interface remoteRoom {
     sources: Source[];
     minerals: Mineral[];

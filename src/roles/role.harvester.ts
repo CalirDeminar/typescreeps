@@ -1,8 +1,9 @@
-export class Harvester {
+import { CreepBase } from "./role.creep";
+export class Harvester extends CreepBase {
   private static pathColour(): string {
     return "orange";
   }
-  private static setWorkingState(creep: Creep) {
+  private static setWorkingState(creep: Creep){
     const working = creep.memory.working;
     const workParts = creep.body.filter((p) => p.type === WORK).length
     const full = creep.store.getFreeCapacity() < (workParts * 2);
@@ -34,7 +35,8 @@ export class Harvester {
         case working:
           // move to source or harvest source
           if (!creep.pos.isNearTo(sourcePos)) {
-            creep.moveTo(sourcePos, { visualizePathStyle: {stroke: this.pathColour() }});
+            // creep.moveTo(sourcePos, { visualizePathStyle: {stroke: this.pathColour() }});
+            this.travelTo(creep, sourcePos, this.pathColour());
           } else {
             const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
             creep.harvest(source);
@@ -44,7 +46,8 @@ export class Harvester {
           // returning to home room
           const homeController = Game.rooms[creep.memory.homeRoom].controller;
           if (homeController) {
-            creep.moveTo(homeController.pos, { visualizePathStyle: {stroke: this.pathColour() }});
+            //creep.moveTo(homeController.pos, { visualizePathStyle: {stroke: this.pathColour() }});
+            this.travelTo(creep, homeController, this.pathColour());
           }
           break;
         default:
@@ -54,7 +57,8 @@ export class Harvester {
             if(creep.pos.isNearTo(storeTarget.pos)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
             } else {
-              creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
+              // creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
+              this.travelTo(creep, storeTarget, this.pathColour());
             }
           }
       }

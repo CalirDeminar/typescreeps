@@ -32,20 +32,22 @@ export class RemoteManager {
             };
         }
         if (Game.time % 100 === 0) {
-            const remoteSources = _.reduce(Memory.roomStore[room.name].remoteRooms, (acc: {source: Source, hostile: boolean}[], rRoom) => {
-                const rtn = rRoom.sources.filter((s) => {
+            let isSpawning = !!spawn.spawning;
+            const remoteSources = _.reduce(Memory.roomStore[room.name].remoteRooms, (acc: {source: Source, hostile: boolean, pathLength: number}[], rRoom) => {
+                const rtn = rRoom.sources.reduce((acc: {source: Source, hostile: boolean, pathLength: number}[], s) => {
                     if (s.pos) {
                         const pos = new RoomPosition(s.pos.x, s.pos.y, s.pos.roomName)
                         const path = anchor.pos.findPathTo(pos, {maxRooms: 1, ignoreCreeps: true, });
-                        return path.length < 30;
+                        const rtn = {source: s, hostile: rRoom.hostile, pathLength: path.length};
+                        return acc.concat([rtn]);
                     }
-                    return false;
-                }).map((s) => {return {source: s, hostile: rRoom.hostile}});
+                    return acc;
+                }, [])
                 return acc.concat(rtn);
-            }, []);
+            }, []).sort((a, b) => a.pathLength - b.pathLength);
             console.log(`Remote Source Count: ${remoteSources.length}`)
             remoteSources.map((t) => {
-                if(!t.hostile && _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === t.source.id).length < 1) {
+                if(!isSpawning && !t.hostile && _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === t.source.id).length < 1) {
                     const creepMemory = {
                         ...CreepBase.baseMemory,
                         role: "harvesterShuttle",
@@ -57,6 +59,8 @@ export class RemoteManager {
                         template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
                         memory: creepMemory
                     };
+                    isSpawning = true;
+
                 }
             });
         }
