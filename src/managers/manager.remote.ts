@@ -47,7 +47,7 @@ export class RemoteManager {
             }, []).sort((a, b) => a.pathLength - b.pathLength);
             console.log(`Remote Source Count: ${remoteSources.length}`)
             remoteSources.map((t) => {
-                if(!isSpawning && !t.hostile && _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === t.source.id).length < 1) {
+                if(!isSpawning && !t.hostile && _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === t.source.id).length < 2) {
                     const creepMemory = {
                         ...CreepBase.baseMemory,
                         role: "harvesterShuttle",
