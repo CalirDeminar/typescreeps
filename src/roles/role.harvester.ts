@@ -56,6 +56,10 @@ export class Harvester extends CreepBase {
           if (storeTarget) {
             if(creep.pos.isNearTo(storeTarget.pos)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
+              if(creep.pos.isNearTo(sourcePos)) {
+                const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
+                creep.harvest(source);
+              }
             } else {
               // creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
               this.travelTo(creep, storeTarget, this.pathColour());
