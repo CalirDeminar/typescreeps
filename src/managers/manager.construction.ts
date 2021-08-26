@@ -61,26 +61,52 @@ export class ConstructionManager {
     }
     return [];
   }
-  private static getExtensionBlock(room: Room, anchor: RoomPosition, xMult: number, yMult: number): RoomPosition[] {
+  private static getExtensionBlockType1(
+    room: Room,
+    anchor: RoomPosition,
+    xMult: number,
+    yMult: number
+  ): RoomPosition[] {
     const baseX = anchor.x + 2 * xMult;
     const baseY = anchor.y + 2 * yMult;
     return [
-      new RoomPosition(baseX + -1 * xMult, baseY + 1 * yMult, room.name),
-      new RoomPosition(baseX, baseY + 1 * yMult, room.name),
       new RoomPosition(baseX, baseY, room.name),
       new RoomPosition(baseX + 1 * xMult, baseY, room.name),
+      new RoomPosition(baseX, baseY + 1 * yMult, room.name),
+      new RoomPosition(baseX + -1 * xMult, baseY + 1 * yMult, room.name),
+      new RoomPosition(baseX + 1 * xMult, baseY + -1 * yMult, room.name)
+    ];
+  }
+  private static getExtensionBlockType2(
+    room: Room,
+    anchor: RoomPosition,
+    xMult: number,
+    yMult: number
+  ): RoomPosition[] {
+    const baseX = anchor.x + 4 * xMult;
+    const baseY = anchor.y + 4 * yMult;
+    return [
+      new RoomPosition(baseX, baseY, room.name),
+      new RoomPosition(baseX + -1 * xMult, baseY, room.name),
+      new RoomPosition(baseX, baseY + -1 * yMult, room.name),
+      new RoomPosition(baseX + -1 * xMult, baseY + 1 * yMult, room.name),
       new RoomPosition(baseX + 1 * xMult, baseY + -1 * yMult, room.name),
-      new RoomPosition(baseX + 1 * xMult, baseY + 1 * yMult, room.name),
-      new RoomPosition(baseX, baseY + 2 * yMult, room.name),
-      new RoomPosition(baseX + 2 * xMult, baseY, room.name)
+      new RoomPosition(baseX + -2 * xMult, baseY + 1 * yMult, room.name),
+      new RoomPosition(baseX + 1 * xMult, baseY + -2 * yMult, room.name),
+      new RoomPosition(baseX + -2 * xMult, baseY + 2 * yMult, room.name),
+      new RoomPosition(baseX + 2 * xMult, baseY + -2 * yMult, room.name)
     ];
   }
   private static getExtensionList(room: Room, anchor: RoomPosition): RoomPosition[] {
     return [
-      ...this.getExtensionBlock(room, anchor, 1, 1),
-      ...this.getExtensionBlock(room, anchor, 1, -1),
-      ...this.getExtensionBlock(room, anchor, -1, 1),
-      ...this.getExtensionBlock(room, anchor, -1, -1)
+      ...this.getExtensionBlockType1(room, anchor, 1, 1),
+      ...this.getExtensionBlockType1(room, anchor, 1, -1),
+      ...this.getExtensionBlockType1(room, anchor, -1, 1),
+      ...this.getExtensionBlockType1(room, anchor, -1, -1),
+      ...this.getExtensionBlockType2(room, anchor, 1, 1),
+      ...this.getExtensionBlockType2(room, anchor, 1, -1),
+      ...this.getExtensionBlockType2(room, anchor, -1, 1),
+      ...this.getExtensionBlockType2(room, anchor, -1, -1)
     ];
   }
   private static getRoomAnchor(room: Room): Flag | null {
@@ -158,6 +184,10 @@ export class ConstructionManager {
         nextRoadPos?.createConstructionSite(STRUCTURE_ROAD);
         activeConstructionSite = true;
       }
+      // buildTarget
+      const target = room.find(FIND_CONSTRUCTION_SITES)[0];
+      const creeps = _.filter(Game.creeps, (c) => c.memory.role === "builder");
+      creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
       //  Generalise some code for the fixed position buildings?
     }
   }
