@@ -34,7 +34,10 @@ export class SourceManager {
       Game.creeps,
       (c: Creep) => c.memory.role === "hauler" && c.memory.targetSource === container.id
     );
-    if (haulers.length < Constants.maxHaulers || (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 125)) {
+    if (
+      haulers.length < Constants.maxHaulers ||
+      (haulers.length === 1 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 125)
+    ) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(Math.min(source.room.energyCapacityAvailable, 750)),
         memory: {
@@ -50,7 +53,10 @@ export class SourceManager {
       };
     } else if (
       activeHarvesters.length < Constants.maxStatic ||
-      (activeHarvesters.length == 1 && activeHarvesters[0] && activeHarvesters[0].ticksToLive && activeHarvesters[0].ticksToLive < 100)
+      (activeHarvesters.length == 1 &&
+        activeHarvesters[0] &&
+        activeHarvesters[0].ticksToLive &&
+        activeHarvesters[0].ticksToLive < 100)
     ) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
@@ -76,13 +82,20 @@ export class SourceManager {
   private static getMissingHarvesters(source: Source): number {
     const container = this.getSourceContainer(source);
     const maxHarvesters = container ? Constants.maxStatic : Constants.maxShuttles;
-    const creepCount = _.filter(Game.creeps, (c) => c.memory.targetSource === source.id && (c.memory.role === "harvesterShuttle" || c.memory.role === "harvesterStatic")).length;
+    const creepCount = _.filter(
+      Game.creeps,
+      (c) =>
+        c.memory.targetSource === source.id &&
+        (c.memory.role === "harvesterShuttle" || c.memory.role === "harvesterStatic")
+    ).length;
     return maxHarvesters - creepCount;
   }
   private static getMostMissingHarvesters(room: Room): number {
-    return Math.max(...room.find(FIND_SOURCES).map((s) => {
-      return this.getMissingHarvesters(s);
-    }));
+    return Math.max(
+      ...room.find(FIND_SOURCES).map((s) => {
+        return this.getMissingHarvesters(s);
+      })
+    );
   }
   public static run(room: Room): void {
     const maxMissingHarvesters = this.getMostMissingHarvesters(room);

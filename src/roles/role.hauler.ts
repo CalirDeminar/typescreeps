@@ -1,29 +1,34 @@
 import { Logger } from "utils/logger";
 import { CreepBase } from "./role.creep";
-export class Hauler extends CreepBase{
+export class Hauler extends CreepBase {
   private static pathColour(): string {
     return "blue";
   }
   private static getStoreTarget(creep: Creep): Structure | null {
-    return creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
-        s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ||
-        s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) < 500 && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-    }) || creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) >= 500
-    }) || creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) =>
-        s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-    });
+    return (
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) =>
+          (s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
+          (s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
+          (s.structureType === STRUCTURE_TOWER &&
+            s.store.getFreeCapacity(RESOURCE_ENERGY) < 500 &&
+            s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+      }) ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) =>
+          s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) >= 500
+      }) ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) =>
+          s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+      })
+    );
   }
   private static getContainerTarget(creep: Creep): string {
     const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s) =>
-      (s.structureType === STRUCTURE_CONTAINER
-      || s.structureType === STRUCTURE_STORAGE)
-      && s.store[RESOURCE_ENERGY] > (creep.store.getCapacity() / 2)
+        (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) &&
+        s.store[RESOURCE_ENERGY] > creep.store.getCapacity() / 2
     });
     return target ? target.id : "";
   }
@@ -31,8 +36,9 @@ export class Hauler extends CreepBase{
     const withdrawing = creep.memory.working;
     const empty = creep.store[RESOURCE_ENERGY] === 0;
     const full = creep.store.getFreeCapacity() === 0;
-    let container: StructureContainer | null = Game.getObjectById(creep.memory.workTarget) || Game.getObjectById(creep.memory.targetSource);
-    switch(true) {
+    let container: StructureContainer | null =
+      Game.getObjectById(creep.memory.workTarget) || Game.getObjectById(creep.memory.targetSource);
+    switch (true) {
       case withdrawing && container?.store.getUsedCapacity() === 0:
       case !withdrawing && empty:
         creep.memory.working = true;
@@ -47,10 +53,10 @@ export class Hauler extends CreepBase{
     }
     if (withdrawing && container) {
       const rangeToContainer = creep.pos.getRangeTo(container);
-      if(rangeToContainer > 1) {
+      if (rangeToContainer > 1) {
         this.travelTo(creep, container, this.pathColour());
       } else {
-        creep.withdraw(container, RESOURCE_ENERGY)
+        creep.withdraw(container, RESOURCE_ENERGY);
       }
     } else {
       const storeTarget: Structure | null =
@@ -60,7 +66,7 @@ export class Hauler extends CreepBase{
         if (rangeToStore > 1) {
           this.travelTo(creep, storeTarget, this.pathColour());
         } else {
-          creep.transfer(storeTarget, RESOURCE_ENERGY)
+          creep.transfer(storeTarget, RESOURCE_ENERGY);
         }
       }
     }

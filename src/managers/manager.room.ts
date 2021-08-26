@@ -14,7 +14,7 @@ export class RoomManager {
     controllerId: "",
     nextSpawn: null,
     remoteRooms: {}
-  }
+  };
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
       console.log("Initialising roomStore");
@@ -23,9 +23,9 @@ export class RoomManager {
     const currentRooms = Object.keys(Game.rooms);
     _.map(Object.keys(Memory.roomStore), (roomKey) => {
       if (!currentRooms.includes(roomKey)) {
-        delete Memory.roomStore[roomKey]
+        delete Memory.roomStore[roomKey];
       }
-    })
+    });
     if (Memory.roomStore[room.name] === undefined) {
       console.log(`Initialising roomStore for ${room.name}`);
       Memory.roomStore[room.name] = {
@@ -64,10 +64,18 @@ export class RoomManager {
     }
   }
   private static ManageBuilders(room: Room) {
-    const energyFull = (room.energyCapacityAvailable - room.energyAvailable) === 0;
+    const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0;
     //const creepNearDeath = _.filter(Game.creeps, (c: Creep) => c.ticksToLive && c.ticksToLive < 100 && c.memory.role !== "builder").length > 0;
-    const towersNeedEnergy = _.filter(room.find(FIND_MY_STRUCTURES, {filter: (s) => {return s.structureType === STRUCTURE_TOWER && s.store[RESOURCE_ENERGY] <= 500}})).length > 0
-    const builderCountLow = this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my;
+    const towersNeedEnergy =
+      _.filter(
+        room.find(FIND_MY_STRUCTURES, {
+          filter: (s) => {
+            return s.structureType === STRUCTURE_TOWER && s.store[RESOURCE_ENERGY] <= 500;
+          }
+        })
+      ).length > 0;
+    const builderCountLow =
+      this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my;
     // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
     if (builderCountLow || (energyFull && Memory.roomStore[room.name].nextSpawn === null && !towersNeedEnergy)) {
@@ -97,9 +105,11 @@ export class RoomManager {
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];
         if (mainSpawn != null) {
-          const resp = mainSpawn.spawnCreep(toSpawn.template, `${toSpawn.memory.role}-${Game.time}`, {memory: toSpawn.memory});
+          const resp = mainSpawn.spawnCreep(toSpawn.template, `${toSpawn.memory.role}-${Game.time}`, {
+            memory: toSpawn.memory
+          });
           if (resp === OK) {
-            console.log("Nulling Nextspawn")
+            console.log("Nulling Nextspawn");
             Memory.roomStore[room.name].nextSpawn = null;
           }
         }

@@ -19,7 +19,7 @@ export class Builder extends CreepBase {
     const empty = creep.store.getUsedCapacity() === 0;
     const full = creep.store.getUsedCapacity() === creep.store.getCapacity();
     const hasTarget = creep.memory.workTarget !== "";
-    switch(true) {
+    switch (true) {
       case working && empty:
         creep.memory.working = false;
         break;
@@ -40,10 +40,10 @@ export class Builder extends CreepBase {
     if (working) {
       const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
       const buildTargetInRange = buildTarget && creep.pos.getRangeTo(buildTarget) <= 3;
-      switch(true) {
+      switch (true) {
         case buildTarget && buildTargetInRange:
-          if(buildTarget) {
-            creep.build(buildTarget)
+          if (buildTarget) {
+            creep.build(buildTarget);
           }
           break;
         case buildTarget && !buildTargetInRange:
@@ -57,9 +57,9 @@ export class Builder extends CreepBase {
     } else {
       const sourceTarget: Structure | null =
         creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetSource) : this.getSourceTarget(creep);
-      if (sourceTarget){
+      if (sourceTarget) {
         const sourceTargetRange = creep.pos.getRangeTo(sourceTarget);
-        if(sourceTargetRange > 1) {
+        if (sourceTargetRange > 1) {
           this.travelTo(creep, sourceTarget, this.pathColour());
         } else {
           creep.withdraw(sourceTarget, RESOURCE_ENERGY);

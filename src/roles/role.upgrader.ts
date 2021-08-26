@@ -6,7 +6,7 @@ export class Upgrader extends CreepBase {
   public static run(creep: Creep): void {
     const working = creep.memory.working;
     if (!creep.memory.upgradeTarget && creep.room.controller) {
-      creep.memory.upgradeTarget = creep.room.controller.id
+      creep.memory.upgradeTarget = creep.room.controller.id;
     }
     if (working && creep.carry.energy === 0) {
       creep.memory.working = false;

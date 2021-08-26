@@ -3,10 +3,10 @@ export class Harvester extends CreepBase {
   private static pathColour(): string {
     return "orange";
   }
-  private static setWorkingState(creep: Creep){
+  private static setWorkingState(creep: Creep) {
     const working = creep.memory.working;
-    const workParts = creep.body.filter((p) => p.type === WORK).length
-    const full = creep.store.getFreeCapacity() < (workParts * 2);
+    const workParts = creep.body.filter((p) => p.type === WORK).length;
+    const full = creep.store.getFreeCapacity() < workParts * 2;
     const empty = creep.store.getUsedCapacity() === 0;
     if (!working && empty) {
       creep.memory.working = true;
@@ -29,9 +29,9 @@ export class Harvester extends CreepBase {
     this.setWorkingState(creep);
     const working = creep.memory.working;
     let sourcePos = creep.memory.targetSourcePos;
-    if (sourcePos){
+    if (sourcePos) {
       sourcePos = new RoomPosition(sourcePos.x, sourcePos.y, sourcePos.roomName);
-      switch(true) {
+      switch (true) {
         case working:
           // move to source or harvest source
           if (!creep.pos.isNearTo(sourcePos)) {
@@ -54,13 +54,13 @@ export class Harvester extends CreepBase {
           // store in container in home room
           const storeTarget = this.getStoreTarget(creep);
           if (storeTarget) {
-            if(creep.pos.isNearTo(storeTarget.pos)) {
+            if (creep.pos.isNearTo(storeTarget.pos)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
-              if(creep.pos.isNearTo(sourcePos)) {
+              if (creep.pos.isNearTo(sourcePos)) {
                 const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
                 creep.harvest(source);
+                creep.memory.working = true;
               }
-              creep.memory.working = true;
             } else {
               // creep.moveTo(storeTarget, { visualizePathStyle: {stroke: this.pathColour() }});
               this.travelTo(creep, storeTarget, this.pathColour());

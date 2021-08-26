@@ -22,7 +22,9 @@ declare global {
     template: BodyPartConstant[];
     memory: CreepMemory;
   }
-  interface HasPos {pos: RoomPosition}
+  interface HasPos {
+    pos: RoomPosition;
+  }
   interface remoteRoom {
     sources: Source[];
     minerals: Mineral[];
@@ -33,7 +35,7 @@ declare global {
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
-    remoteRooms: {[roomid: string]: remoteRoom}
+    remoteRooms: { [roomid: string]: remoteRoom };
   }
   interface Memory {
     uuid: number;

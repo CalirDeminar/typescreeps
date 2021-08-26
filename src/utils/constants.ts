@@ -1,19 +1,19 @@
 export class Constants {
-    public static upgraders = 1;
-    public static builders = 0;
-    public static maxShuttles = 4;
-    public static maxStatic = 1;
-    public static maxHaulers = 2;
-    public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
-    public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
-    public static towerOffsets = [
-        {x: 0, y: 2},
-        {x: 0, y: -2},
-        {x: 2, y: 0},
-        {x: -2, y: 0},
-        {x: 1, y: 1},
-        {x: -1, y: -2}
-    ]
+  public static upgraders = 1;
+  public static builders = 0;
+  public static maxShuttles = 4;
+  public static maxStatic = 1;
+  public static maxHaulers = 2;
+  public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
+  public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
+  public static towerOffsets = [
+    { x: 0, y: 2 },
+    { x: 0, y: -2 },
+    { x: 2, y: 0 },
+    { x: -2, y: 0 },
+    { x: 1, y: 1 },
+    { x: -1, y: -2 }
+  ];
 }
 // Flag Anchor 0,0
 // Spawn 1 - 0, 1
