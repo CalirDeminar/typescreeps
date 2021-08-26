@@ -19,17 +19,18 @@ export class CreepBase {
   }
   public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string) {
     const targetPos = "pos" in target ? target.pos : target;
+    const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
       if (creep.room.name === targetPos.roomName) {
         const rangeToTarget = creep.pos.getRangeTo(target);
         if(rangeToTarget > 1) {
-          creep.moveTo(targetPos, { visualizePathStyle: {stroke: pathColour }});
+          creep.moveTo(targetPos, { visualizePathStyle: {stroke: pathColour }, ignoreCreeps: !creepNearby});
         }
       } else {
         const dir = creep.room.findExitTo(targetPos.roomName);
         if (dir !== -2 && dir !== -10) {
           const exit = creep.room.find(dir)[0];
-          creep.moveTo(exit, { visualizePathStyle: {stroke: pathColour }});
+          creep.moveTo(exit, { visualizePathStyle: {stroke: pathColour }, ignoreCreeps: !creepNearby});
         }
       }
     }
