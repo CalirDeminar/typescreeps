@@ -10,13 +10,13 @@ export class Hauler extends CreepBase {
         filter: (s: AnyStructure) =>
           (s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
           (s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
-          (s.structureType === STRUCTURE_TOWER &&
-            s.store.getFreeCapacity(RESOURCE_ENERGY) < 500 &&
-            s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+          (s.structureType === STRUCTURE_TOWER && s.store.getUsedCapacity(RESOURCE_ENERGY) < 500)
       }) ||
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) =>
-          s.structureType === STRUCTURE_TOWER && s.store.getFreeCapacity(RESOURCE_ENERGY) >= 500
+          s.structureType === STRUCTURE_TOWER &&
+          s.store.getUsedCapacity(RESOURCE_ENERGY) >= 500 &&
+          s.store.getUsedCapacity(RESOURCE_ENERGY) < 750
       }) ||
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) =>
