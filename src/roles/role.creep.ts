@@ -24,18 +24,19 @@ export class CreepBase {
     const targetPos = "pos" in target ? target.pos : target;
     const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
-      if (creep.room.name === targetPos.roomName) {
-        const rangeToTarget = creep.pos.getRangeTo(target);
-        if (rangeToTarget > 1) {
-          creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
-        }
-      } else {
-        const dir = creep.room.findExitTo(targetPos.roomName);
-        if (dir !== -2 && dir !== -10) {
-          const exit = creep.room.find(dir).sort((i, j) => creep.pos.getRangeTo(i) - creep.pos.getRangeTo(j))[0];
-          creep.moveTo(exit, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
-        }
-      }
+      creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
+      // if (creep.room.name === targetPos.roomName) {
+      //   const rangeToTarget = creep.pos.getRangeTo(target);
+      //   if (rangeToTarget > 1) {
+      //     creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
+      //   }
+      // } else {
+      //   const dir = creep.room.findExitTo(targetPos.roomName);
+      //   if (dir !== -2 && dir !== -10) {
+      //     const exit = creep.room.find(dir).sort((i, j) => creep.pos.getRangeTo(i) - creep.pos.getRangeTo(j))[0];
+      //     creep.moveTo(exit, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
+      //   }
+      // }
     }
   }
   static getSourceTarget(creep: Creep): Structure | null {
