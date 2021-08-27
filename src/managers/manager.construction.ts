@@ -129,6 +129,9 @@ export class ConstructionManager {
       return UtilPosition.getClosestSurroundingTo(source.pos, spawn.pos);
     });
   }
+  private static getCentralContainer(anchor: RoomPosition): RoomPosition[] {
+    return [new RoomPosition(anchor.x, anchor.y + 1, anchor.roomName)];
+  }
   public static run2(room: Room) {
     const anchor = this.getRoomAnchor(room);
     const controller = room.controller;
@@ -138,8 +141,12 @@ export class ConstructionManager {
       const structures = room.find(FIND_STRUCTURES);
       // Containers
       const containerCount = structures.filter((s) => s.structureType === STRUCTURE_CONTAINER).length;
-      if (level > 2 && containerCount < room.find(FIND_SOURCES).length) {
-        const containerList = this.getSourceContainerList(room);
+      if (level > 1 && containerCount < 1) {
+        this.getCentralContainer(anchor.pos)[0].createConstructionSite(STRUCTURE_CONTAINER);
+        activeConstructionSite = true;
+      }
+      if (level > 2 && containerCount < room.find(FIND_SOURCES).length + 1) {
+        const containerList = this.getSourceContainerList(room).concat(this.getCentralContainer(anchor.pos));
         const nextContainerPos = containerList.find(
           (e) => e.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0
         );
