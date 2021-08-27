@@ -14,6 +14,7 @@
 
 import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
+import { RemoteManager } from "./manager.remote";
 export class ConstructionManager {
   private static getStoragePos(room: Room, anchor: RoomPosition): RoomPosition {
     return new RoomPosition(anchor.x - 1, anchor.y, room.name);
@@ -52,6 +53,21 @@ export class ConstructionManager {
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })
       .reduce((acc, arr) => acc.concat(arr), []);
+  }
+  private static getRoadListToRemotes(room: Room, anchor: RoomPosition): RoomPosition[] {
+    const remoteSources = RemoteManager.getRemoteSourcePositions(room);
+    return remoteSources.reduce((acc: RoomPosition[], s) => {
+      const dir = room.findExitTo(s.roomName);
+      // console.log(dir);
+      if (dir !== -2 && dir !== -10) {
+        const exit = room.find(dir).sort((a, b) => anchor.getRangeTo(a) - anchor.getRangeTo(b))[0];
+        const path = anchor
+          .findPathTo(exit, { ignoreCreeps: true, swampCost: 1 })
+          .map((p) => new RoomPosition(p.x, p.y, room.name));
+        return acc.concat(path);
+      }
+      return acc;
+    }, []);
   }
   private static getRoadListToController(room: Room, anchor: RoomPosition): RoomPosition[] {
     if (room.controller) {
@@ -135,6 +151,7 @@ export class ConstructionManager {
   public static run2(room: Room) {
     const anchor = this.getRoomAnchor(room);
     const controller = room.controller;
+    const terrain = room.getTerrain();
     let activeConstructionSite = room.find(FIND_MY_CONSTRUCTION_SITES).length > 0;
     if (anchor && controller && !activeConstructionSite) {
       const level = controller.level;
@@ -157,9 +174,11 @@ export class ConstructionManager {
       const extensionCount = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION).length;
       if (Constants.maxExtensions[level] > extensionCount && !activeConstructionSite) {
         const extensionList = this.getExtensionList(room, anchor.pos);
-        const nextExtensionPos = extensionList.find(
-          (e) => e.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0
-        );
+        const nextExtensionPos = extensionList.find((e) => {
+          const notOnRoad = e.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0;
+          const isInWall = terrain.get(e.x, e.y) === 1;
+          return notOnRoad && !isInWall;
+        });
         nextExtensionPos?.createConstructionSite(STRUCTURE_EXTENSION);
         activeConstructionSite = true;
       }
@@ -184,9 +203,17 @@ export class ConstructionManager {
       if (!activeConstructionSite && level > 2) {
         const roadList = this.getSurrondingRoadList(room, anchor.pos)
           .concat(this.getRoadListToSources(room, anchor.pos))
-          .concat(this.getRoadListToController(room, anchor.pos));
+          .concat(this.getRoadListToController(room, anchor.pos))
+          .concat(this.getRoadListToRemotes(room, anchor.pos));
         const nextRoadPos = roadList.find(
-          (e) => e.lookFor(LOOK_STRUCTURES).length === 0 && e.lookFor(LOOK_SOURCES).length === 0
+          (e) =>
+            e.lookFor(LOOK_STRUCTURES).length === 0 &&
+            e.lookFor(LOOK_SOURCES).length === 0 &&
+            e.roomName === room.name &&
+            e.x > 0 &&
+            e.x < 49 &&
+            e.y > 0 &&
+            e.y < 49
         );
         nextRoadPos?.createConstructionSite(STRUCTURE_ROAD);
         activeConstructionSite = true;

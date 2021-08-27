@@ -2,7 +2,7 @@ import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 export class RemoteManager {
-  public static getSurroundingRoomNames(room: Room): RoomPosition[] {
+  private static getSurroundingRoomNames(room: Room): RoomPosition[] {
     const baseName = room.name;
     const currentWestString = baseName.match(/^W(\d+)N\d+/);
     const currentNorthString = baseName.match(/^W\d+N(\d+)/);
@@ -34,7 +34,7 @@ export class RemoteManager {
         return roomsToA - roomsToB;
       });
   }
-  public static spawnScout(room: Room) {
+  private static spawnScout(room: Room) {
     const spawn = room.find(FIND_MY_SPAWNS)[0];
     const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
     const shouldSpawnScout =
@@ -52,7 +52,7 @@ export class RemoteManager {
       };
     }
   }
-  public static remoteHarvest(room: Room) {
+  private static remoteHarvest(room: Room) {
     const remoteRooms = Memory.roomStore[room.name].remoteRooms;
     _.map(remoteRooms, (targetRoom, targetRoomName) => {
       if (!targetRoom.hostile && targetRoomName) {
@@ -82,6 +82,20 @@ export class RemoteManager {
         }
       }
     });
+  }
+  public static getRemoteSourcePositions(room: Room): RoomPosition[] {
+    const remoteRooms = Memory.roomStore[room.name].remoteRooms;
+    return _.filter(remoteRooms, (targetRoom, targetRoomName) => {
+      if (!targetRoom.hostile && targetRoomName) {
+        const roomRoute = Game.map.findRoute(room.name, targetRoomName);
+        if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
+          return true;
+        }
+      }
+      return false;
+    }).reduce((acc: RoomPosition[], r) => {
+      return acc.concat(r.sources.map((s) => s.pos));
+    }, []);
   }
   public static run(room: Room) {
     this.spawnScout(room);
