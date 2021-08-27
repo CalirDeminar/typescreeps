@@ -13,7 +13,8 @@ export class RoomManager {
     minerals: [],
     controllerId: "",
     nextSpawn: null,
-    remoteRooms: {}
+    remoteRooms: {},
+    sourceDirector: []
   };
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
@@ -33,7 +34,8 @@ export class RoomManager {
         minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id),
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
-        remoteRooms: {}
+        remoteRooms: {},
+        sourceDirector: []
       };
     }
   }
@@ -140,7 +142,6 @@ export class RoomManager {
             memory: toSpawn.memory
           });
           if (resp === OK) {
-            console.log("Nulling Nextspawn");
             Memory.roomStore[room.name].nextSpawn = null;
           }
         }

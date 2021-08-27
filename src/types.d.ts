@@ -30,8 +30,49 @@ declare global {
     minerals: Mineral[];
     hostile: boolean;
   }
+  interface SourceDirectorStore {
+    sourceId: string;
+    shuttleHarvesterIds: string[];
+    staticHarvesterIds: string[];
+    containerId: string | null;
+    targetContainerId: string | null;
+    containerDistanceByPath: number;
+    linkId: string | null;
+    targetLinkId: string | null;
+  }
+  interface CoreDirectorStore {
+    anchorPos: RoomPosition;
+    controllerId: string;
+    containerId: string | null;
+    storageId: string | null;
+    terminalId: string | null;
+    spawnIds: string[];
+    populatorIds: string[];
+    nextSpawn: CreepRecipie;
+  }
+  interface DefenseDirectorStore {
+    towerIds: string[];
+    alertLevel: 0 | 1 | 2 | 3;
+    defenders: string[];
+  }
+  interface RemoteDirectorStore {
+    roomName: string;
+    controller: string;
+    sources: {
+      sourceId: string;
+      harvesterIds: string[];
+      targetContainerId: string | null;
+    }[];
+  }
+  interface ConstructionDirectorStore {
+    containerQueue: RoomPosition[];
+    roadQueue: RoomPosition[];
+    extensionQueue: RoomPosition[];
+    baseTemplate: {}[];
+  }
   interface RoomType {
     sources: string[];
+    sourceDirector: SourceDirectorStore[];
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
