@@ -1,5 +1,6 @@
 export class Logger {
   static log(game: Game) {
+    let report = "";
     const creepNames = Object.keys(game.creeps);
     const creepTotals = creepNames.reduce((acc: any, name: string) => {
       const creep = game.creeps[name];
@@ -10,7 +11,8 @@ export class Logger {
       }
     }, {});
     for (const name in creepTotals) {
-      console.log(`${name}: ${creepTotals[name]}`);
+      report = report + `${name}: ${creepTotals[name]} `;
     }
+    console.log(`Tick: ${Game.time} Bucket: ${Game.cpu.bucket} ` + report);
   }
 }

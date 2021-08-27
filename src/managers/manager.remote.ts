@@ -38,7 +38,11 @@ export class RemoteManager {
     const spawn = room.find(FIND_MY_SPAWNS)[0];
     const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
     const shouldSpawnScout =
-      Game.time % 1500 === 0 && room.controller && room.controller.level > 1 && spawn && scouts.length === 0;
+      Game.time % Constants.scoutFrequency === 0 &&
+      room.controller &&
+      room.controller.level > 1 &&
+      spawn &&
+      scouts.length === 0;
     if (shouldSpawnScout) {
       const initialTargets = this.getSurroundingRoomNames(room);
       Memory.roomStore[room.name].nextSpawn = {
@@ -59,24 +63,45 @@ export class RemoteManager {
         const roomRoute = Game.map.findRoute(room.name, targetRoomName);
         if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
           targetRoom.sources.map((s) => {
-            const creepCount = _.filter(
+            const harvesterCreepCount = _.filter(
               Game.creeps,
               (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === s.id
             ).length;
-            if (creepCount < Constants.maxRemoteShuttles) {
-              Memory.roomStore[room.name].nextSpawn = {
-                template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
-                memory: {
-                  ...CreepBase.baseMemory,
-                  role: "harvesterShuttle",
-                  working: false,
-                  born: Game.time,
-                  targetSource: s.id,
-                  targetSourcePos: s.pos,
-                  homeRoom: room.name,
-                  targetRoom: s.pos.roomName
-                }
-              };
+            const reserverCreepCount = _.filter(
+              Game.creeps,
+              (c) => c.memory.role === "reserver" && c.memory.targetRoom === s.pos.roomName
+            ).length;
+            const needsHarvester = harvesterCreepCount < Constants.maxRemoteShuttles;
+            const needsReserver = reserverCreepCount < 1 && room.energyCapacityAvailable > 650;
+            switch (true) {
+              case needsReserver:
+                Memory.roomStore[room.name].nextSpawn = {
+                  template: [MOVE, CLAIM],
+                  memory: {
+                    ...CreepBase.baseMemory,
+                    role: "reserver",
+                    working: false,
+                    born: Game.time,
+                    homeRoom: room.name,
+                    targetRoom: s.pos.roomName
+                  }
+                };
+                break;
+              case needsHarvester:
+                Memory.roomStore[room.name].nextSpawn = {
+                  template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+                  memory: {
+                    ...CreepBase.baseMemory,
+                    role: "harvesterShuttle",
+                    working: false,
+                    born: Game.time,
+                    targetSource: s.id,
+                    targetSourcePos: s.pos,
+                    homeRoom: room.name,
+                    targetRoom: s.pos.roomName
+                  }
+                };
+                break;
             }
           });
         }

@@ -9,6 +9,7 @@ export class Constants {
   public static haulerVolume = 200;
   public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
   public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
+  public static scoutFrequency = 1500;
   public static towerOffsets = [
     { x: 0, y: 2 },
     { x: 0, y: -2 },

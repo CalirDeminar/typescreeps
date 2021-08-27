@@ -5,12 +5,11 @@ import { Hauler } from "./roles/role.hauler";
 import { Upgrader } from "./roles/role.upgrader";
 import { Builder } from "./roles/role.builder";
 import { Scout } from "roles/role.scout";
+import { Reserver } from "roles/role.reserver";
 import { Logger } from "./utils/logger";
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
-  console.log(`Current game tick is ${Game.time}`);
-  console.log(`Bucket: ${Game.cpu.bucket}`);
   Logger.log(Game);
 
   for (const name in Memory.creeps) {
@@ -36,6 +35,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
           break;
         case "scout":
           Scout.run(creep);
+          break;
+        case "reserver":
+          Reserver.run(creep);
           break;
       }
     }
