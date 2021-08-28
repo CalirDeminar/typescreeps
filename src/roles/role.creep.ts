@@ -52,6 +52,14 @@ export class CreepBase {
       if (harvestableStorage) {
         return harvestableStorage;
       }
+      const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s) =>
+          s.structureType === STRUCTURE_CONTAINER &&
+          s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.room.energyCapacityAvailable + creep.store.getCapacity()
+      });
+      if (harvestableContainer) {
+        return harvestableContainer;
+      }
       const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: this.filterStructures(STRUCTURE_SPAWN, 100)
       });

@@ -15,6 +15,13 @@ export class Hauler extends CreepBase {
           s.structureType === STRUCTURE_CONTAINER &&
           s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
           s.pos.findInRange(FIND_FLAGS, 1).length > 0
+      }) ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) => s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+      }) ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) =>
+          s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
       })
     );
   }
