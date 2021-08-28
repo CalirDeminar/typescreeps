@@ -131,12 +131,13 @@ export class RoomManager {
         })
       ).length > 0;
     const count = this.sumRoomRole("builder", room.name);
-    const builderCountLow = count < maxBuilders && room.controller && room.controller.my;
     // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
     if (
-      builderCountLow ||
-      (energyFull && Memory.roomStore[room.name].nextSpawn === null && !towersNeedEnergy && count < 10)
+      energyFull &&
+      Memory.roomStore[room.name].nextSpawn === null &&
+      !towersNeedEnergy &&
+      count < Constants.builders
     ) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),

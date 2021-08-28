@@ -1,6 +1,6 @@
 export class Constants {
   public static upgraders = 1;
-  public static builders = 0;
+  public static builders = 15;
   public static maxShuttles = 4;
   public static maxRemoteRoomDistance = 1;
   public static maxRemoteShuttles = 2;
