@@ -89,8 +89,15 @@ export class ConstructionDirector {
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
-          store.internalRoadTemplate.length,
+          level > 2 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
           store.internalRoadTemplate,
+          terrain
+        ) ||
+        this.nextStructure(
+          STRUCTURE_ROAD,
+          structures,
+          level > 2 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
+          store.routeRoadTemplate,
           terrain
         ) ||
         this.nextStructure(STRUCTURE_TOWER, structures, Constants.maxTowers[level], store.towerTemplate, terrain) ||
