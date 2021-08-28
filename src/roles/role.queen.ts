@@ -24,7 +24,7 @@ export class Queen extends CreepBase {
       case creep.store.getFreeCapacity() > 0 && creep.pos.isNearTo(container):
         // if full, go to work
         return true;
-      case creep.store.getUsedCapacity() > 50:
+      case creep.store.getUsedCapacity() >= 50:
         return true;
       case !creep.memory.working && creep.store.getUsedCapacity() >= 50 && container.store[RESOURCE_ENERGY] === 0:
         // if container is empty, we have > 50 energy, go to work
