@@ -9,7 +9,13 @@ export class Constants {
   public static haulerVolume = 200;
   public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
   public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
+  public static maxContainers = [0, 0, 0, 3, 3, 3, 3, 3, 3];
+  public static maxStorage = [0, 0, 0, 0, 1, 1, 1, 1, 1];
+  public static maxTerminal = [0, 0, 0, 0, 0, 0, 1, 1, 1];
+  public static maxExtractor = [0, 0, 0, 0, 0, 0, 1, 1, 1];
+  public static buildRoadsFrom = 3;
   public static scoutFrequency = 1500;
+  public static terminalPlacent = { x: 1, y: 0 };
   public static towerOffsets = [
     { x: 0, y: 2 },
     { x: 0, y: -2 },
@@ -19,6 +25,7 @@ export class Constants {
     { x: -1, y: -2 }
   ];
 }
+// [0, 0, 0, 0, 0, 0, 0, 0, 0]
 // Flag Anchor 0,0
 // Spawn 1 - 0, 1
 // Spawn 2 - 0, -1

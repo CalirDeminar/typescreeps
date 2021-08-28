@@ -1,4 +1,4 @@
-import { ConstructionManager } from "./manager.construction";
+import { ConstructionDirector } from "director/director.construction";
 import { SourceManager } from "./manager.source";
 import { DefenseManager } from "./manager.defense";
 import { RemoteManager } from "./manager.remote";
@@ -14,7 +14,20 @@ export class RoomManager {
     controllerId: "",
     nextSpawn: null,
     remoteRooms: {},
-    sourceDirector: []
+    sourceDirector: [],
+    constructionDirector: {
+      anchor: null,
+      containerTemplate: [],
+      internalRoadTemplate: [],
+      routeRoadTemplate: [],
+      extensionTemplate: [],
+      remoteTemplate: [],
+      storage: null,
+      terminal: null,
+      extractor: null,
+      baseTemplate: [],
+      towerTemplate: []
+    }
   };
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
@@ -35,7 +48,20 @@ export class RoomManager {
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
         remoteRooms: {},
-        sourceDirector: []
+        sourceDirector: [],
+        constructionDirector: {
+          anchor: null,
+          containerTemplate: [],
+          internalRoadTemplate: [],
+          routeRoadTemplate: [],
+          extensionTemplate: [],
+          remoteTemplate: [],
+          storage: null,
+          terminal: null,
+          extractor: null,
+          baseTemplate: [],
+          towerTemplate: []
+        }
       };
     }
   }
@@ -104,11 +130,14 @@ export class RoomManager {
           }
         })
       ).length > 0;
-    const builderCountLow =
-      this.sumRoomRole("builder", room.name) < maxBuilders && room.controller && room.controller.my;
+    const count = this.sumRoomRole("builder", room.name);
+    const builderCountLow = count < maxBuilders && room.controller && room.controller.my;
     // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
-    if (builderCountLow || (energyFull && Memory.roomStore[room.name].nextSpawn === null && !towersNeedEnergy)) {
+    if (
+      builderCountLow ||
+      (energyFull && Memory.roomStore[room.name].nextSpawn === null && !towersNeedEnergy && count < 10)
+    ) {
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
@@ -125,13 +154,13 @@ export class RoomManager {
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
       this.memorySetup(room);
-      ConstructionManager.run2(room);
+      ConstructionDirector.run(room);
       RemoteManager.run(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
-      this.ManageHaulers(room);
       SourceManager.run(room);
       DefenseManager.run(room);
+      this.ManageHaulers(room);
       const toSpawn = Memory.roomStore[room.name].nextSpawn;
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];

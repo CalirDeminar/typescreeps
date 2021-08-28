@@ -65,14 +65,22 @@ declare global {
     }[];
   }
   interface ConstructionDirectorStore {
-    containerQueue: RoomPosition[];
-    roadQueue: RoomPosition[];
-    extensionQueue: RoomPosition[];
+    anchor: RoomPosition | null;
+    containerTemplate: RoomPosition[];
+    internalRoadTemplate: RoomPosition[];
+    routeRoadTemplate: RoomPosition[];
+    extensionTemplate: RoomPosition[];
+    towerTemplate: RoomPosition[];
+    remoteTemplate: RoomPosition[];
+    storage: RoomPosition | null;
+    terminal: RoomPosition | null;
+    extractor: RoomPosition | null;
     baseTemplate: {}[];
   }
   interface RoomType {
     sources: string[];
     sourceDirector: SourceDirectorStore[];
+    constructionDirector: ConstructionDirectorStore;
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
