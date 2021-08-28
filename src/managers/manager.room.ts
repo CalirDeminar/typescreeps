@@ -1,11 +1,11 @@
 import { ConstructionDirector } from "director/director.construction";
+import { MineralDirector } from "director/director.mineral";
 import { SourceManager } from "./manager.source";
 import { DefenseManager } from "./manager.defense";
 import { RemoteManager } from "./manager.remote";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { CreepBase } from "roles/role.creep";
-const maxBuilders = Constants.builders;
 const maxUpgraders = Constants.upgraders;
 export class RoomManager {
   public static baseMemory: RoomType = {
@@ -156,6 +156,7 @@ export class RoomManager {
     if (room.controller && room.controller.my) {
       this.memorySetup(room);
       ConstructionDirector.run(room);
+      MineralDirector.run(room);
       RemoteManager.run(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);

@@ -4,6 +4,7 @@ export class Constants {
   public static maxShuttles = 4;
   public static maxRemoteRoomDistance = 1;
   public static maxRemoteShuttles = 2;
+  public static maxMineralHarvester = 1;
   public static maxStatic = 1;
   public static maxHaulers = 2;
   public static haulerVolume = 200;
