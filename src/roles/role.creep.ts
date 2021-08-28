@@ -20,11 +20,11 @@ export class CreepBase {
     scoutPositions: [],
     targetSourcePos: null
   };
-  public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string) {
+  public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string, range?: number | 1) {
     const targetPos = "pos" in target ? target.pos : target;
     const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
-      creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
+      creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby, range: range });
       // if (creep.room.name === targetPos.roomName) {
       //   const rangeToTarget = creep.pos.getRangeTo(target);
       //   if (rangeToTarget > 1) {
@@ -38,6 +38,10 @@ export class CreepBase {
       //   }
       // }
     }
+  }
+  public static travelToRoom(creep: Creep, pathColour: string, targetRoom: string) {
+    const roomCenter = new RoomPosition(25, 25, targetRoom);
+    this.travelTo(creep, roomCenter, pathColour, 20);
   }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;

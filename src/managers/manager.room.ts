@@ -76,7 +76,10 @@ export class RoomManager {
           Game.creeps,
           (c) => c.memory.role === "hauler" && c.memory.targetSource === centralContainer.id
         );
-        if (activeHaulers.length < 1 || (activeHaulers[0].ticksToLive && activeHaulers[0].ticksToLive < 50)) {
+        if (
+          activeHaulers.length < 1 ||
+          (activeHaulers.length == 1 && activeHaulers[0].ticksToLive && activeHaulers[0].ticksToLive < 50)
+        ) {
           const energy = 200;
           Memory.roomStore[room.name].nextSpawn = {
             template: CreepBuilder.buildHaulingCreep(energy),
