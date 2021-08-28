@@ -4,8 +4,7 @@ import { Constants } from "utils/constants";
 export class RemoteManager {
   private static getSurroundingRoomNames(room: Room): RoomPosition[] {
     const baseName = room.name;
-    const currentWestString = baseName.match(/^W(\d+)N\d+/);
-    const currentNorthString = baseName.match(/^W\d+N(\d+)/);
+    const matches = baseName.match(/^(\w)(\d+)(\w)(\d+)$/);
     return [
       { x: -1, y: 0 },
       { x: 1, y: 0 },
@@ -13,8 +12,12 @@ export class RemoteManager {
       { x: 0, y: -1 }
     ]
       .reduce((acc: RoomPosition[], c: { x: number; y: number }) => {
-        if (currentWestString && currentNorthString) {
-          const targetRoomName = `W${parseInt(currentWestString[1]) + c.x}N${parseInt(currentNorthString[1]) + c.y}`;
+        if (matches) {
+          const hDir = matches[1];
+          const hDist = matches[2];
+          const vDir = matches[3];
+          const vDist = matches[4];
+          const targetRoomName = `${hDir}${parseInt(hDist) + c.x}${vDir}${parseInt(vDist) + c.y}`;
           // only travel to directly adjacent rooms
           const roomRoute = Game.map.findRoute(room.name, targetRoomName);
           if (roomRoute != -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
@@ -197,16 +200,16 @@ export class RemoteManager {
     const remoteRooms = Memory.roomStore[room.name].remoteRooms;
     _.map(remoteRooms, (targetRoom, targetRoomName) => {
       if (targetRoomName) {
-        this.runDefenderCreeps(targetRoomName);
-        if (targetRoom.hostile) {
-          this.spawnCombatants(room, targetRoom, targetRoomName);
-        }
         if (!targetRoom.hostile) {
           const roomRoute = Game.map.findRoute(room.name, targetRoomName);
           targetRoom.sources.map((s) => {
             this.spawnReserver(room, s, roomRoute);
             this.spawnRemoteHarvester(room, s, roomRoute);
           });
+        }
+        this.runDefenderCreeps(targetRoomName);
+        if (targetRoom.hostile) {
+          this.spawnCombatants(room, targetRoom, targetRoomName);
         }
       }
     });
