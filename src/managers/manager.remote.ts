@@ -93,7 +93,7 @@ export class RemoteManager {
                 break;
               case needsHarvester:
                 Memory.roomStore[room.name].nextSpawn = {
-                  template: CreepBuilder.buildShuttleCreep(room.energyCapacityAvailable),
+                  template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 1000)),
                   memory: {
                     ...CreepBase.baseMemory,
                     role: "harvesterShuttle",

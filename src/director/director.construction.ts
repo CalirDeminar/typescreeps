@@ -42,7 +42,7 @@ export class ConstructionDirector {
     const currentCount = structures.filter((s) => s.structureType === targetType).length;
     if (pos && currentCount < currentMax) {
       pos = new RoomPosition(pos.x, pos.y, pos.roomName);
-      pos.createConstructionSite(targetType) === OK;
+      return pos.createConstructionSite(targetType) === OK;
     }
     return false;
   }

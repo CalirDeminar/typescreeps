@@ -41,7 +41,7 @@ export class SourceManager {
     ) {
       Memory.roomStore[source.room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(
-          Math.min(allHaulers.length < 1 ? 200 : source.room.energyCapacityAvailable, 800)
+          Math.min(allHaulers.length < 1 ? 200 : source.room.energyCapacityAvailable, 1000)
         ),
         memory: {
           ...CreepBase.baseMemory,
