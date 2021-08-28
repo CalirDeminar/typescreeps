@@ -60,71 +60,156 @@ export class RemoteManager {
       };
     }
   }
+  private static spawnReserver(
+    room: Room,
+    source: Source,
+    roomRoute:
+      | {
+          exit: ExitConstant;
+          room: string;
+        }[]
+      | -2
+  ) {
+    if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
+      const reserverCreepCount = _.filter(
+        Game.creeps,
+        (c) => c.memory.role === "reserver" && c.memory.targetRoom === source.pos.roomName
+      ).length;
+      const needsReserver = reserverCreepCount < 1 && room.energyCapacityAvailable > 650;
+      if (needsReserver) {
+        Memory.roomStore[room.name].nextSpawn = {
+          template: [MOVE, CLAIM],
+          memory: {
+            ...CreepBase.baseMemory,
+            role: "reserver",
+            working: false,
+            born: Game.time,
+            homeRoom: room.name,
+            targetRoom: source.pos.roomName
+          }
+        };
+      }
+    }
+  }
+  private static spawnRemoteHarvester(
+    room: Room,
+    source: Source,
+    roomRoute:
+      | {
+          exit: ExitConstant;
+          room: string;
+        }[]
+      | -2
+  ) {
+    if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
+      const harvesterCreepCount = _.filter(
+        Game.creeps,
+        (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id
+      ).length;
+      const needsHarvester = harvesterCreepCount < Constants.maxRemoteShuttles;
+      if (needsHarvester) {
+        Memory.roomStore[room.name].nextSpawn = {
+          template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 1000)),
+          memory: {
+            ...CreepBase.baseMemory,
+            role: "harvesterShuttle",
+            working: false,
+            born: Game.time,
+            targetSource: source.id,
+            targetSourcePos: source.pos,
+            homeRoom: room.name,
+            targetRoom: source.pos.roomName
+          }
+        };
+      }
+    }
+  }
+  private static spawnCombatants(room: Room, intel: remoteRoom, targetRoomName: string) {
+    if (
+      intel.hostileCreepCount < 1 &&
+      intel.hostileTowerCount < 1 &&
+      intel.invaderCore &&
+      room.energyCapacityAvailable > 390
+    ) {
+      const currentDefenders = _.filter(
+        Game.creeps,
+        (c) => c.memory.role === "remoteDefender" && c.memory.targetRoom === targetRoomName
+      );
+      if (currentDefenders.length < 1) {
+        const roomRoute = Game.map.findRoute(room.name, targetRoomName);
+        const roomReachable = roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance;
+        if (roomReachable) {
+          Memory.roomStore[room.name].nextSpawn = {
+            template: [ATTACK, ATTACK, ATTACK, MOVE, MOVE, MOVE],
+            memory: {
+              ...CreepBase.baseMemory,
+              role: "remoteDefender",
+              working: false,
+              born: Game.time,
+              targetRoom: targetRoomName,
+              homeRoom: room.name
+            }
+          };
+        }
+      }
+    }
+  }
+  private static runDefenderCreeps(targetRoomName: string): void {
+    _.filter(Game.creeps, (c) => c.memory.role === "remoteDefender" && c.memory.targetRoom === targetRoomName).map(
+      (c) => {
+        if (c.pos.roomName !== targetRoomName) {
+          const roomCenter = new RoomPosition(25, 25, targetRoomName);
+          CreepBase.travelTo(c, roomCenter, "red", 23);
+        } else {
+          const invaderCore = c.room.find<StructureInvaderCore>(FIND_HOSTILE_STRUCTURES, {
+            filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+          })[0];
+          if (invaderCore) {
+            if (c.pos.isNearTo(invaderCore)) {
+              c.attack(invaderCore);
+            } else {
+              CreepBase.travelTo(c, invaderCore, "red", 1);
+            }
+          }
+          // update room intel each tick as well
+          const hostileCreepCount = c.room.find(FIND_HOSTILE_CREEPS).length;
+          const hostileTowerCount = c.room.find(FIND_HOSTILE_STRUCTURES, {
+            filter: (s) => s.structureType === STRUCTURE_TOWER
+          }).length;
+          const invaderCorePresent =
+            c.room.find(FIND_HOSTILE_STRUCTURES, {
+              filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+            }).length > 0;
+          const hostile = hostileCreepCount > 0 || c.room.find(FIND_HOSTILE_STRUCTURES).length > 0;
+          const currentIntel = Memory.roomStore[c.memory.homeRoom].remoteRooms[c.pos.roomName];
+          Memory.roomStore[c.memory.homeRoom].remoteRooms[c.pos.roomName] = {
+            ...currentIntel,
+            hostile: hostile,
+            hostileCreepCount: hostileCreepCount,
+            hostileTowerCount: hostileTowerCount,
+            invaderCore: invaderCorePresent
+          };
+        }
+      }
+    );
+  }
   private static remoteHarvest(room: Room) {
     const remoteRooms = Memory.roomStore[room.name].remoteRooms;
     _.map(remoteRooms, (targetRoom, targetRoomName) => {
-      if (!targetRoom.hostile && targetRoomName) {
-        const roomRoute = Game.map.findRoute(room.name, targetRoomName);
-        if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
+      if (targetRoomName) {
+        this.runDefenderCreeps(targetRoomName);
+        if (targetRoom.hostile) {
+          this.spawnCombatants(room, targetRoom, targetRoomName);
+        }
+        if (!targetRoom.hostile) {
+          const roomRoute = Game.map.findRoute(room.name, targetRoomName);
           targetRoom.sources.map((s) => {
-            const harvesterCreepCount = _.filter(
-              Game.creeps,
-              (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === s.id
-            ).length;
-            const reserverCreepCount = _.filter(
-              Game.creeps,
-              (c) => c.memory.role === "reserver" && c.memory.targetRoom === s.pos.roomName
-            ).length;
-            const needsHarvester = harvesterCreepCount < Constants.maxRemoteShuttles;
-            const needsReserver = reserverCreepCount < 1 && room.energyCapacityAvailable > 650;
-            switch (true) {
-              case needsReserver:
-                Memory.roomStore[room.name].nextSpawn = {
-                  template: [MOVE, CLAIM],
-                  memory: {
-                    ...CreepBase.baseMemory,
-                    role: "reserver",
-                    working: false,
-                    born: Game.time,
-                    homeRoom: room.name,
-                    targetRoom: s.pos.roomName
-                  }
-                };
-                break;
-              case needsHarvester:
-                Memory.roomStore[room.name].nextSpawn = {
-                  template: CreepBuilder.buildShuttleCreep(Math.min(room.energyCapacityAvailable, 1000)),
-                  memory: {
-                    ...CreepBase.baseMemory,
-                    role: "harvesterShuttle",
-                    working: false,
-                    born: Game.time,
-                    targetSource: s.id,
-                    targetSourcePos: s.pos,
-                    homeRoom: room.name,
-                    targetRoom: s.pos.roomName
-                  }
-                };
-                break;
-            }
+            this.spawnReserver(room, s, roomRoute);
+            this.spawnRemoteHarvester(room, s, roomRoute);
           });
         }
       }
     });
-  }
-  public static getRemoteSourcePositions(room: Room): RoomPosition[] {
-    const remoteRooms = Memory.roomStore[room.name].remoteRooms;
-    return _.filter(remoteRooms, (targetRoom, targetRoomName) => {
-      if (!targetRoom.hostile && targetRoomName) {
-        const roomRoute = Game.map.findRoute(room.name, targetRoomName);
-        if (roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance) {
-          return true;
-        }
-      }
-      return false;
-    }).reduce((acc: RoomPosition[], r) => {
-      return acc.concat(r.sources.map((s) => s.pos));
-    }, []);
   }
   public static run(room: Room) {
     this.spawnScout(room);
