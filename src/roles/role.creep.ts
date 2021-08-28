@@ -1,6 +1,6 @@
 export class CreepBase {
   private static filterStructures(
-    type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION,
+    type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION | STRUCTURE_CONTAINER,
     energyLimit: number
   ) {
     return (s: AnyStructure) => s.structureType === type && s.store[RESOURCE_ENERGY] > energyLimit;
@@ -53,9 +53,7 @@ export class CreepBase {
         return harvestableStorage;
       }
       const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) =>
-          s.structureType === STRUCTURE_CONTAINER &&
-          s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.room.energyCapacityAvailable + creep.store.getCapacity()
+        filter: (s) => this.filterStructures(STRUCTURE_CONTAINER, 100)
       });
       if (harvestableContainer) {
         return harvestableContainer;
