@@ -68,28 +68,23 @@ export class RoomManager {
   private static ManageHaulers(room: Room) {
     const anchor: Flag | null = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     if (anchor) {
-      const centralContainer = anchor.pos.findInRange(FIND_STRUCTURES, 1, {
+      const centralContainer = anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_CONTAINER
       })[0];
-      if (centralContainer) {
-        const activeHaulers = _.filter(
-          Game.creeps,
-          (c) => c.memory.role === "hauler" && c.memory.targetSource === centralContainer.id
-        );
+      if (centralContainer && centralContainer.store.getUsedCapacity() > 0) {
+        const activeQueens = _.filter(Game.creeps, (c) => c.memory.role === "queen");
         if (
-          activeHaulers.length < 1 ||
-          (activeHaulers.length == 1 && activeHaulers[0].ticksToLive && activeHaulers[0].ticksToLive < 50)
+          activeQueens.length < 1 ||
+          (activeQueens.length === 1 && activeQueens[0].ticksToLive && activeQueens[0].ticksToLive < 100)
         ) {
           const energy = 200;
           Memory.roomStore[room.name].nextSpawn = {
-            template: CreepBuilder.buildHaulingCreep(energy),
+            template: CreepBuilder.buildHaulingCreep(Math.max(room.energyAvailable, energy)),
             memory: {
               ...CreepBase.baseMemory,
-              role: "hauler",
+              role: "queen",
               working: false,
               born: Game.time,
-              targetSource: centralContainer.id,
-              targetSourcePos: centralContainer.pos,
               homeRoom: room.name,
               targetRoom: room.name
             }

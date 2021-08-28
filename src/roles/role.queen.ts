@@ -16,9 +16,15 @@ export class Queen extends CreepBase {
     );
   }
   private static isWorking(creep: Creep, container: StructureContainer | StructureStorage): boolean {
+    const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
-      case creep.store.getFreeCapacity() === 0:
+      case creep.store.getUsedCapacity() < 50:
+        console.log("Near Empty");
+        return false;
+      case creep.store.getFreeCapacity() > 0 && creep.pos.isNearTo(container):
         // if full, go to work
+        return true;
+      case creep.store.getUsedCapacity() > 50:
         return true;
       case !creep.memory.working && creep.store.getUsedCapacity() >= 50 && container.store[RESOURCE_ENERGY] === 0:
         // if container is empty, we have > 50 energy, go to work
@@ -30,9 +36,9 @@ export class Queen extends CreepBase {
   public static refuelSelf(creep: Creep, container: StructureContainer | StructureStorage): void {
     const nearContainer = creep.pos.isNearTo(container);
     if (nearContainer) {
-      this.travelTo(creep, container, this.pathColour());
-    } else {
       creep.withdraw(container, RESOURCE_ENERGY);
+    } else {
+      this.travelTo(creep, container, this.pathColour());
     }
   }
   private static getClosestStructure(
@@ -61,15 +67,28 @@ export class Queen extends CreepBase {
     return "";
   }
   public static fillCore(creep: Creep): void {
-    if (!creep.memory.workTarget) {
+    let target = Game.getObjectById<StructureSpawn | StructureExtension | null>(creep.memory.workTarget);
+    if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
       creep.memory.workTarget = this.findTarget(creep);
     }
     if (creep.memory.workTarget) {
       const target = Game.getObjectById<StructureSpawn | StructureExtension | StructureTower>(creep.memory.workTarget);
-      if (target && creep.pos.isNearTo(target)) {
-        creep.transfer(target, RESOURCE_ENERGY);
-      } else if (target) {
-        this.travelTo(creep, target, this.pathColour());
+      switch (true) {
+        case target === null:
+          break;
+        case target && target.store.getFreeCapacity(RESOURCE_ENERGY) === 0:
+          creep.memory.workTarget = "";
+          break;
+        case target && creep.pos.isNearTo(target):
+          if (target) {
+            creep.transfer(target, RESOURCE_ENERGY);
+          }
+          break;
+        default:
+          if (target) {
+            this.travelTo(creep, target, this.pathColour());
+          }
+          break;
       }
     }
   }

@@ -8,29 +8,18 @@ export class Hauler extends CreepBase {
     return (
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) =>
-          (s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
-          (s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0) ||
-          (s.structureType === STRUCTURE_TOWER && s.store.getUsedCapacity(RESOURCE_ENERGY) < 500)
-      }) ||
-      creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s: AnyStructure) =>
-          s.structureType === STRUCTURE_TOWER &&
-          s.store.getUsedCapacity(RESOURCE_ENERGY) >= 500 &&
-          s.store.getUsedCapacity(RESOURCE_ENERGY) < 750
-      }) ||
-      creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s: AnyStructure) =>
           s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+      }) ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) =>
+          s.structureType === STRUCTURE_CONTAINER &&
+          s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+          s.pos.findInRange(FIND_FLAGS, 1).length > 0
       })
     );
   }
   private static getContainerTarget(creep: Creep): string {
-    const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s) =>
-        (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) &&
-        s.store[RESOURCE_ENERGY] > creep.store.getCapacity() / 2
-    });
-    return target ? target.id : "";
+    return creep.memory.targetSource;
   }
   public static run(creep: Creep): void {
     const withdrawing = creep.memory.working;
