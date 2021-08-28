@@ -14,6 +14,7 @@ export class Constants {
   public static maxStorage = [0, 0, 0, 0, 1, 1, 1, 1, 1];
   public static maxTerminal = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static maxExtractor = [0, 0, 0, 0, 0, 0, 1, 1, 1];
+  public static maxLinks = [0, 0, 0, 0, 0, 2, 3, 4, 6];
   public static buildRoadsFrom = 3;
   public static earlyScoutFrequency = 1500;
   public static lateScoutFrequency = 500;

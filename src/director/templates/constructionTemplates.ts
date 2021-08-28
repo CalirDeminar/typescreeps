@@ -112,4 +112,27 @@ export class ConstructionTemplates {
       })
       .reduce((acc, arr) => acc.concat(arr), []);
   }
+  public static controllerRoads(room: Room): RoomPosition[] {
+    const anchor = this.getAnchor(room);
+    const mask = this.getRoadMask(room);
+    const controller = room.controller;
+    if (!controller) {
+      return [];
+    } else {
+      return anchor.pos
+        .findPathTo(controller, { ignoreCreeps: true, swampCost: 1, ignoreRoads: true, ignore: mask })
+        .map((p) => new RoomPosition(p.x, p.y, room.name));
+    }
+  }
+  public static anchorLink(room: Room): RoomPosition {
+    const anchor = this.getAnchor(room);
+    return new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 1, room.name);
+  }
+  public static sourceLinks(room: Room): RoomPosition[] {
+    const anchor = this.getAnchor(room);
+    const sources = room.find(FIND_SOURCES);
+    return sources.map((source) => {
+      return UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos);
+    });
+  }
 }

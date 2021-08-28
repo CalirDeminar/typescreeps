@@ -69,6 +69,7 @@ declare global {
   }
   interface ConstructionDirectorStore {
     anchor: RoomPosition | null;
+    anchorContainer: RoomPosition | null;
     containerTemplate: RoomPosition[];
     internalRoadTemplate: RoomPosition[];
     routeRoadTemplate: RoomPosition[];
@@ -78,6 +79,8 @@ declare global {
     storage: RoomPosition | null;
     terminal: RoomPosition | null;
     extractor: RoomPosition | null;
+    anchorLink: RoomPosition | null;
+    sourceLinks: RoomPosition[];
     baseTemplate: {}[];
   }
   interface RoomType {

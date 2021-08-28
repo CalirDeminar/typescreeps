@@ -24,11 +24,18 @@ export class SourceManager {
       };
     }
   }
-  private static runContainer(source: Source, container: Structure): void {
+  private static runContainer(source: Source, container: Structure, anchorLink: StructureLink | null): void {
     const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
     const oldHarvesters = this.getCreepRoleAt("harvesterShuttle", source.id);
+    const sourceLink = this.getSourceLink(source);
     if (activeHarvesters.length > 0 && oldHarvesters.length > 0) {
       oldHarvesters.map((h) => h.suicide());
+    }
+    if (sourceLink && anchorLink && sourceLink.cooldown === 0 && sourceLink.store[RESOURCE_ENERGY] > 100) {
+      sourceLink.transferEnergy(
+        anchorLink,
+        Math.min(sourceLink.store[RESOURCE_ENERGY], 800 - anchorLink.store[RESOURCE_ENERGY])
+      );
     }
     const allHaulers = _.filter(Game.creeps, (c: Creep) => c.memory.role === "hauler");
     const haulers = _.filter(
@@ -77,9 +84,23 @@ export class SourceManager {
       };
     }
   }
-  private static getSourceContainer(source: Source): AnyStructure | null {
-    return source.pos.findInRange(FIND_STRUCTURES, 1, {
+  private static getSourceContainer(source: Source): StructureContainer | null {
+    return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
       filter: (s: Structure) => s.structureType === STRUCTURE_CONTAINER
+    })[0];
+  }
+  private static getSourceLink(source: Source): StructureLink | null {
+    return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1, {
+      filter: (s: Structure) => s.structureType === STRUCTURE_LINK
+    })[0];
+  }
+  private static getAnchor(room: Room): Flag {
+    return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+  }
+  private static getAnchorLink(room: Room): StructureLink | null {
+    const anchor = this.getAnchor(room);
+    return anchor.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
   }
   private static getMissingHarvesters(source: Source): number {
@@ -102,10 +123,11 @@ export class SourceManager {
   }
   public static run(room: Room): void {
     const maxMissingHarvesters = this.getMostMissingHarvesters(room);
+    const anchorLink = this.getAnchorLink(room);
     _.map(room.find(FIND_SOURCES), (source: Source) => {
       const container = this.getSourceContainer(source);
       if (container) {
-        this.runContainer(source, container);
+        this.runContainer(source, container, anchorLink);
         // assign hauler store targets
       } else {
         this.runShuttle(source, maxMissingHarvesters);

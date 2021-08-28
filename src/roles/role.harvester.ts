@@ -30,12 +30,21 @@ export class Harvester extends CreepBase {
       filter: (s) => s.structureType === STRUCTURE_EXTENSION && s.store.energy < s.energyCapacity
     });
   }
+  private static findLink(creep: Creep): Structure | null {
+    return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
+      filter: (s) =>
+        s.structureType === STRUCTURE_LINK &&
+        s.pos.roomName === creep.memory.targetRoom &&
+        s.store[RESOURCE_ENERGY] < 750
+    })[0];
+  }
   private static getStoreTarget(creep: Creep): Structure | null {
-    return this.findContainer(creep) || this.findSpawn(creep) || this.findExtension(creep);
+    return this.findLink(creep) || this.findContainer(creep) || this.findSpawn(creep) || this.findExtension(creep);
   }
   public static run(creep: Creep): void {
     this.setWorkingState(creep);
     const working = creep.memory.working;
+    const container = Game.getObjectById<StructureContainer>(creep.memory.targetStore);
     let sourcePos = creep.memory.targetSourcePos;
     if (sourcePos) {
       sourcePos = new RoomPosition(sourcePos.x, sourcePos.y, sourcePos.roomName);
@@ -44,7 +53,7 @@ export class Harvester extends CreepBase {
           // move to source or harvest source
           if (!creep.pos.isNearTo(sourcePos)) {
             // creep.moveTo(sourcePos, { visualizePathStyle: {stroke: this.pathColour() }});
-            this.travelTo(creep, sourcePos, this.pathColour());
+            this.travelTo(creep, container ? container.pos : sourcePos, this.pathColour());
           } else {
             const source = sourcePos.findInRange(FIND_SOURCES, 1)[0];
             creep.harvest(source);

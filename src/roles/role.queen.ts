@@ -4,8 +4,11 @@ export class Queen extends CreepBase {
   private static pathColour() {
     return "red";
   }
-  private static getContainer(anchor: Flag): StructureContainer | StructureStorage | null {
+  private static getContainer(anchor: Flag): StructureContainer | StructureStorage | StructureLink | null {
     return (
+      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
+        filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] >= 100
+      })[0] ||
       anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_STORAGE
       })[0] ||
@@ -15,7 +18,7 @@ export class Queen extends CreepBase {
       null
     );
   }
-  private static isWorking(creep: Creep, container: StructureContainer | StructureStorage): boolean {
+  private static isWorking(creep: Creep, container: StructureContainer | StructureStorage | StructureLink): boolean {
     const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
       case creep.store.getUsedCapacity() < 50:
@@ -32,7 +35,7 @@ export class Queen extends CreepBase {
         return false;
     }
   }
-  public static refuelSelf(creep: Creep, container: StructureContainer | StructureStorage): void {
+  public static refuelSelf(creep: Creep, container: StructureContainer | StructureStorage | StructureLink): void {
     const nearContainer = creep.pos.isNearTo(container);
     if (nearContainer) {
       creep.withdraw(container, RESOURCE_ENERGY);

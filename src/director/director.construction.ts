@@ -20,12 +20,16 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.storage = ConstructionTemplates.storage(room);
     Memory.roomStore[room.name].constructionDirector.terminal = ConstructionTemplates.terminal(room);
     Memory.roomStore[room.name].constructionDirector.extractor = ConstructionTemplates.extractor(room);
+    Memory.roomStore[room.name].constructionDirector.anchorLink = ConstructionTemplates.anchorLink(room);
+    Memory.roomStore[room.name].constructionDirector.sourceLinks = ConstructionTemplates.sourceLinks(room);
   }
   private static populateRoadStore(room: Room): void {
     Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = ConstructionTemplates.surroundingRoads(
       room
     );
-    Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = ConstructionTemplates.sourceRoads(room);
+    Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = ConstructionTemplates.sourceRoads(room).concat(
+      ConstructionTemplates.controllerRoads(room)
+    );
   }
   private static populate(room: Room) {
     if (Memory.roomStore[room.name].constructionDirector.extensionTemplate.length === 0) {
@@ -111,6 +115,8 @@ export class ConstructionDirector {
         ) ||
         this.nextStructure(STRUCTURE_TOWER, structures, Constants.maxTowers[level], store.towerTemplate, terrain) ||
         this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
+        this.nextSingleStructure(STRUCTURE_LINK, structures, Constants.maxLinks[level], store.anchorLink) ||
+        this.nextStructure(STRUCTURE_LINK, structures, Constants.maxLinks[level], store.sourceLinks, terrain) ||
         this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
         this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor);
     }

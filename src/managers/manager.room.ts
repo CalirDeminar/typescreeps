@@ -17,6 +17,7 @@ export class RoomManager {
     sourceDirector: [],
     constructionDirector: {
       anchor: null,
+      anchorContainer: null,
       containerTemplate: [],
       internalRoadTemplate: [],
       routeRoadTemplate: [],
@@ -26,7 +27,9 @@ export class RoomManager {
       terminal: null,
       extractor: null,
       baseTemplate: [],
-      towerTemplate: []
+      towerTemplate: [],
+      anchorLink: null,
+      sourceLinks: []
     }
   };
   private static memorySetup(room: Room) {
@@ -51,6 +54,7 @@ export class RoomManager {
         sourceDirector: [],
         constructionDirector: {
           anchor: null,
+          anchorContainer: null,
           containerTemplate: [],
           internalRoadTemplate: [],
           routeRoadTemplate: [],
@@ -60,7 +64,9 @@ export class RoomManager {
           terminal: null,
           extractor: null,
           baseTemplate: [],
-          towerTemplate: []
+          towerTemplate: [],
+          anchorLink: null,
+          sourceLinks: []
         }
       };
     }
@@ -103,9 +109,9 @@ export class RoomManager {
           activeQueens.length < 1 ||
           (activeQueens.length === 1 && activeQueens[0].ticksToLive && activeQueens[0].ticksToLive < 100)
         ) {
-          const energy = 200;
+          const energy = 500;
           Memory.roomStore[room.name].nextSpawn = {
-            template: CreepBuilder.buildHaulingCreep(Math.max(room.energyAvailable, energy)),
+            template: CreepBuilder.buildHaulingCreep(Math.min(room.energyAvailable, energy)),
             memory: {
               ...CreepBase.baseMemory,
               role: "queen",
@@ -140,7 +146,7 @@ export class RoomManager {
       count < Constants.builders
     ) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
+        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1000)),
         memory: {
           ...CreepBase.baseMemory,
           role: "builder",
