@@ -35,4 +35,12 @@ export class CreepBuilder {
     }
     return body;
   }
+  public static buildMineralHarvester(energy: number): (WORK | CARRY | MOVE)[] {
+    const noParts = Math.floor(energy / 400);
+    let body: (WORK | CARRY | MOVE)[] = [];
+    for (let i = 0; i < noParts; i++) {
+      body = body.concat([WORK, WORK, WORK, CARRY, MOVE]);
+    }
+    return body;
+  }
 }
