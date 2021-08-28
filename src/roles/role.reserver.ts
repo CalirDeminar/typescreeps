@@ -15,7 +15,11 @@ export class Reserver extends CreepBase {
           if (range > 1) {
             this.travelTo(creep, controller, this.pathColour());
           } else {
-            creep.reserveController(controller);
+            if (controller.reservation === undefined || controller.reservation["username"] === creep.owner.username) {
+              creep.reserveController(controller);
+            } else {
+              creep.attackController(controller);
+            }
           }
         }
         break;
