@@ -19,7 +19,6 @@ export class Queen extends CreepBase {
     const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
       case creep.store.getUsedCapacity() < 50:
-        console.log("Near Empty");
         return false;
       case creep.store.getFreeCapacity() > 0 && creep.pos.isNearTo(container):
         // if full, go to work
