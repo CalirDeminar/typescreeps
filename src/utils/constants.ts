@@ -14,7 +14,8 @@ export class Constants {
   public static maxTerminal = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static maxExtractor = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static buildRoadsFrom = 3;
-  public static scoutFrequency = 1500;
+  public static earlyScoutFrequency = 1500;
+  public static lateScoutFrequency = 500;
   public static terminalPlacent = { x: 1, y: 0 };
   public static towerOffsets = [
     { x: 0, y: 2 },

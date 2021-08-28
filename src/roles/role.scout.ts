@@ -2,12 +2,22 @@ export class Scout {
   public static recordCurrentRoom(creep: Creep): void {
     const sources = creep.room.find(FIND_SOURCES);
     const minerals = creep.room.find(FIND_MINERALS);
-    const hostile =
-      creep.room.find(FIND_HOSTILE_CREEPS).length > 0 || creep.room.find(FIND_HOSTILE_STRUCTURES).length > 0;
+    const hostileCreeps = creep.room.find(FIND_HOSTILE_CREEPS).length;
+    const hostileTowers = creep.room.find(FIND_HOSTILE_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_TOWER
+    }).length;
+    const invaderCore =
+      creep.room.find(FIND_HOSTILE_STRUCTURES, {
+        filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+      }).length > 0;
+    const hostile = hostileCreeps > 0 || creep.room.find(FIND_HOSTILE_STRUCTURES).length > 0;
     Memory.roomStore[creep.memory.homeRoom].remoteRooms[creep.pos.roomName] = {
       sources: sources,
       minerals: minerals,
-      hostile: hostile
+      hostile: hostile,
+      hostileCreepCount: hostileCreeps,
+      hostileTowerCount: hostileTowers,
+      invaderCore: invaderCore
     };
     const exits = [
       creep.room.find(FIND_EXIT_TOP),

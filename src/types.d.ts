@@ -29,6 +29,9 @@ declare global {
     sources: Source[];
     minerals: Mineral[];
     hostile: boolean;
+    hostileCreepCount: number;
+    hostileTowerCount: number;
+    invaderCore: boolean;
   }
   interface SourceDirectorStore {
     sourceId: string;
