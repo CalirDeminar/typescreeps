@@ -41,6 +41,7 @@ export class ConstructionDirector {
   ): boolean {
     const currentCount = structures.filter((s) => s.structureType === targetType).length;
     if (pos && currentCount < currentMax) {
+      pos = new RoomPosition(pos.x, pos.y, pos.roomName);
       pos.createConstructionSite(targetType) === OK;
     }
     return false;
@@ -56,7 +57,15 @@ export class ConstructionDirector {
     if (currentCount < currentMax) {
       const next = template.find((p) => {
         p = new RoomPosition(p.x, p.y, p.roomName);
-        return terrain.get(p.x, p.y) !== 1 && p.lookFor(LOOK_STRUCTURES).length === 0;
+        return (
+          terrain.get(p.x, p.y) !== 1 &&
+          p.lookFor(LOOK_STRUCTURES).filter((s) => {
+            if (targetType === STRUCTURE_ROAD) {
+              return true;
+            }
+            return s.structureType !== STRUCTURE_ROAD;
+          }).length === 0
+        );
       });
       if (next) {
         return new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(targetType) === OK;
