@@ -38,9 +38,13 @@ export class RemoteManager {
     const spawn = room.find(FIND_MY_SPAWNS)[0];
     const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
     const shouldSpawnScout =
-      Game.time % Constants.scoutFrequency === 0 &&
       room.controller &&
       room.controller.level > 1 &&
+      Game.time %
+        (Game.time % Constants.earlyScoutFrequency === 2
+          ? Constants.earlyScoutFrequency
+          : Constants.lateScoutFrequency) ===
+        0 &&
       spawn &&
       scouts.length === 0;
     if (shouldSpawnScout) {
