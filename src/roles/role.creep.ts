@@ -3,7 +3,9 @@ export class CreepBase {
     type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION | STRUCTURE_CONTAINER,
     energyLimit: number
   ) {
-    return (s: AnyStructure) => s.structureType === type && s.store[RESOURCE_ENERGY] > energyLimit;
+    return (s: AnyStructure) => {
+      return s.structureType === type && s.store[RESOURCE_ENERGY] > energyLimit;
+    };
   }
   public static baseMemory: CreepMemory = {
     role: "",
@@ -54,13 +56,13 @@ export class CreepBase {
     if (harvestableStorage) {
       return harvestableStorage;
     }
+    const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: this.filterStructures(STRUCTURE_CONTAINER, creep.room.energyCapacityAvailable * 2)
+    });
+    if (harvestableContainer) {
+      return harvestableContainer;
+    }
     if (!isSpawning) {
-      const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s) => this.filterStructures(STRUCTURE_CONTAINER, 100)
-      });
-      if (harvestableContainer) {
-        return harvestableContainer;
-      }
       const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: this.filterStructures(STRUCTURE_SPAWN, 100)
       });

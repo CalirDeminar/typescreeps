@@ -95,14 +95,16 @@ export class Queen extends CreepBase {
     }
   }
   public static run(creep: Creep) {
-    const room = creep.room;
-    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
-    const container = this.getContainer(anchor);
-    if (container) {
-      if (this.isWorking(creep, container)) {
-        this.fillCore(creep);
-      } else {
-        this.refuelSelf(creep, container);
+    if (creep.ticksToLive) {
+      const room = creep.room;
+      const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+      const container = this.getContainer(anchor);
+      if (container) {
+        if (this.isWorking(creep, container)) {
+          this.fillCore(creep);
+        } else {
+          this.refuelSelf(creep, container);
+        }
       }
     }
   }

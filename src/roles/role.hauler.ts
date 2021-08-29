@@ -29,40 +29,42 @@ export class Hauler extends CreepBase {
     return creep.memory.targetSource;
   }
   public static run(creep: Creep): void {
-    const withdrawing = creep.memory.working;
-    const empty = creep.store[RESOURCE_ENERGY] === 0;
-    const full = creep.store.getFreeCapacity() === 0;
-    let container: StructureContainer | null =
-      Game.getObjectById(creep.memory.workTarget) || Game.getObjectById(creep.memory.targetSource);
-    switch (true) {
-      case withdrawing && container?.store.getUsedCapacity() === 0:
-      case !withdrawing && empty:
-        creep.memory.working = true;
-        creep.memory.workTarget = this.getContainerTarget(creep);
-        container = Game.getObjectById(creep.memory.workTarget);
-        break;
-      case withdrawing && full:
-        creep.memory.working = false;
-        creep.memory.workTarget = "";
-        creep.memory.dropOffTarget = "";
-        break;
-    }
-    if (withdrawing && container) {
-      const rangeToContainer = creep.pos.getRangeTo(container);
-      if (rangeToContainer > 1) {
-        this.travelTo(creep, container, this.pathColour());
-      } else {
-        creep.withdraw(container, RESOURCE_ENERGY);
+    if (creep.ticksToLive) {
+      const withdrawing = creep.memory.working;
+      const empty = creep.store[RESOURCE_ENERGY] === 0;
+      const full = creep.store.getFreeCapacity() === 0;
+      let container: StructureContainer | null =
+        Game.getObjectById(creep.memory.workTarget) || Game.getObjectById(creep.memory.targetSource);
+      switch (true) {
+        case withdrawing && container?.store.getUsedCapacity() === 0:
+        case !withdrawing && empty:
+          creep.memory.working = true;
+          creep.memory.workTarget = this.getContainerTarget(creep);
+          container = Game.getObjectById(creep.memory.workTarget);
+          break;
+        case withdrawing && full:
+          creep.memory.working = false;
+          creep.memory.workTarget = "";
+          creep.memory.dropOffTarget = "";
+          break;
       }
-    } else {
-      const storeTarget: Structure | null =
-        creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
-      if (storeTarget) {
-        const rangeToStore = creep.pos.getRangeTo(storeTarget);
-        if (rangeToStore > 1) {
-          this.travelTo(creep, storeTarget, this.pathColour());
+      if (withdrawing && container) {
+        const rangeToContainer = creep.pos.getRangeTo(container);
+        if (rangeToContainer > 1) {
+          this.travelTo(creep, container, this.pathColour());
         } else {
-          creep.transfer(storeTarget, RESOURCE_ENERGY);
+          creep.withdraw(container, RESOURCE_ENERGY);
+        }
+      } else {
+        const storeTarget: Structure | null =
+          creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
+        if (storeTarget) {
+          const rangeToStore = creep.pos.getRangeTo(storeTarget);
+          if (rangeToStore > 1) {
+            this.travelTo(creep, storeTarget, this.pathColour());
+          } else {
+            creep.transfer(storeTarget, RESOURCE_ENERGY);
+          }
         }
       }
     }

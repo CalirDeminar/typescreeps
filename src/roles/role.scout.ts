@@ -36,37 +36,39 @@ export class Scout {
     //creep.memory.scoutPositions = creep.memory.scoutPositions.concat(exits);
   }
   public static run(creep: Creep): void {
-    const homeRoom = Memory.roomStore[creep.memory.homeRoom];
-    const knownRooms = Object.keys(homeRoom.remoteRooms).concat([creep.memory.homeRoom]);
-    const positions = creep.memory.scoutPositions;
-    const target = positions[0];
-    //const path = creep.pos.findPathTo(target, {maxRooms: 2})
-    if (creep.room.name !== creep.memory.homeRoom) {
-      this.recordCurrentRoom(creep);
-    }
-    switch (true) {
-      case !knownRooms.includes(creep.pos.roomName):
-        // console.log("Record Room");
-        // this.recordCurrentRoom(creep);
-        break;
-      case !positions || positions.length === 0:
-        // console.log("Suicide");
-        // nothing left to scout, so suicide
-        creep.suicide();
-        break;
-      case creep.room.name === target.roomName:
-        // console.log("At Target");
-        // wait for room transfer
-        creep.moveTo(target);
-        creep.memory.scoutPositions = creep.memory.scoutPositions.slice(1);
-        break;
-      default:
-        // console.log("Move To Target");
-        const dir = creep.room.findExitTo(target.roomName);
-        if (dir !== -2 && dir !== -10) {
-          const exit = creep.room.find(dir)[0];
-          const moveToResp = creep.moveTo(exit);
-        }
+    if (creep.ticksToLive) {
+      const homeRoom = Memory.roomStore[creep.memory.homeRoom];
+      const knownRooms = Object.keys(homeRoom.remoteRooms).concat([creep.memory.homeRoom]);
+      const positions = creep.memory.scoutPositions;
+      const target = positions[0];
+      //const path = creep.pos.findPathTo(target, {maxRooms: 2})
+      if (creep.room.name !== creep.memory.homeRoom) {
+        this.recordCurrentRoom(creep);
+      }
+      switch (true) {
+        case !knownRooms.includes(creep.pos.roomName):
+          // console.log("Record Room");
+          // this.recordCurrentRoom(creep);
+          break;
+        case !positions || positions.length === 0:
+          // console.log("Suicide");
+          // nothing left to scout, so suicide
+          creep.suicide();
+          break;
+        case creep.room.name === target.roomName:
+          // console.log("At Target");
+          // wait for room transfer
+          creep.moveTo(target);
+          creep.memory.scoutPositions = creep.memory.scoutPositions.slice(1);
+          break;
+        default:
+          // console.log("Move To Target");
+          const dir = creep.room.findExitTo(target.roomName);
+          if (dir !== -2 && dir !== -10) {
+            const exit = creep.room.find(dir)[0];
+            const moveToResp = creep.moveTo(exit);
+          }
+      }
     }
   }
 }

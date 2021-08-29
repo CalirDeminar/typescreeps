@@ -4,28 +4,30 @@ export class Upgrader extends CreepBase {
     return "green";
   }
   public static run(creep: Creep): void {
-    const working = creep.memory.working;
-    if (!creep.memory.upgradeTarget && creep.room.controller) {
-      creep.memory.upgradeTarget = creep.room.controller.id;
-    }
-    if (working && creep.carry.energy === 0) {
-      creep.memory.working = false;
-    } else if (!working && creep.carry.energy === creep.carryCapacity) {
-      creep.memory.working = true;
-      creep.memory.targetSource = "";
-    }
-    if (creep.memory.working) {
-      const controller: StructureController | null = Game.getObjectById(creep.memory.upgradeTarget);
-      if (controller && creep.upgradeController(controller) !== 0) {
-        creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
+    if (creep.ticksToLive) {
+      const working = creep.memory.working;
+      if (!creep.memory.upgradeTarget && creep.room.controller) {
+        creep.memory.upgradeTarget = creep.room.controller.id;
       }
-    } else {
-      const sourceTarget: Structure | null =
-        creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetSource) : this.getSourceTarget(creep);
-      if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
-        creep.moveTo(sourceTarget, {
-          visualizePathStyle: { stroke: this.pathColour() }
-        });
+      if (working && creep.carry.energy === 0) {
+        creep.memory.working = false;
+      } else if (!working && creep.carry.energy === creep.carryCapacity) {
+        creep.memory.working = true;
+        creep.memory.targetSource = "";
+      }
+      if (creep.memory.working) {
+        const controller: StructureController | null = Game.getObjectById(creep.memory.upgradeTarget);
+        if (controller && creep.upgradeController(controller) !== 0) {
+          creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
+        }
+      } else {
+        const sourceTarget: Structure | null =
+          creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetSource) : this.getSourceTarget(creep);
+        if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
+          creep.moveTo(sourceTarget, {
+            visualizePathStyle: { stroke: this.pathColour() }
+          });
+        }
       }
     }
   }
