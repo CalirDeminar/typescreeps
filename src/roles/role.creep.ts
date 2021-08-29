@@ -47,6 +47,15 @@ export class CreepBase {
   }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
+    const containerExists =
+      creep.room.find(FIND_STRUCTURES, {
+        filter: (s: AnyStructure) => {
+          return (
+            (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) &&
+            s.pos.findInRange(FIND_FLAGS, 1).length > 0
+          );
+        }
+      }).length > 0;
     const harvestableStorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: this.filterStructures(
         STRUCTURE_STORAGE,
@@ -57,12 +66,18 @@ export class CreepBase {
       return harvestableStorage;
     }
     const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: this.filterStructures(STRUCTURE_CONTAINER, creep.room.energyCapacityAvailable * 2)
+      filter: (s: AnyStructure) => {
+        return (
+          s.structureType === STRUCTURE_CONTAINER &&
+          s.pos.findInRange(FIND_FLAGS, 1).length > 0 &&
+          s.store[RESOURCE_ENERGY] > creep.room.energyCapacityAvailable + creep.store.getCapacity()
+        );
+      }
     });
     if (harvestableContainer) {
       return harvestableContainer;
     }
-    if (!isSpawning) {
+    if (!isSpawning && !containerExists) {
       const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: this.filterStructures(STRUCTURE_SPAWN, 100)
       });

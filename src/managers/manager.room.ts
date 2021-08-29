@@ -136,6 +136,8 @@ export class RoomManager {
           }
         })
       ).length > 0;
+    const buildersNeedEnergy =
+      _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.working === false).length > 0;
     const count = this.sumRoomRole("builder", room.name);
     // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
@@ -143,6 +145,7 @@ export class RoomManager {
       energyFull &&
       Memory.roomStore[room.name].nextSpawn === null &&
       !towersNeedEnergy &&
+      !buildersNeedEnergy &&
       count < Constants.builders
     ) {
       Memory.roomStore[room.name].nextSpawn = {
