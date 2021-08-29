@@ -41,6 +41,7 @@ export class Harvester extends CreepBase {
   public static run(creep: Creep): void {
     if (creep.ticksToLive) {
       this.setWorkingState(creep);
+      this.maintainRoad(creep);
       const working = creep.memory.working;
       const container = Game.getObjectById<StructureContainer>(creep.memory.targetStore);
       let sourcePos = creep.memory.targetSourcePos;

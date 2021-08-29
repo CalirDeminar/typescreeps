@@ -45,6 +45,15 @@ export class CreepBase {
     const roomCenter = new RoomPosition(25, 25, targetRoom);
     this.travelTo(creep, roomCenter, pathColour, 20);
   }
+  public static maintainRoad(creep: Creep): void {
+    const workParts = creep.body.filter((p) => p.type === WORK).length;
+    if (workParts > 0 && creep.store[RESOURCE_ENERGY] > 0) {
+      const road = creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD)[0];
+      if (road && road.hits <= road.hitsMax - 100 * workParts) {
+        creep.repair(road);
+      }
+    }
+  }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
     const containerExists =
