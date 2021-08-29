@@ -30,7 +30,10 @@ export class Queen extends CreepBase {
   ): "work" | "fuel" | "dump" {
     const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
-      case link && creep.store.getFreeCapacity() <= 200 && link.store.getFreeCapacity(RESOURCE_ENERGY) < 50:
+      case link &&
+        creep.store.getUsedCapacity() !== 0 &&
+        creep.store.getFreeCapacity() <= 200 &&
+        link.store.getFreeCapacity(RESOURCE_ENERGY) < 50:
         return "dump";
       case link && creep.store.getFreeCapacity() > 200 && link.store.getFreeCapacity(RESOURCE_ENERGY) <= 200:
         return "fuel";
