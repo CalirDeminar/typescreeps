@@ -57,10 +57,7 @@ export class CreepBase {
         }
       }).length > 0;
     const harvestableStorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: this.filterStructures(
-        STRUCTURE_STORAGE,
-        isSpawning ? creep.room.energyCapacityAvailable * 2 : creep.room.energyCapacityAvailable * 2
-      )
+      filter: this.filterStructures(STRUCTURE_STORAGE, creep.room.energyCapacityAvailable + creep.store.getCapacity())
     });
     if (harvestableStorage) {
       return harvestableStorage;

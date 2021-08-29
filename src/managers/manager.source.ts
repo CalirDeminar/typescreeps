@@ -24,19 +24,38 @@ export class SourceManager {
       };
     }
   }
-  private static runContainer(source: Source, container: Structure, anchorLink: StructureLink | null): void {
+  private static spawnStatics(source: Source, container: StructureContainer): boolean {
     const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
     const oldHarvesters = this.getCreepRoleAt("harvesterShuttle", source.id);
-    const sourceLink = this.getSourceLink(source);
     if (activeHarvesters.length > 0 && oldHarvesters.length > 0) {
       oldHarvesters.map((h) => h.suicide());
     }
-    if (sourceLink && anchorLink && sourceLink.cooldown === 0 && sourceLink.store[RESOURCE_ENERGY] > 100) {
-      sourceLink.transferEnergy(
-        anchorLink,
-        Math.min(sourceLink.store[RESOURCE_ENERGY], 800 - anchorLink.store[RESOURCE_ENERGY])
-      );
+    if (
+      activeHarvesters.length < Constants.maxStatic ||
+      (activeHarvesters.length == 1 &&
+        activeHarvesters[0] &&
+        activeHarvesters[0].ticksToLive &&
+        activeHarvesters[0].ticksToLive < 100)
+    ) {
+      Memory.roomStore[source.room.name].nextSpawn = {
+        template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
+        memory: {
+          ...CreepBase.baseMemory,
+          role: "harvesterStatic",
+          working: false,
+          born: Game.time,
+          targetSource: source.id,
+          targetSourcePos: source.pos,
+          homeRoom: source.room.name,
+          targetRoom: source.room.name,
+          targetStore: container.id
+        }
+      };
+      return true;
     }
+    return false;
+  }
+  private static spawnHaulers(source: Source, container: StructureContainer): boolean {
     const allHaulers = _.filter(Game.creeps, (c: Creep) => c.memory.role === "hauler");
     const haulers = _.filter(
       Game.creeps,
@@ -61,28 +80,20 @@ export class SourceManager {
           targetRoom: source.room.name
         }
       };
-    } else if (
-      activeHarvesters.length < Constants.maxStatic ||
-      (activeHarvesters.length == 1 &&
-        activeHarvesters[0] &&
-        activeHarvesters[0].ticksToLive &&
-        activeHarvesters[0].ticksToLive < 100)
-    ) {
-      Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
-        memory: {
-          ...CreepBase.baseMemory,
-          role: "harvesterStatic",
-          working: false,
-          born: Game.time,
-          targetSource: source.id,
-          targetSourcePos: source.pos,
-          homeRoom: source.room.name,
-          targetRoom: source.room.name,
-          targetStore: container.id
-        }
-      };
+      return true;
     }
+    return false;
+  }
+  private static runContainer(source: Source, container: StructureContainer, anchorLink: StructureLink | null): void {
+    const sourceLink = this.getSourceLink(source);
+    if (sourceLink && anchorLink && sourceLink.cooldown === 0 && sourceLink.store[RESOURCE_ENERGY] > 100) {
+      sourceLink.transferEnergy(
+        anchorLink,
+        Math.min(sourceLink.store[RESOURCE_ENERGY], 800 - anchorLink.store[RESOURCE_ENERGY])
+      );
+    }
+
+    (!sourceLink && this.spawnHaulers(source, container)) || this.spawnStatics(source, container);
   }
   private static getSourceContainer(source: Source): StructureContainer | null {
     return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {

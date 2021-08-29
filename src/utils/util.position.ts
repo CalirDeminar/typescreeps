@@ -1,5 +1,9 @@
 export class UtilPosition {
-  public static getClosestSurroundingTo(anchor: RoomPosition, target: RoomPosition): RoomPosition {
+  public static getClosestSurroundingTo(
+    anchor: RoomPosition,
+    target: RoomPosition,
+    avoid: RoomPosition[] = []
+  ): RoomPosition {
     const room = Game.rooms[anchor.roomName];
     const terrain = room.getTerrain();
     const surroundings = _.range(-1, 2)
@@ -18,6 +22,7 @@ export class UtilPosition {
           return new RoomPosition(anchor.x + tile.x, anchor.y + tile.y, room.name);
         }
       )
+      .filter((p1) => avoid.find((p2) => p1.isEqualTo(p2)) === undefined)
       .sort((p1, p2) => {
         const len =
           p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1 }).length -

@@ -32,10 +32,7 @@ export class Harvester extends CreepBase {
   }
   private static findLink(creep: Creep): Structure | null {
     return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
-      filter: (s) =>
-        s.structureType === STRUCTURE_LINK &&
-        s.pos.roomName === creep.memory.targetRoom &&
-        s.store[RESOURCE_ENERGY] < 750
+      filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] < 750
     })[0];
   }
   private static getStoreTarget(creep: Creep): Structure | null {

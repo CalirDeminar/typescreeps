@@ -131,8 +131,9 @@ export class ConstructionTemplates {
   public static sourceLinks(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
     const sources = room.find(FIND_SOURCES);
+    const containers = this.containers(room);
     return sources.map((source) => {
-      return UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos);
+      return UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, containers);
     });
   }
 }
