@@ -18,21 +18,34 @@ export class Queen extends CreepBase {
       null
     );
   }
-  private static isWorking(creep: Creep, container: StructureContainer | StructureStorage | StructureLink): boolean {
+  private static getLink(anchor: Flag): StructureLink | null {
+    return anchor.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_LINK
+    })[0];
+  }
+  private static isWorking(
+    creep: Creep,
+    container: StructureContainer | StructureStorage | StructureLink,
+    link: StructureLink | null
+  ): "work" | "fuel" | "dump" {
     const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
+      case link && creep.store.getFreeCapacity() <= 200 && link.store.getFreeCapacity(RESOURCE_ENERGY) < 50:
+        return "dump";
+      case link && creep.store.getFreeCapacity() > 200 && link.store.getFreeCapacity(RESOURCE_ENERGY) <= 200:
+        return "fuel";
       case creep.store.getUsedCapacity() < 50:
-        return false;
+        return "fuel";
       case creep.store.getFreeCapacity() > 0 && creep.pos.isNearTo(container):
         // if full, go to work
-        return true;
+        return "work";
       case creep.store.getUsedCapacity() >= 50:
-        return true;
+        return "work";
       case !creep.memory.working && creep.store.getUsedCapacity() >= 50 && container.store[RESOURCE_ENERGY] === 0:
         // if container is empty, we have > 50 energy, go to work
-        return true;
+        return "work";
       default:
-        return false;
+        return "fuel";
     }
   }
   public static refuelSelf(creep: Creep, container: StructureContainer | StructureStorage | StructureLink): void {
@@ -94,16 +107,34 @@ export class Queen extends CreepBase {
       }
     }
   }
+  private static dumpEnergy(creep: Creep, anchor: Flag): void {
+    const storage = anchor.pos.findInRange<StructureStorage>(FIND_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_STORAGE
+    })[0];
+    if (storage) {
+      if (creep.pos.isNearTo(storage)) {
+        creep.transfer(storage, RESOURCE_ENERGY);
+      } else {
+        this.travelTo(creep, storage, this.pathColour());
+      }
+    }
+  }
   public static run(creep: Creep) {
     if (creep.ticksToLive) {
       const room = creep.room;
       const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
       const container = this.getContainer(anchor);
+      const link = this.getLink(anchor);
       if (container) {
-        if (this.isWorking(creep, container)) {
-          this.fillCore(creep);
-        } else {
-          this.refuelSelf(creep, container);
+        switch (this.isWorking(creep, container, link)) {
+          case "work":
+            this.fillCore(creep);
+            break;
+          case "fuel":
+            this.refuelSelf(creep, container);
+            break;
+          case "dump":
+            this.dumpEnergy(creep, anchor);
         }
       }
     }
