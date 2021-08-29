@@ -29,7 +29,9 @@ export class RoomManager {
       baseTemplate: [],
       towerTemplate: [],
       anchorLink: null,
-      sourceLinks: []
+      sourceLinks: [],
+      buildingsCreated: false,
+      roadsCreated: false
     }
   };
   private static memorySetup(room: Room) {
@@ -66,7 +68,9 @@ export class RoomManager {
           baseTemplate: [],
           towerTemplate: [],
           anchorLink: null,
-          sourceLinks: []
+          sourceLinks: [],
+          buildingsCreated: false,
+          roadsCreated: false
         }
       };
     }

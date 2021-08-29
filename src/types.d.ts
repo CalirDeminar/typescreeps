@@ -82,6 +82,8 @@ declare global {
     anchorLink: RoomPosition | null;
     sourceLinks: RoomPosition[];
     baseTemplate: {}[];
+    buildingsCreated: boolean;
+    roadsCreated: boolean;
   }
   interface RoomType {
     sources: string[];

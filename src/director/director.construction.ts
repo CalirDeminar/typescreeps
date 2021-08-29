@@ -22,6 +22,7 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.extractor = ConstructionTemplates.extractor(room);
     Memory.roomStore[room.name].constructionDirector.anchorLink = ConstructionTemplates.anchorLink(room);
     Memory.roomStore[room.name].constructionDirector.sourceLinks = ConstructionTemplates.sourceLinks(room);
+    Memory.roomStore[room.name].constructionDirector.buildingsCreated = true;
   }
   private static populateRoadStore(room: Room): void {
     Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = ConstructionTemplates.surroundingRoads(
@@ -30,10 +31,16 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = ConstructionTemplates.sourceRoads(room).concat(
       ConstructionTemplates.controllerRoads(room)
     );
+    Memory.roomStore[room.name].constructionDirector.roadsCreated = true;
   }
   private static populate(room: Room) {
-    if (Memory.roomStore[room.name].constructionDirector.extensionTemplate.length === 0) {
+    const store = Memory.roomStore[room.name].constructionDirector;
+    if (!store.buildingsCreated) {
+      console.log("Placing Buildings");
       this.populateBuildingStore(room);
+    }
+    if (!store.roadsCreated) {
+      console.log("Routing Roads");
       this.populateRoadStore(room);
     }
   }
