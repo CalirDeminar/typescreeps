@@ -129,7 +129,7 @@ export class RemoteManager {
   }
   private static spawnCombatants(room: Room, intel: remoteRoom, targetRoomName: string) {
     if (
-      intel.hostileCreepCount < 1 &&
+      intel.hostileCreepCount < 2 &&
       intel.hostileTowerCount < 1 &&
       intel.invaderCore &&
       room.energyCapacityAvailable > 390
@@ -167,31 +167,15 @@ export class RemoteManager {
           const invaderCore = c.room.find<StructureInvaderCore>(FIND_HOSTILE_STRUCTURES, {
             filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
           })[0];
-          if (invaderCore) {
-            if (c.pos.isNearTo(invaderCore)) {
-              c.attack(invaderCore);
+          const hostileCreep = c.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+          const target = hostileCreep || invaderCore;
+          if (target) {
+            if (c.pos.isNearTo(target)) {
+              c.attack(target);
             } else {
-              CreepBase.travelTo(c, invaderCore, "red", 1);
+              CreepBase.travelTo(c, target, "red", 1);
             }
           }
-          // update room intel each tick as well
-          const hostileCreepCount = c.room.find(FIND_HOSTILE_CREEPS).length;
-          const hostileTowerCount = c.room.find(FIND_HOSTILE_STRUCTURES, {
-            filter: (s) => s.structureType === STRUCTURE_TOWER
-          }).length;
-          const invaderCorePresent =
-            c.room.find(FIND_HOSTILE_STRUCTURES, {
-              filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
-            }).length > 0;
-          const hostile = hostileCreepCount > 0 || c.room.find(FIND_HOSTILE_STRUCTURES).length > 0;
-          const currentIntel = Memory.roomStore[c.memory.homeRoom].remoteRooms[c.pos.roomName];
-          Memory.roomStore[c.memory.homeRoom].remoteRooms[c.pos.roomName] = {
-            ...currentIntel,
-            hostile: hostile,
-            hostileCreepCount: hostileCreepCount,
-            hostileTowerCount: hostileTowerCount,
-            invaderCore: invaderCorePresent
-          };
         }
       }
     );
@@ -200,6 +184,7 @@ export class RemoteManager {
     const remoteRooms = Memory.roomStore[room.name].remoteRooms;
     _.map(remoteRooms, (targetRoom, targetRoomName) => {
       if (targetRoomName) {
+        this.doIntel(targetRoomName, room.name);
         if (!targetRoom.hostile) {
           const roomRoute = Game.map.findRoute(room.name, targetRoomName);
           targetRoom.sources.map((s) => {
@@ -213,6 +198,28 @@ export class RemoteManager {
         }
       }
     });
+  }
+  private static doIntel(roomName: string, baseRoom: string) {
+    const room = Game.rooms[roomName];
+    if (room) {
+      const hostileCreepCount = room.find(FIND_HOSTILE_CREEPS).length;
+      const hostileTowerCount = room.find(FIND_HOSTILE_STRUCTURES, {
+        filter: (s) => s.structureType === STRUCTURE_TOWER
+      }).length;
+      const invaderCorePresent =
+        room.find(FIND_HOSTILE_STRUCTURES, {
+          filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+        }).length > 0;
+      const hostile = hostileCreepCount > 0 || room.find(FIND_HOSTILE_STRUCTURES).length > 0;
+      const currentIntel = Memory.roomStore[baseRoom].remoteRooms[roomName];
+      Memory.roomStore[baseRoom].remoteRooms[roomName] = {
+        ...currentIntel,
+        hostile: hostile,
+        hostileCreepCount: hostileCreepCount,
+        hostileTowerCount: hostileTowerCount,
+        invaderCore: invaderCorePresent
+      };
+    }
   }
   public static run(room: Room) {
     this.spawnScout(room);
