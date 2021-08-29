@@ -83,7 +83,11 @@ export class ConstructionTemplates {
   }
   private static getRoadMask(room: Room): RoomPosition[] {
     const store = Memory.roomStore[room.name].constructionDirector;
-    return store.containerTemplate.concat(store.extensionTemplate).concat(store.towerTemplate);
+    return store.containerTemplate
+      .concat(store.extensionTemplate)
+      .concat(store.towerTemplate)
+      .concat(store.containerTemplate)
+      .concat(store.sourceLinks);
   }
   public static surroundingRoads(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
@@ -111,6 +115,48 @@ export class ConstructionTemplates {
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })
       .reduce((acc, arr) => acc.concat(arr), []);
+  }
+  public static isBoundary(x: number, y: number): boolean {
+    const boundaries = [0, 49];
+    return boundaries.includes(x) || boundaries.includes(y);
+  }
+  public static remoteSourceRoads(room: Room): RoomPosition[] {
+    const anchor = this.getAnchor(room);
+    const mask = this.getRoadMask(room);
+    const remoteStore = Memory.roomStore[room.name].remoteRooms;
+    const remoteSources = _.reduce(remoteStore, (acc: Source[], r) => acc.concat(r.sources), []);
+    return _.reduce(
+      remoteSources,
+      (acc: RoomPosition[], s: Source) => {
+        const source = Game.getObjectById<Source>(s.id);
+        if (source) {
+          const anchorToSourceExitDir = room.findExitTo(source.room);
+          const sourceToAnchorExitDir = source.room.findExitTo(room);
+          if (
+            anchorToSourceExitDir !== -2 &&
+            anchorToSourceExitDir !== -10 &&
+            sourceToAnchorExitDir !== -2 &&
+            sourceToAnchorExitDir !== -10
+          ) {
+            const anchorToSourceExits = room.find(anchorToSourceExitDir);
+            // const sourceToAnchorExits = source.room.find(sourceToAnchorExitDir);
+            // const sourceClosestExit = source.pos.findClosestByPath(sourceToAnchorExits);
+            const anchorClosestExit = anchor.pos.findClosestByPath(anchorToSourceExits);
+            if (anchorClosestExit) {
+              // const sourcePath = source.pos
+              //   .findPathTo(sourceClosestExit, { ignoreCreeps: true, ignoreRoads: true, swampCost: 1 })
+              //   .map((p) => new RoomPosition(p.x, p.y, source.pos.roomName));
+              const anchorPath = anchor.pos
+                .findPathTo(anchorClosestExit, { ignoreCreeps: true, ignoreRoads: true, swampCost: 1 })
+                .map((p) => new RoomPosition(p.x, p.y, room.name));
+              return acc.concat(anchorPath).filter((p) => !this.isBoundary(p.x, p.y) && !mask.includes(p));
+            }
+          }
+        }
+        return acc;
+      },
+      []
+    );
   }
   public static controllerRoads(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);

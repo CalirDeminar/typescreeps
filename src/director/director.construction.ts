@@ -28,18 +28,23 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = ConstructionTemplates.surroundingRoads(
       room
     );
-    Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = ConstructionTemplates.sourceRoads(room).concat(
-      ConstructionTemplates.controllerRoads(room)
-    );
+    Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = [
+      ...new Set(
+        ConstructionTemplates.sourceRoads(room)
+          .concat(ConstructionTemplates.controllerRoads(room))
+          .concat(ConstructionTemplates.remoteSourceRoads(room))
+      )
+    ];
     Memory.roomStore[room.name].constructionDirector.roadsCreated = true;
   }
   private static populate(room: Room) {
     const store = Memory.roomStore[room.name].constructionDirector;
+    const isPeriodic = Game.time % 5000 === 0;
     if (!store.buildingsCreated) {
       console.log("Placing Buildings");
       this.populateBuildingStore(room);
     }
-    if (!store.roadsCreated) {
+    if (!store.roadsCreated || isPeriodic) {
       console.log("Routing Roads");
       this.populateRoadStore(room);
     }
@@ -62,13 +67,15 @@ export class ConstructionDirector {
     structures: AnyStructure[],
     currentMax: number,
     template: RoomPosition[],
-    terrain: RoomTerrain
+    terrain: RoomTerrain,
+    roomName: string
   ): boolean {
     const currentCount = structures.filter((s) => s.structureType === targetType).length;
     if (currentCount < currentMax) {
       const next = template.find((p) => {
         p = new RoomPosition(p.x, p.y, p.roomName);
         return (
+          p.roomName === roomName &&
           terrain.get(p.x, p.y) !== 1 &&
           p.lookFor(LOOK_STRUCTURES).filter((s) => {
             if (targetType === STRUCTURE_ROAD) {
@@ -79,7 +86,8 @@ export class ConstructionDirector {
         );
       });
       if (next) {
-        return new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(targetType) === OK;
+        const rtn = new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(targetType);
+        return rtn === OK;
       }
       return false;
     }
@@ -97,33 +105,51 @@ export class ConstructionDirector {
         structures,
         Constants.maxContainers[level],
         store.containerTemplate,
-        terrain
+        terrain,
+        room.name
       ) ||
         this.nextStructure(
           STRUCTURE_EXTENSION,
           structures,
           Constants.maxExtensions[level],
           store.extensionTemplate,
-          terrain
+          terrain,
+          room.name
         ) ||
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
           level > 2 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
           store.internalRoadTemplate,
-          terrain
+          terrain,
+          room.name
         ) ||
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
           level > 2 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
           store.routeRoadTemplate,
-          terrain
+          terrain,
+          room.name
         ) ||
-        this.nextStructure(STRUCTURE_TOWER, structures, Constants.maxTowers[level], store.towerTemplate, terrain) ||
+        this.nextStructure(
+          STRUCTURE_TOWER,
+          structures,
+          Constants.maxTowers[level],
+          store.towerTemplate,
+          terrain,
+          room.name
+        ) ||
         this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
         this.nextSingleStructure(STRUCTURE_LINK, structures, Constants.maxLinks[level], store.anchorLink) ||
-        this.nextStructure(STRUCTURE_LINK, structures, Constants.maxLinks[level], store.sourceLinks, terrain) ||
+        this.nextStructure(
+          STRUCTURE_LINK,
+          structures,
+          Constants.maxLinks[level],
+          store.sourceLinks,
+          terrain,
+          room.name
+        ) ||
         this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
         this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor);
     }
