@@ -16,6 +16,7 @@ export class Builder extends CreepBase {
   }
   public static run(creep: Creep): void {
     if (creep.ticksToLive) {
+      this.maintainRoad(creep);
       const working = creep.memory.working;
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getUsedCapacity() === creep.store.getCapacity();

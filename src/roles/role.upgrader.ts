@@ -5,6 +5,7 @@ export class Upgrader extends CreepBase {
   }
   public static run(creep: Creep): void {
     if (creep.ticksToLive) {
+      this.maintainRoad(creep);
       const working = creep.memory.working;
       if (!creep.memory.upgradeTarget && creep.room.controller) {
         creep.memory.upgradeTarget = creep.room.controller.id;
