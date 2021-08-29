@@ -54,6 +54,28 @@ export class CreepBase {
       }
     }
   }
+  public static findContainer(creep: Creep, ignore: string[] = []): Structure | null {
+    return creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) =>
+        s.structureType === STRUCTURE_CONTAINER && !ignore.includes(s.id) && s.store.energy < s.store.getCapacity()
+    });
+  }
+  public static findSpawn(creep: Creep, ignore: string[] = []): Structure | null {
+    return creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_SPAWN && !ignore.includes(s.id) && s.store.energy < s.energyCapacity
+    });
+  }
+  public static findExtension(creep: Creep, ignore: string[] = []): Structure | null {
+    return creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+      filter: (s) =>
+        s.structureType === STRUCTURE_EXTENSION && !ignore.includes(s.id) && s.store.energy < s.energyCapacity
+    });
+  }
+  public static findLink(creep: Creep, ignore: string[] = []): Structure | null {
+    return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_LINK && !ignore.includes(s.id) && s.store[RESOURCE_ENERGY] < 750
+    })[0];
+  }
   static getSourceTarget(creep: Creep): Structure | null {
     const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
     const containerExists =
@@ -76,7 +98,7 @@ export class CreepBase {
         return (
           s.structureType === STRUCTURE_CONTAINER &&
           s.pos.findInRange(FIND_FLAGS, 1).length > 0 &&
-          s.store[RESOURCE_ENERGY] > creep.room.energyCapacityAvailable + creep.store.getCapacity()
+          s.store[RESOURCE_ENERGY] > Math.min(creep.room.energyCapacityAvailable + creep.store.getCapacity(), 1800)
         );
       }
     });
