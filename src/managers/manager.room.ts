@@ -113,9 +113,9 @@ export class RoomManager {
           activeQueens.length < 1 ||
           (activeQueens.length === 1 && activeQueens[0].ticksToLive && activeQueens[0].ticksToLive < 100)
         ) {
-          const energy = 500;
+          const optimalEnergy = activeQueens.length === 1 ? 1000 : Math.max(room.energyAvailable, 300);
           Memory.roomStore[room.name].nextSpawn = {
-            template: CreepBuilder.buildHaulingCreep(Math.min(room.energyAvailable, energy)),
+            template: CreepBuilder.buildHaulingCreep(optimalEnergy),
             memory: {
               ...CreepBase.baseMemory,
               role: "queen",
@@ -130,7 +130,7 @@ export class RoomManager {
     }
   }
   private static ManageBuilders(room: Room) {
-    const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0;
+    const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0 || room.energyAvailable > 1000;
     //const creepNearDeath = _.filter(Game.creeps, (c: Creep) => c.ticksToLive && c.ticksToLive < 100 && c.memory.role !== "builder").length > 0;
     const towersNeedEnergy =
       _.filter(
