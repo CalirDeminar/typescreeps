@@ -93,5 +93,6 @@ export class SourceLinkDirector {
   public static run(room: Room, source: Source, link: StructureLink, anchor: Flag): void {
     this.runHarvesters(source);
     this.spawnStaticHarvester(room, source, link)
+    this.runLink(link, anchor);
   }
 }

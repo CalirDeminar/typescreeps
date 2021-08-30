@@ -138,6 +138,7 @@ export class SourceContainerDirector {
         case withdrawing && container.store.getUsedCapacity() === 0:
         case !withdrawing && empty:
           creep.memory.working = true;
+          break;
         case withdrawing && full:
           creep.memory.working = false;
           creep.memory.dropOffTarget = "";
@@ -165,7 +166,7 @@ export class SourceContainerDirector {
     }
   }
   private static runHaulers(container: StructureContainer, anchor: Flag): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" && c.memory.targetSource === container.id).map(
+    _.filter(Game.creeps, (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id).map(
       (c) => {
         this.runHauler(c, container);
       }

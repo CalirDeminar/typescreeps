@@ -99,14 +99,6 @@ export class ConstructionDirector {
       const level = room.controller.level;
       const store = Memory.roomStore[room.name].constructionDirector;
       const terrain = room.getTerrain();
-      this.nextStructure(
-        STRUCTURE_CONTAINER,
-        structures,
-        Constants.maxContainers[level],
-        store.containerTemplate,
-        terrain,
-        room.name
-      ) ||
         this.nextStructure(
           STRUCTURE_EXTENSION,
           structures,
@@ -140,15 +132,6 @@ export class ConstructionDirector {
           room.name
         ) ||
         this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
-        this.nextSingleStructure(STRUCTURE_LINK, structures, Constants.maxLinks[level], store.anchorLink) ||
-        this.nextStructure(
-          STRUCTURE_LINK,
-          structures,
-          Constants.maxLinks[level],
-          store.sourceLinks,
-          terrain,
-          room.name
-        ) ||
         this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
         this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor);
     }
