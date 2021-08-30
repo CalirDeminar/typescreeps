@@ -11,8 +11,6 @@ import { Logger } from "./utils/logger";
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
-  Logger.log(Game);
-
   for (const name in Memory.creeps) {
     // Automatically delete memory of missing creeps
     if (!(name in Game.creeps)) {
@@ -53,4 +51,5 @@ export const loop = ErrorMapper.wrapLoop(() => {
     const cpu: any = Game.cpu;
     //cpu.generatePixel();
   }
+  Logger.log(Game);
 });

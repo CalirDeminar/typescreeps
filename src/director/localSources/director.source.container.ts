@@ -101,11 +101,11 @@ export class SourceContainerDirector {
     }
   }
   private static runHarvesters(source: Source): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id).map(
-      (c) => {
+    _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id)
+      .sort((a, b) => a.store.getUsedCapacity() - b.store.getUsedCapacity())
+      .map((c) => {
         this.runHarvester(c, source);
-      }
-    );
+      });
   }
   private static getStoreTarget(creep: Creep): Structure | null {
     return (

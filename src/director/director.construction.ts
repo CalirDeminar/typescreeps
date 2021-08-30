@@ -14,7 +14,6 @@ export class ConstructionDirector {
     }
   }
   private static populateBuildingStore(room: Room): void {
-    Memory.roomStore[room.name].constructionDirector.containerTemplate = ConstructionTemplates.containers(room);
     Memory.roomStore[room.name].constructionDirector.extensionTemplate = ConstructionTemplates.extensions(room);
     Memory.roomStore[room.name].constructionDirector.towerTemplate = ConstructionTemplates.towers(room);
     Memory.roomStore[room.name].constructionDirector.storage = ConstructionTemplates.storage(room);
@@ -44,7 +43,7 @@ export class ConstructionDirector {
       console.log("Placing Buildings");
       this.populateBuildingStore(room);
     }
-    if (!store.roadsCreated) {
+    if (!store.roadsCreated && room.controller && Constants.maxContainers[room.controller.level] > 0) {
       console.log("Routing Roads");
       this.populateRoadStore(room);
     }

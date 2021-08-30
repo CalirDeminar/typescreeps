@@ -21,7 +21,7 @@ export class SourceShuttleDirector {
     const maxMissing = this.getMaxMissingShuttles();
     const activeHarvesters = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource
+      (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id
     );
     const missingHarvesters = Constants.maxShuttles - activeHarvesters.length;
     const harvestersEmpty = missingHarvesters >= Constants.maxShuttles;

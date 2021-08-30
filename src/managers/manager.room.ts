@@ -1,6 +1,6 @@
 import { ConstructionDirector } from "director/director.construction";
 import { MineralDirector } from "director/director.mineral";
-import { SourceManager } from "./manager.source";
+import { SourceDirector } from "director/director.source";
 import { DefenseManager } from "./manager.defense";
 import { RemoteManager } from "./manager.remote";
 import { CreepBuilder } from "../utils/creepBuilder";
@@ -173,7 +173,7 @@ export class RoomManager {
       RemoteManager.run(room);
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
-      SourceManager.run(room);
+      SourceDirector.run(room);
       DefenseManager.run(room);
       this.ManageHaulers(room);
       const toSpawn = Memory.roomStore[room.name].nextSpawn;

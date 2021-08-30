@@ -17,6 +17,9 @@ export class SourceDirector {
       filter: { filter: (s: AnyStructure) => s.structureType === STRUCTURE_CONTAINER }
     })[0];
   }
+  private static doPlaceContainer(pos: RoomPosition): boolean {
+    return pos.createConstructionSite(STRUCTURE_CONTAINER) === 0;
+  }
   private static placeStructures(
     room: Room,
     source: Source,
@@ -30,7 +33,9 @@ export class SourceDirector {
       const level = controller.level;
       const shouldHaveContainers = Constants.maxContainers[level] > 0 && !link;
       if (!container && shouldHaveContainers) {
-        UtilPosition.getClosestSurroundingTo(anchor.pos, source.pos).createConstructionSite(STRUCTURE_CONTAINER);
+        console.log("Placing Containers");
+        this.doPlaceContainer(new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName)) ||
+          this.doPlaceContainer(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos));
       } else {
         const shouldHaveLinks = Constants.maxLinks[level] > 0;
         const canHaveNewLink =
@@ -38,7 +43,7 @@ export class SourceDirector {
           room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_LINK }).length <
             Constants.maxLinks[level];
         if (!link && shouldHaveLinks && canHaveNewLink) {
-          UtilPosition.getClosestSurroundingTo(anchor.pos, source.pos, container ? [container.pos] : []);
+          UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, container ? [container.pos] : []);
         }
         if (link && container) {
           container.destroy();
@@ -48,6 +53,8 @@ export class SourceDirector {
   }
   private static runSource(room: Room, source: Source, anchor: Flag): void {
     const container = this.getContainer(source);
+    console.log(JSON.stringify(source.pos));
+    console.log(JSON.stringify(container));
     const link = this.getLink(source);
     this.placeStructures(room, source, anchor, container, link);
     switch (true) {
@@ -58,10 +65,12 @@ export class SourceDirector {
         break;
       case !!container:
         if (container) {
+          console.log("Run Container");
           SourceContainerDirector.run(room, source, container, anchor);
         }
         break;
       default:
+        console.log("Run Shuttle");
         SourceShuttleDirector.run(room, source, anchor);
         break;
     }

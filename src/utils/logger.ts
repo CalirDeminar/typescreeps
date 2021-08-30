@@ -14,7 +14,9 @@ export class Logger {
       for (const name in creepTotals) {
         report = report + `   ${name}: ${creepTotals[name]}`;
       }
-      console.log(`Tick: ${Game.time} Bucket: ${Game.cpu.bucket}` + report);
+      console.log(
+        `Tick: ${Game.time} Bucket: ${Game.cpu.bucket}    Execution Time: ${Game.cpu.getUsed().toPrecision(5)}` + report
+      );
     }
   }
 }

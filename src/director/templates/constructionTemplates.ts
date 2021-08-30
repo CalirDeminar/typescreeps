@@ -56,11 +56,7 @@ export class ConstructionTemplates {
   public static containers(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
     const sources = room.find(FIND_SOURCES);
-    return [new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName)].concat(
-      sources.map((source) => {
-        return UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos);
-      })
-    );
+    return [new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName)];
   }
   public static towers(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
