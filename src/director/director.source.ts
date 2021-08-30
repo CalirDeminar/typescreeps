@@ -14,7 +14,10 @@ export class SourceDirector {
     return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "container")[0];
   }
   private static doPlaceStructure(pos: RoomPosition, type: BuildableStructureConstant): boolean {
-    return pos.createConstructionSite(type) === 0;
+    if(pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0){
+      return pos.createConstructionSite(type) === 0;
+    }
+    return false;
   }
   private static placeStructures(
     room: Room,
