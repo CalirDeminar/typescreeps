@@ -28,12 +28,12 @@ export class SourceDirector {
     if (controller && !activeSite) {
       const level = controller.level;
       const shouldHaveContainers = Constants.maxContainers[level] > 0 && !link;
-      if (!container && shouldHaveContainers) {
+      const shouldHaveLinks = Constants.maxLinks[level] > 0;
+      if (!container && shouldHaveContainers && !shouldHaveLinks) {
         console.log("Placing Containers");
         this.doPlaceContainer(new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName)) ||
           this.doPlaceContainer(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos));
       } else {
-        const shouldHaveLinks = Constants.maxLinks[level] > 0;
         const canHaveNewLink =
           shouldHaveLinks &&
           room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_LINK }).length <
