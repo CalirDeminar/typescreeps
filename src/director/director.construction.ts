@@ -44,7 +44,7 @@ export class ConstructionDirector {
       console.log("Placing Buildings");
       this.populateBuildingStore(room);
     }
-    if (!store.roadsCreated || isPeriodic) {
+    if (!store.roadsCreated) {
       console.log("Routing Roads");
       this.populateRoadStore(room);
     }
