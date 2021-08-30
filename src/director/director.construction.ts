@@ -126,7 +126,7 @@ export class ConstructionDirector {
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
-          level > 2 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
+          level > 3 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
           store.routeRoadTemplate,
           terrain,
           room.name
