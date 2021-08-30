@@ -8,14 +8,10 @@ export class SourceDirector {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
   }
   private static getLink(source: Source): StructureLink | null {
-    return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1, {
-      filter: { filter: (s: AnyStructure) => s.structureType === STRUCTURE_LINK }
-    })[0];
+    return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "link")[0];
   }
   private static getContainer(source: Source): StructureContainer | null {
-    return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
-      filter: { filter: (s: AnyStructure) => s.structureType === STRUCTURE_CONTAINER }
-    })[0];
+    return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "container")[0];
   }
   private static doPlaceContainer(pos: RoomPosition): boolean {
     return pos.createConstructionSite(STRUCTURE_CONTAINER) === 0;
@@ -53,8 +49,6 @@ export class SourceDirector {
   }
   private static runSource(room: Room, source: Source, anchor: Flag): void {
     const container = this.getContainer(source);
-    console.log(JSON.stringify(source.pos));
-    console.log(JSON.stringify(container));
     const link = this.getLink(source);
     this.placeStructures(room, source, anchor, container, link);
     switch (true) {
@@ -65,12 +59,10 @@ export class SourceDirector {
         break;
       case !!container:
         if (container) {
-          console.log("Run Container");
           SourceContainerDirector.run(room, source, container, anchor);
         }
         break;
       default:
-        console.log("Run Shuttle");
         SourceShuttleDirector.run(room, source, anchor);
         break;
     }
