@@ -55,6 +55,8 @@ export class Builder extends CreepBase {
               this.travelTo(creep, buildTarget, this.pathColour());
             }
             break;
+          case creep.pos.roomName !== creep.memory.homeRoom:
+            this.travelToRoom(creep, "black", creep.memory.homeRoom);
           default:
             Upgrader.run(creep);
         }

@@ -77,49 +77,55 @@ export class CreepBase {
     })[0];
   }
   static getSourceTarget(creep: Creep): Structure | null {
-    const isSpawning = Memory.roomStore[creep.room.name].nextSpawn !== null;
-    const containerExists =
-      creep.room.find(FIND_STRUCTURES, {
+    const homeRoom = Game.rooms[creep.memory.homeRoom];
+    const isSpawning = Memory.roomStore[homeRoom.name].nextSpawn !== null;
+    if (creep.room.name !== creep.memory.homeRoom) {
+      this.travelToRoom(creep, "", homeRoom.name);
+      return null;
+    } else {
+      const containerExists =
+        homeRoom.find(FIND_STRUCTURES, {
+          filter: (s: AnyStructure) => {
+            return (
+              (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) &&
+              s.pos.findInRange(FIND_FLAGS, 1).length > 0
+            );
+          }
+        }).length > 0;
+      const harvestableStorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: this.filterStructures(STRUCTURE_STORAGE, homeRoom.energyCapacityAvailable + creep.store.getCapacity())
+      });
+      if (harvestableStorage) {
+        return harvestableStorage;
+      }
+      const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) => {
           return (
-            (s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE) &&
-            s.pos.findInRange(FIND_FLAGS, 1).length > 0
+            s.structureType === STRUCTURE_CONTAINER &&
+            s.pos.findInRange(FIND_FLAGS, 1).length > 0 &&
+            s.store[RESOURCE_ENERGY] > Math.min(homeRoom.energyCapacityAvailable + creep.store.getCapacity(), 1800)
           );
         }
-      }).length > 0;
-    const harvestableStorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: this.filterStructures(STRUCTURE_STORAGE, creep.room.energyCapacityAvailable + creep.store.getCapacity())
-    });
-    if (harvestableStorage) {
-      return harvestableStorage;
-    }
-    const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s: AnyStructure) => {
-        return (
-          s.structureType === STRUCTURE_CONTAINER &&
-          s.pos.findInRange(FIND_FLAGS, 1).length > 0 &&
-          s.store[RESOURCE_ENERGY] > Math.min(creep.room.energyCapacityAvailable + creep.store.getCapacity(), 1800)
-        );
-      }
-    });
-    if (harvestableContainer) {
-      return harvestableContainer;
-    }
-    if (!isSpawning && !containerExists) {
-      const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: this.filterStructures(STRUCTURE_SPAWN, 100)
       });
-      if (harvestableSpawn) {
-        return harvestableSpawn;
+      if (harvestableContainer) {
+        return harvestableContainer;
       }
-      const harvestableExtension = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: this.filterStructures(STRUCTURE_EXTENSION, 10)
-      });
-      if (harvestableExtension) {
-        return harvestableExtension;
+      if (!isSpawning && !containerExists) {
+        const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: this.filterStructures(STRUCTURE_SPAWN, 100)
+        });
+        if (harvestableSpawn) {
+          return harvestableSpawn;
+        }
+        const harvestableExtension = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          filter: this.filterStructures(STRUCTURE_EXTENSION, 10)
+        });
+        if (harvestableExtension) {
+          return harvestableExtension;
+        }
+        return null;
       }
       return null;
     }
-    return null;
   }
 }

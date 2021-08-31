@@ -107,7 +107,7 @@ export class ConstructionTemplates {
     return room
       .find(FIND_SOURCES)
       .map((s) => {
-        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1, ignoreRoads: true, ignore: mask });
+        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1, ignore: mask });
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })
       .reduce((acc, arr) => acc.concat(arr), []);
@@ -135,17 +135,22 @@ export class ConstructionTemplates {
             sourceToAnchorExitDir !== -10
           ) {
             const anchorToSourceExits = room.find(anchorToSourceExitDir);
-            // const sourceToAnchorExits = source.room.find(sourceToAnchorExitDir);
-            // const sourceClosestExit = source.pos.findClosestByPath(sourceToAnchorExits);
+            const sourceToAnchorExits = source.room.find(sourceToAnchorExitDir);
+            // TODO - ensure these exits are opposite each other on the boundary
+            const sourceClosestExit = source.pos.findClosestByPath(sourceToAnchorExits);
             const anchorClosestExit = anchor.pos.findClosestByPath(anchorToSourceExits);
-            if (anchorClosestExit) {
-              // const sourcePath = source.pos
-              //   .findPathTo(sourceClosestExit, { ignoreCreeps: true, ignoreRoads: true, swampCost: 1 })
-              //   .map((p) => new RoomPosition(p.x, p.y, source.pos.roomName));
+            if (anchorClosestExit && sourceClosestExit) {
+              const sourcePath = source.pos
+                .findPathTo(sourceClosestExit, { ignoreCreeps: true, swampCost: 1 })
+                .map((p) => new RoomPosition(p.x, p.y, source.pos.roomName))
+                .reverse();
               const anchorPath = anchor.pos
-                .findPathTo(anchorClosestExit, { ignoreCreeps: true, ignoreRoads: true, swampCost: 1 })
+                .findPathTo(anchorClosestExit, { ignoreCreeps: true, swampCost: 1 })
                 .map((p) => new RoomPosition(p.x, p.y, room.name));
-              return acc.concat(anchorPath).filter((p) => !this.isBoundary(p.x, p.y) && !mask.includes(p));
+              return acc
+                .concat(anchorPath)
+                .concat(sourcePath)
+                .filter((p) => !this.isBoundary(p.x, p.y) && !mask.includes(p));
             }
           }
         }

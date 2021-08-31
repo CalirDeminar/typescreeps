@@ -24,9 +24,8 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.buildingsCreated = true;
   }
   private static populateRoadStore(room: Room): void {
-    Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = ConstructionTemplates.surroundingRoads(
-      room
-    );
+    Memory.roomStore[room.name].constructionDirector.internalRoadTemplate =
+      ConstructionTemplates.surroundingRoads(room);
     Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = [
       ...new Set(
         ConstructionTemplates.sourceRoads(room)
@@ -74,8 +73,8 @@ export class ConstructionDirector {
       const next = template.find((p) => {
         p = new RoomPosition(p.x, p.y, p.roomName);
         return (
-          p.roomName === roomName &&
-          terrain.get(p.x, p.y) !== 1 &&
+          ((p.roomName !== roomName && p.roomName in Game.rooms) ||
+            (p.roomName === roomName && terrain.get(p.x, p.y) !== 1)) &&
           p.lookFor(LOOK_STRUCTURES).filter((s) => {
             if (targetType === STRUCTURE_ROAD) {
               return true;
@@ -85,28 +84,36 @@ export class ConstructionDirector {
         );
       });
       if (next) {
-        const rtn = new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(targetType);
-        return rtn === OK;
+        const targetRoom = Game.rooms[next.roomName];
+        if (targetRoom) {
+          const rtn = targetRoom.createConstructionSite(next.x, next.y, targetType);
+          return rtn === OK;
+        }
       }
       return false;
     }
     return false;
   }
   private static nextSite(room: Room) {
-    const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0;
+    const activeRooms = Object.keys(Memory.roomStore[room.name].remoteRooms)
+      .filter((n) => n in Game.rooms)
+      .map((n) => Game.rooms[n])
+      .concat([room])
+      .filter((r) => r.find(FIND_CONSTRUCTION_SITES).length > 0);
+    const activeSite = activeRooms.length > 0;
     const structures = room.find(FIND_STRUCTURES);
     if (!activeSite && room.controller) {
       const level = room.controller.level;
       const store = Memory.roomStore[room.name].constructionDirector;
       const terrain = room.getTerrain();
-        this.nextStructure(
-          STRUCTURE_EXTENSION,
-          structures,
-          Constants.maxExtensions[level],
-          store.extensionTemplate,
-          terrain,
-          room.name
-        ) ||
+      this.nextStructure(
+        STRUCTURE_EXTENSION,
+        structures,
+        Constants.maxExtensions[level],
+        store.extensionTemplate,
+        terrain,
+        room.name
+      ) ||
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
@@ -137,7 +144,14 @@ export class ConstructionDirector {
     }
   }
   private static buildSites(room: Room): void {
-    const target = room.find(FIND_CONSTRUCTION_SITES)[0];
+    // TODO - change this from being responsibility of the builder, to the responsibility of the remote harvester
+    const target =
+      room.find(FIND_CONSTRUCTION_SITES)[0] ||
+      Object.keys(Memory.roomStore[room.name].remoteRooms)
+        .map((n) => Game.rooms[n])
+        .filter((r) => !!r)
+        .map((r) => r.find(FIND_CONSTRUCTION_SITES)[0])
+        .filter((s) => !!s)[0];
     const creeps = _.filter(Game.creeps, (c) => c.memory.role === "builder");
     creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
   }
