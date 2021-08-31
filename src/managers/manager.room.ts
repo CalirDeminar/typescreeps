@@ -167,14 +167,34 @@ export class RoomManager {
   }
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
+      let lastCpu = Game.cpu.getUsed();
+      let cpu = lastCpu;
       this.memorySetup(room);
       ConstructionDirector.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Construction Director: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       MineralDirector.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Mineral Director: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       RemoteManager.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Remote Manager: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Manage Builders & Upgraders: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       SourceDirector.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Source Director: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       DefenseManager.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Defense Manager: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
       this.ManageHaulers(room);
       const toSpawn = Memory.roomStore[room.name].nextSpawn;
       if (toSpawn != null) {
