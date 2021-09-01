@@ -17,22 +17,12 @@ export class Scout {
       hostile: hostile,
       hostileCreepCount: hostileCreeps,
       hostileTowerCount: hostileTowers,
-      invaderCore: invaderCore
+      invaderCore: invaderCore,
+      name: creep.pos.roomName,
+      anchor: Game.rooms[creep.memory.homeRoom].find(FIND_FLAGS, {
+        filter: (f) => f.name === `${creep.memory.homeRoom}-Anchor`
+      })[0].pos
     };
-    const exits = [
-      creep.room.find(FIND_EXIT_TOP),
-      creep.room.find(FIND_EXIT_RIGHT),
-      creep.room.find(FIND_EXIT_BOTTOM),
-      creep.room.find(FIND_EXIT_LEFT)
-    ]
-      .filter((a) => {
-        return (
-          a.find((p) => {
-            return p.isEqualTo(creep.pos);
-          }) === undefined
-        );
-      })
-      .map((a) => a[0]);
     //creep.memory.scoutPositions = creep.memory.scoutPositions.concat(exits);
   }
   public static run(creep: Creep): void {

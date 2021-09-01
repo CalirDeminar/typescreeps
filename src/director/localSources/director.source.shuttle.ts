@@ -6,10 +6,14 @@ export class SourceShuttleDirector {
     const counts = _.reduce(
       Game.creeps,
       (acc: { [key: string]: number }, creep) => {
-        if (creep.memory.targetSource in acc) {
-          return { ...acc, [creep.memory.targetSource]: acc[creep.memory.targetSource] + 1 };
+        if (creep.memory.role === "shuttleHarvester") {
+          if (creep.memory.targetSource in acc) {
+            return { ...acc, [creep.memory.targetSource]: acc[creep.memory.targetSource] + 1 };
+          } else {
+            return { ...acc, [creep.memory.targetSource]: 1 };
+          }
         } else {
-          return { ...acc, [creep.memory.targetSource]: 1 };
+          return acc;
         }
       },
       {}

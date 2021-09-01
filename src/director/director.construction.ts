@@ -146,14 +146,9 @@ export class ConstructionDirector {
   private static buildSites(room: Room): void {
     // TODO - change this from being responsibility of the builder, to the responsibility of the remote harvester
     //  for structures in remote rooms
-    const target =
-      room.find(FIND_CONSTRUCTION_SITES)[0] ||
-      Object.keys(Memory.roomStore[room.name].remoteRooms)
-        .map((n) => Game.rooms[n])
-        .filter((r) => !!r)
-        .map((r) => r.find(FIND_CONSTRUCTION_SITES)[0])
-        .filter((s) => !!s)
-        .sort((a, b) => a.progressTotal - a.progress - (b.progressTotal - b.progress))[0];
+    const target = room
+      .find(FIND_CONSTRUCTION_SITES)
+      .sort((a, b) => a.progressTotal - a.progress - (b.progressTotal - b.progress))[0];
     const creeps = _.filter(Game.creeps, (c) => c.memory.role === "builder");
     creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
   }

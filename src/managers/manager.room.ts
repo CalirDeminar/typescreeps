@@ -6,6 +6,7 @@ import { RemoteManager } from "./manager.remote";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { CreepBase } from "roles/role.creep";
+import { RemoteHarvestingDirector } from "director/director.remoteHarvesting";
 const maxUpgraders = Constants.upgraders;
 export class RoomManager {
   public static baseMemory: RoomType = {
@@ -32,7 +33,8 @@ export class RoomManager {
       sourceLinks: [],
       buildingsCreated: false,
       roadsCreated: false
-    }
+    },
+    remoteDirector: []
   };
   private static memorySetup(room: Room) {
     if (!Memory.roomStore) {
@@ -71,7 +73,8 @@ export class RoomManager {
           sourceLinks: [],
           buildingsCreated: false,
           roadsCreated: false
-        }
+        },
+        remoteDirector: []
       };
     }
   }
@@ -141,7 +144,9 @@ export class RoomManager {
         })
       ).length > 0;
     const buildersNeedEnergy =
-      _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.working === false).length > 0;
+      _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.working === false).reduce((acc, creep) => {
+        return acc + creep.store.getCapacity();
+      }, 0) > 250;
     const count = this.sumRoomRole("builder", room.name);
     // RHS of "or" statement spawns builders on demand, as energy allows
     //    If energy is low, stores should never fill, so won't waste energy on building or upgrading.
@@ -186,6 +191,10 @@ export class RoomManager {
       this.ManageUpgraders(room);
       cpu = Game.cpu.getUsed();
       // console.log(`Manage Builders & Upgraders: ${cpu.toPrecision(5)}`);
+      lastCpu = cpu;
+      RemoteHarvestingDirector.run(room);
+      cpu = Game.cpu.getUsed();
+      // console.log(`Remote Harvesting Director: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       SourceDirector.run(room);
       cpu = Game.cpu.getUsed();

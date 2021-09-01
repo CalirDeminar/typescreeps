@@ -1,0 +1,20 @@
+Remote Harvesting Director
+    Remote harvesters build their own roads back to the anchor
+    Spawn in reservers with enough time before the previous expiry
+    Container Harvesting?
+    Larger Reservers?
+    Contain construction logic for roads in remote room and through the anchor room
+        Ensure correct path meeting up on borders
+    Move scouting out to the scouting Director
+    Periodically review scouting data to find remote harvesting rooms
+Construction Director
+    Remove everything relating to Remote rooms
+Add scouting Director
+    Finding adjacent remote rooms
+    Finding expansion rooms
+    Finding Invader core and Invader Fortress rooms
+    Find better way to move between rooms
+Mineral Director
+    Add additional scaling to MineralHarvester
+    Container Mining?
+    Road to Mineral

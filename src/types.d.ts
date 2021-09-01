@@ -32,6 +32,8 @@ declare global {
     hostileCreepCount: number;
     hostileTowerCount: number;
     invaderCore: boolean;
+    name: string;
+    anchor: RoomPosition;
   }
   interface SourceDirectorStore {
     sourceId: string;
@@ -60,12 +62,20 @@ declare global {
   }
   interface RemoteDirectorStore {
     roomName: string;
-    controller: string;
+    homeRoomName: string;
+    controllerId: string;
+    anchorId: string;
     sources: {
       sourceId: string;
-      harvesterIds: string[];
       targetContainerId: string | null;
     }[];
+    roadQueue: RoomPosition[];
+    roadsPathed: boolean;
+    roadsConstructed: boolean;
+    hasInvaderCore: boolean;
+    hasHostileCreeps: boolean;
+    hostileCreepCount: number;
+    hostileTowerCount: number;
   }
   interface ConstructionDirectorStore {
     anchor: RoomPosition | null;
@@ -89,6 +99,7 @@ declare global {
     sources: string[];
     sourceDirector: SourceDirectorStore[];
     constructionDirector: ConstructionDirectorStore;
+    remoteDirector: RemoteDirectorStore[];
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;

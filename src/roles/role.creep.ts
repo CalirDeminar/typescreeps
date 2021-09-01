@@ -54,6 +54,12 @@ export class CreepBase {
       }
     }
   }
+  public static findStorage(creep: Creep, ignore: string[] = []): Structure | null {
+    return creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) =>
+        s.structureType === STRUCTURE_STORAGE && !ignore.includes(s.id) && s.store.energy < s.store.getCapacity()
+    });
+  }
   public static findContainer(creep: Creep, ignore: string[] = []): Structure | null {
     return creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s) =>
