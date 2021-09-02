@@ -1,14 +1,15 @@
 Remote Harvesting Director
-    Remote harvesters build their own roads back to the anchor
-    Spawn in reservers with enough time before the previous expiry
     Container Harvesting?
     Larger Reservers?
     Contain construction logic for roads in remote room and through the anchor room
         Ensure correct path meeting up on borders
+        Should be done? double check
     Move scouting out to the scouting Director
-    Periodically review scouting data to find remote harvesting rooms
 Construction Director
-    Remove everything relating to Remote rooms
+    Check why roads to home sources and controller is not working
+    Look into extra movement space around the Storage?
+Source Director
+    Add creep to transfer all energy from anchor link to the store
 Add scouting Director
     Finding adjacent remote rooms
     Finding expansion rooms
@@ -18,3 +19,28 @@ Mineral Director
     Add additional scaling to MineralHarvester
     Container Mining?
     Road to Mineral
+    Add support to other Directors for spawning boosted creeps
+        Have code for Labs to handle making boosts available for fresh creeps
+Defense Director
+    Create Defensive walls and ramparts around each base
+    Create Ramparts over upgrader and harvesters (and harvester structures)
+    Create Ramparts that'll survive Nuke splash on important buildings (Spawns, Storage, Terminal)
+    Add Nuke marker detection
+        Move buildings that are economical to move, out of the splash zone
+        Reinforce ramparts on important buildings that cannot be moved
+        Stop spawning new creeps into the room in a short period before the Nuke lands
+    Classify attackers in room, to determine response
+        None needed than keeping towers fueled?
+        Need towers to hold fire due to enemy tank?
+        Spawn repairers to handle dismantlers?
+            Spawn melee attackers to defend within a rampart?
+        Check ranged attack capability (Need to them be careful with movement close to those creeps)
+        Need to spawn Combat Squad?
+    Spawn defender creep to kill attackers above a certain threat
+Automatic Expansion to New rooms
+    Search data from Scouting Director
+    if possible a new room should:
+        have 2 sources
+        have >= 2 remote mining rooms not already being harvested by another of our rooms
+        have a different mineral to ones we already have OR another high value mineral
+        be within a distance limit TBD
