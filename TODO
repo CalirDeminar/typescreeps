@@ -37,6 +37,16 @@ Defense Director
         Check ranged attack capability (Need to them be careful with movement close to those creeps)
         Need to spawn Combat Squad?
     Spawn defender creep to kill attackers above a certain threat
+Combat Director
+    Creation of Attack Missions: automatically or via a flag placed by the user
+    Scouting location if needed (Flag created in an unscouted room)
+    Design, Creation, Spawning and Boosting of a Combat Squad
+    Creating Haulers to carry loot, if Mission likely to generate loot
+    Handle Squad Movement to target room, engaging the target, and hauling the loot
+    Targets:
+        * Different difficulties of Invader Stronghold
+        * Player rooms as per a flag
+        * Power Banks
 Automatic Expansion to New rooms
     Search data from Scouting Director
     if possible a new room should:
