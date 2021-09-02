@@ -1,60 +1,64 @@
 import { CreepBase } from "roles/role.creep";
 import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
+import { UtilPosition } from "utils/util.position";
 
 export class RemoteHarvestingDirector {
+  private static isBoundary(x: number, y: number): boolean {
+    const boundaries = [0, 49];
+    return boundaries.includes(x) || boundaries.includes(y);
+  }
   private static getRoadsToAnchor(remRoom: RemoteDirectorStore): RoomPosition[] {
-    // TODO - remove boundary cells from this path being stored
     if (Object.keys(Game.rooms).includes(remRoom.roomName)) {
       const room = Game.rooms[remRoom.roomName];
       const anchor = Game.flags[remRoom.anchorId];
       const homeRoom = Game.rooms[anchor.pos.roomName];
-      const roads = room.find(FIND_SOURCES).reduce((acc: RoomPosition[], source: Source) => {
-        // base road on boundry to exit closest to source
-        const anchorToSourceExitDir = homeRoom.findExitTo(room.name);
-        const sourceToAnchorExitDir = room.findExitTo(homeRoom.name);
-        if (
-          anchorToSourceExitDir !== -2 &&
-          anchorToSourceExitDir !== -10 &&
-          sourceToAnchorExitDir !== -2 &&
-          sourceToAnchorExitDir !== -10
-        ) {
-          const sourceExit = source.pos.findClosestByPath(sourceToAnchorExitDir);
-          const anchorExit = source.pos.findClosestByPath(anchorToSourceExitDir);
-          if (anchorExit && sourceExit) {
-            const sourcePath = source.pos
-              .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
-              .map((s) => new RoomPosition(s.x, s.y, source.pos.roomName));
-            const anchorPath = anchor.pos
-              .findPathTo(anchorExit, { ignoreCreeps: true, swampCost: 1 })
-              .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
-            return acc.concat(sourcePath).concat(anchorPath);
+      const roads = room
+        .find(FIND_SOURCES)
+        .reduce((acc: RoomPosition[], source: Source) => {
+          // base road on boundry to exit closest to source
+          const anchorToSourceExitDir = homeRoom.findExitTo(room.name);
+          const sourceToAnchorExitDir = room.findExitTo(homeRoom.name);
+          if (
+            anchorToSourceExitDir !== -2 &&
+            anchorToSourceExitDir !== -10 &&
+            sourceToAnchorExitDir !== -2 &&
+            sourceToAnchorExitDir !== -10
+          ) {
+            const sourceExit = source.pos.findClosestByPath(sourceToAnchorExitDir);
+            const anchorExit = UtilPosition.getOtherSideOfExit(sourceExit || source.pos);
+            if (anchorExit && sourceExit) {
+              const sourcePath = source.pos
+                .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
+                .map((s) => new RoomPosition(s.x, s.y, source.pos.roomName));
+              const anchorPath = anchor.pos
+                .findPathTo(anchorExit, { ignoreCreeps: true, swampCost: 1 })
+                .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
+              return acc.concat(sourcePath).concat(anchorPath);
+            }
           }
-        }
-        return acc;
-      }, []);
+          return acc;
+        }, [])
+        .filter((p) => !this.isBoundary(p.x, p.y));
       return roads;
     }
-    console.log(`Default: ${remRoom.roomName}`);
     return [];
   }
   private static runConstruction(room: RemoteDirectorStore, index: number): void {
     // should generate roads from sources to anchor as soon as level requirement is met. This path calc should only be done once, and flagged as such
     // This is done for the remote room and the home room
 
-    // issue with currently marking path as having run, but not returning a path of positions for roads
-
-    // remote room roads should be being constructed by the remote harvesters
-
-    // TODO - this is not generating paths for all rooms. Some it is marking as done, but not giving a path
+    // TODO - test remote room -> home room road intersection. They should connect across the same set of transfer tiles
     const homeRoom = Game.rooms[room.homeRoomName];
     if (homeRoom) {
       const homeController = homeRoom.controller;
       const level = homeController ? homeController.level : 0;
-      if (!room.roadsPathed && this.getRoadsToAnchor(room) !== []) {
+      if (!room.roadsPathed) {
+        // if (true) {
+        const roads = this.getRoadsToAnchor(room);
         Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
           ...Memory.roomStore[room.homeRoomName].remoteDirector[index],
-          roadQueue: this.getRoadsToAnchor(room),
+          roadQueue: roads,
           roadsPathed: true
         };
       }
@@ -78,7 +82,7 @@ export class RemoteHarvestingDirector {
         if (!homeRoomHasConstructionSite) {
           const nextSite = room.roadQueue.find(
             (p) =>
-              p.roomName === remRoom.name &&
+              p.roomName === homeRoom.name &&
               new RoomPosition(p.x, p.y, p.roomName).lookFor(LOOK_STRUCTURES).length === 0
           );
           if (nextSite) {
@@ -354,21 +358,24 @@ export class RemoteHarvestingDirector {
       };
     }
     reservers.map((creep) => {
-      const controller = Game.rooms[room.roomName].controller;
-      if (creep.ticksToLive && controller) {
+      const controller = Game.rooms[room.roomName] ? Game.rooms[room.roomName].controller : undefined;
+      if (creep.ticksToLive) {
         switch (true) {
-          case creep.pos.roomName === creep.memory.targetRoom && !creep.pos.isNearTo(controller):
-            CreepBase.travelTo(creep, controller, "red");
+          case creep.pos.roomName != room.roomName:
+            CreepBase.travelToRoom(creep, "red", room.roomName);
             break;
-          case creep.pos.roomName === creep.memory.targetRoom && creep.pos.isNearTo(controller):
-            if (controller.reservation === undefined) {
+          case creep.pos.roomName === creep.memory.targetRoom && controller && !creep.pos.isNearTo(controller):
+            if (controller) {
+              CreepBase.travelTo(creep, controller, "red");
+            }
+            break;
+          case creep.pos.roomName === creep.memory.targetRoom && controller && creep.pos.isNearTo(controller):
+            if (controller && controller.reservation === undefined) {
               creep.reserveController(controller);
-            } else {
+            } else if (controller) {
               creep.attackController(controller);
             }
             break;
-          default:
-            CreepBase.travelToRoom(creep, "red", room.roomName);
         }
       }
     });
