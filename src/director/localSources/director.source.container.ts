@@ -78,9 +78,18 @@ export class SourceContainerDirector {
       this.setWorkingState(creep);
       const working = creep.memory.working;
       const container = working ? null : CreepBase.findContainer(creep);
+      const workParts = creep.body.filter((p) => p.type === WORK).length;
+      const repairContainer =
+        container && creep.store.getUsedCapacity() > workParts && container.hits < container.hitsMax - workParts * 100;
       switch (true) {
+        case repairContainer && container && creep.pos.isNearTo(container):
+          if (container) {
+            creep.repair(container);
+          }
         case working && creep.pos.isNearTo(source):
-          creep.harvest(source);
+          if (source.energy > 0) {
+            creep.harvest(source);
+          }
           break;
         case working:
           CreepBase.travelTo(creep, source, "orange");
@@ -88,7 +97,7 @@ export class SourceContainerDirector {
         case !working && container && creep.pos.isNearTo(container):
           if (container) {
             creep.transfer(container, RESOURCE_ENERGY);
-            if (creep.pos.isNearTo(source)) {
+            if (source.energy > 0 && creep.pos.isNearTo(source)) {
               creep.harvest(source);
             }
           }
@@ -148,7 +157,12 @@ export class SourceContainerDirector {
         creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
       switch (true) {
         case withdrawing && creep.pos.isNearTo(container):
-          creep.withdraw(container, RESOURCE_ENERGY);
+          if (container.store.getUsedCapacity() > Math.min(creep.store.getFreeCapacity(), 2000)) {
+            // only withdraw energy if going to fill in 1 go
+            //  reduces intents
+            //  stops 2 haulers fighting over energy store in container
+            creep.withdraw(container, RESOURCE_ENERGY);
+          }
           break;
         case withdrawing:
           CreepBase.travelTo(creep, container, "blue");
@@ -166,11 +180,9 @@ export class SourceContainerDirector {
     }
   }
   private static runHaulers(container: StructureContainer, anchor: Flag): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id).map(
-      (c) => {
-        this.runHauler(c, container);
-      }
-    );
+    _.filter(Game.creeps, (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id).map((c) => {
+      this.runHauler(c, container);
+    });
   }
   public static run(room: Room, source: Source, container: StructureContainer, anchor: Flag): void {
     this.spawnCreeps(room, source, container, anchor);

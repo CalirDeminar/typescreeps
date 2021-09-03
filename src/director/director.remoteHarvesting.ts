@@ -223,7 +223,7 @@ export class RemoteHarvestingDirector {
       const working = creep.memory.working;
       switch (true) {
         case working && source && creep.pos.isNearTo(source.pos):
-          if (source) {
+          if (source && source.energy > 0) {
             creep.harvest(source);
           }
           break;
@@ -256,7 +256,9 @@ export class RemoteHarvestingDirector {
             if (creep.pos.isNearTo(storeTarget)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
               if (creep.pos.isNearTo(source)) {
-                creep.harvest(source);
+                if (source.energy > 0) {
+                  creep.harvest(source);
+                }
                 creep.memory.working = true;
               }
             } else {
