@@ -106,14 +106,15 @@ export class ConstructionDirector {
       const level = room.controller.level;
       const store = Memory.roomStore[room.name].constructionDirector;
       const terrain = room.getTerrain();
-      this.nextStructure(
-        STRUCTURE_EXTENSION,
-        structures,
-        Constants.maxExtensions[level],
-        store.extensionTemplate,
-        terrain,
-        room.name
-      ) ||
+      const built =
+        this.nextStructure(
+          STRUCTURE_EXTENSION,
+          structures,
+          Constants.maxExtensions[level],
+          store.extensionTemplate,
+          terrain,
+          room.name
+        ) ||
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
@@ -141,6 +142,9 @@ export class ConstructionDirector {
         this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
         this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
         this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor);
+      if (built) {
+        Memory.roomStore[room.name].buildingThisTick = true;
+      }
     }
   }
   private static buildSites(room: Room): void {

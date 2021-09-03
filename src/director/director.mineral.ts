@@ -1,6 +1,7 @@
 import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
+import { UtilPosition } from "utils/util.position";
 export class MineralDirector {
   private static operate(room: Room, terminal: StructureTerminal, mineral: Mineral): void {
     const mineralHarvester = _.filter(
@@ -71,7 +72,7 @@ export class MineralDirector {
       .map((material) => {
         const volume = store[material];
         const energy = store[RESOURCE_ENERGY];
-        if (energy > 1000) {
+        if (energy > 1000 && volume > 200) {
           const order = Game.market
             .getAllOrders(
               (order) => order.resourceType === material && order.type === ORDER_BUY && order.remainingAmount > volume
@@ -86,6 +87,22 @@ export class MineralDirector {
           }
         }
       });
+  }
+  private static createMineralContainer(room: Room, mineral: Mineral): void {
+    const hasContainer =
+      mineral.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }).length >
+        0 ||
+      mineral.pos.findInRange(FIND_CONSTRUCTION_SITES, 1, { filter: (s) => s.structureType === STRUCTURE_CONTAINER })
+        .length > 0;
+    if (!hasContainer && !Memory.roomStore[room.name].buildingThisTick) {
+      const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+      UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos).createConstructionSite(STRUCTURE_CONTAINER);
+    }
+  }
+  private static createRoadsToMineral(room: Room, mineral: Mineral): void {
+    // need to set done flag here
+    // need to cache road route in director
+    // put down road sites if no other construction sites
   }
   public static run(room: Room) {
     const correctLevel = room.controller && room.controller.level >= 6;

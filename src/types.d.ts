@@ -85,7 +85,6 @@ declare global {
     routeRoadTemplate: RoomPosition[];
     extensionTemplate: RoomPosition[];
     towerTemplate: RoomPosition[];
-    remoteTemplate: RoomPosition[];
     storage: RoomPosition | null;
     terminal: RoomPosition | null;
     extractor: RoomPosition | null;
@@ -103,6 +102,7 @@ declare global {
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
+    buildingThisTick: boolean;
     remoteRooms: { [roomid: string]: remoteRoom };
   }
   interface Memory {

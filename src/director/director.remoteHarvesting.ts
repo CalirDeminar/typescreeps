@@ -78,8 +78,7 @@ export class RemoteHarvestingDirector {
           }
         }
         // home room
-        const homeRoomHasConstructionSite = homeRoom.find(FIND_CONSTRUCTION_SITES).length > 0;
-        if (!homeRoomHasConstructionSite) {
+        if (!Memory.roomStore[homeRoom.name].buildingThisTick) {
           const nextSite = room.roadQueue.find(
             (p) =>
               p.roomName === homeRoom.name &&

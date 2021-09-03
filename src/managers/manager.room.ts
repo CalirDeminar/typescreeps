@@ -14,6 +14,7 @@ export class RoomManager {
     minerals: [],
     controllerId: "",
     nextSpawn: null,
+    buildingThisTick: false,
     remoteRooms: {},
     sourceDirector: [],
     constructionDirector: {
@@ -23,7 +24,6 @@ export class RoomManager {
       internalRoadTemplate: [],
       routeRoadTemplate: [],
       extensionTemplate: [],
-      remoteTemplate: [],
       storage: null,
       terminal: null,
       extractor: null,
@@ -54,6 +54,7 @@ export class RoomManager {
         minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id),
         controllerId: room.controller ? room.controller.id : "",
         nextSpawn: null,
+        buildingThisTick: false,
         remoteRooms: {},
         sourceDirector: [],
         constructionDirector: {
@@ -63,7 +64,6 @@ export class RoomManager {
           internalRoadTemplate: [],
           routeRoadTemplate: [],
           extensionTemplate: [],
-          remoteTemplate: [],
           storage: null,
           terminal: null,
           extractor: null,
@@ -170,8 +170,17 @@ export class RoomManager {
       };
     }
   }
+  private static setRoomFlags(room: Room): void {
+    if (Object.keys(Memory.roomStore).includes(room.name)) {
+      Memory.roomStore[room.name] = {
+        ...Memory.roomStore[room.name],
+        buildingThisTick: room.find(FIND_CONSTRUCTION_SITES).length > 0
+      };
+    }
+  }
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
+      this.setRoomFlags(room);
       let lastCpu = Game.cpu.getUsed();
       let cpu = lastCpu;
       this.memorySetup(room);

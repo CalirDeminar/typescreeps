@@ -11,11 +11,13 @@ export class SourceDirector {
     return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "link")[0];
   }
   private static getContainer(source: Source): StructureContainer | null {
-    return source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "container")[0];
+    return source.pos
+      .findInRange<StructureContainer>(FIND_STRUCTURES, 1)
+      .filter((s) => s.structureType === "container")[0];
   }
   private static doPlaceStructure(pos: RoomPosition, type: BuildableStructureConstant): boolean {
-    if(pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0){
-      return pos.createConstructionSite(type) === 0;
+    if (pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0) {
+      return pos.createConstructionSite(type) === OK;
     }
     return false;
   }
@@ -34,16 +36,33 @@ export class SourceDirector {
       const shouldHaveLinks = Constants.maxLinks[level] > 0;
       if (!container && shouldHaveContainers && !shouldHaveLinks) {
         console.log("Placing Containers");
-        this.doPlaceStructure(new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName), STRUCTURE_CONTAINER) ||
-          this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
+        const built =
+          this.doPlaceStructure(
+            new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName),
+            STRUCTURE_CONTAINER
+          ) || this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
+        if (built) {
+          Memory.roomStore[room.name].buildingThisTick = true;
+        }
       } else {
         const canHaveNewLink =
           shouldHaveLinks &&
           room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_LINK }).length <
             Constants.maxLinks[level];
         if (!link && shouldHaveLinks && canHaveNewLink) {
-          this.doPlaceStructure(new RoomPosition(anchor.pos.x -1, anchor.pos.y -1, anchor.pos.roomName), STRUCTURE_LINK) ||
-            UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, container ? [container.pos] : []).createConstructionSite(STRUCTURE_LINK);
+          const built =
+            this.doPlaceStructure(
+              new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 1, anchor.pos.roomName),
+              STRUCTURE_LINK
+            ) ||
+            UtilPosition.getClosestSurroundingTo(
+              source.pos,
+              anchor.pos,
+              container ? [container.pos] : []
+            ).createConstructionSite(STRUCTURE_LINK) === OK;
+          if (built) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
         }
         if (link && container) {
           container.destroy();
