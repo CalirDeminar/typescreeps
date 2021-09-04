@@ -24,11 +24,15 @@ Mineral Director
     Handle getting hold of energy from storage to fund market transactions
 Defense Director
     * Automatic safe mode triggering when *core buildings take damage
-    Create Defensive walls and ramparts around each base
+    * Have all creeps flee from attack capable hostile creeps if any are within N range
+    * Create Defensive walls and ramparts around each base
     Create Ramparts over upgrader and harvesters (and harvester structures)
     Add Repairer Creep to repair ramparts & structures. More efficient than Tower.
         Update Towers to only repair in specific scenarios
-    Create Ramparts that'll survive Nuke splash on important buildings (Spawns, Storage, Terminal)
+    Create Ramparts that will survive Nuke splash on important buildings (Spawns, Storage, Terminal)
+    Periodically asses the tank of all enemy targets
+        Only attack with towers if the tank can be broken
+        * Handle damage resistance, healing, volley damage and Creep body part placement in tanking calculations
     Add Nuke marker detection
         Move buildings that are economical to move, out of the splash zone
         Reinforce ramparts on important buildings that cannot be moved
