@@ -19,6 +19,9 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.storage = ConstructionTemplates.storage(room);
     Memory.roomStore[room.name].constructionDirector.terminal = ConstructionTemplates.terminal(room);
     Memory.roomStore[room.name].constructionDirector.extractor = ConstructionTemplates.extractor(room);
+    Memory.roomStore[room.name].constructionDirector.extractorContainer = ConstructionTemplates.extractorContainer(
+      room
+    );
     Memory.roomStore[room.name].constructionDirector.anchorLink = ConstructionTemplates.anchorLink(room);
     Memory.roomStore[room.name].constructionDirector.sourceLinks = ConstructionTemplates.sourceLinks(room);
     Memory.roomStore[room.name].constructionDirector.buildingsCreated = true;
@@ -30,6 +33,7 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = [
       ...new Set(ConstructionTemplates.sourceRoads(room).concat(ConstructionTemplates.controllerRoads(room)))
     ];
+    Memory.roomStore[room.name].constructionDirector.mineralRoadTemplate = ConstructionTemplates.mineralRoads(room);
     Memory.roomStore[room.name].constructionDirector.roadsCreated = true;
   }
   private static populate(room: Room) {
@@ -138,7 +142,21 @@ export class ConstructionDirector {
         ) ||
         this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
         this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
-        this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor);
+        this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor) ||
+        this.nextSingleStructure(
+          STRUCTURE_CONTAINER,
+          structures,
+          Constants.maxContainers[level],
+          store.extractorContainer
+        ) ||
+        this.nextStructure(
+          STRUCTURE_ROAD,
+          structures,
+          Constants.maxExtractor[level] > 0 ? store.mineralRoadTemplate.length : 0,
+          store.mineralRoadTemplate,
+          terrain,
+          room.name
+        );
       if (built) {
         Memory.roomStore[room.name].buildingThisTick = true;
       }

@@ -83,11 +83,13 @@ declare global {
     containerTemplate: RoomPosition[];
     internalRoadTemplate: RoomPosition[];
     routeRoadTemplate: RoomPosition[];
+    mineralRoadTemplate: RoomPosition[];
     extensionTemplate: RoomPosition[];
     towerTemplate: RoomPosition[];
     storage: RoomPosition | null;
     terminal: RoomPosition | null;
     extractor: RoomPosition | null;
+    extractorContainer: RoomPosition | null;
     anchorLink: RoomPosition | null;
     sourceLinks: RoomPosition[];
     baseTemplate: {}[];

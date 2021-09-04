@@ -3,7 +3,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
 import { UtilPosition } from "utils/util.position";
 export class MineralDirector {
-  private static operate(room: Room, terminal: StructureTerminal, mineral: Mineral): void {
+  private static spawnMineralHarvester(room: Room, container: StructureContainer, mineral: Mineral): void {
     const mineralHarvester = _.filter(
       Game.creeps,
       (c) => c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id
@@ -21,39 +21,77 @@ export class MineralDirector {
           working: false,
           born: Game.time,
           targetSource: mineral.id,
-          dropOffTarget: terminal.id,
+          dropOffTarget: container.id,
           homeRoom: room.name,
           targetRoom: room.name
         }
       };
     }
-    mineralHarvester.map((c) => {
-      const empty = c.store.getUsedCapacity() === 0;
-      const full =
-        c.store.getFreeCapacity() < c.body.filter((p) => p.type === WORK).length * 1 ||
-        (c.ticksToLive && c.ticksToLive < 150);
-      const inRangeOfMineral = c.pos.getRangeTo(mineral) <= 1;
-      const inRangeOfTerminal = c.pos.getRangeTo(terminal) <= 1;
-      switch (true) {
-        case inRangeOfMineral && !full:
-          const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1)[0];
-          if (extractor.cooldown === 0) {
-            c.harvest(mineral);
-          }
-          break;
-        case !inRangeOfMineral && !full:
-          CreepBase.travelTo(c, mineral, "white");
-          break;
-        case !inRangeOfTerminal && full:
-          CreepBase.travelTo(c, terminal, "white");
-          break;
-        case inRangeOfTerminal && full:
-          c.transfer(terminal, mineral.mineralType);
-          break;
-        default:
-          break;
+  }
+  private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
+    if (creep.ticksToLive) {
+      const full = creep.store.getFreeCapacity() < creep.body.filter((p) => p.type === WORK).length * 1;
+      const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1)[0];
+      const extractorOffCooldown = extractor.cooldown === 0;
+      const inRangeOfContainer = creep.pos.getRangeTo(container) === 0;
+      if (!inRangeOfContainer) {
+        CreepBase.travelTo(creep, container, "white");
+      } else {
+        if (full) {
+          creep.transfer(container, mineral.mineralType);
+        }
+        if (extractorOffCooldown) {
+          creep.harvest(mineral);
+        }
       }
-    });
+    }
+  }
+  private static runHauler(
+    creep: Creep,
+    container: StructureContainer,
+    terminal: StructureTerminal,
+    mineralType: MineralConstant
+  ): void {
+    if (creep.ticksToLive) {
+      const hasCargo = creep.store.getUsedCapacity() > 0;
+      if (hasCargo) {
+        // dump cargo
+        const nearTerminal = creep.pos.isNearTo(terminal);
+        if (nearTerminal) {
+          creep.transfer(terminal, mineralType);
+        } else {
+          CreepBase.travelTo(creep, terminal.pos, "blue");
+        }
+      } else {
+        // pick up cargo
+        const nearContainer = creep.pos.isNearTo(container);
+        if (nearContainer) {
+          if (container.store.getUsedCapacity() >= creep.store.getFreeCapacity() && creep.ticksToLive > 100) {
+            creep.withdraw(container, mineralType);
+          }
+        } else {
+          CreepBase.travelTo(creep, container.pos, "blue");
+        }
+      }
+    }
+  }
+  private static operate(
+    room: Room,
+    terminal: StructureTerminal,
+    mineral: Mineral,
+    container: StructureContainer
+  ): void {
+    const mineralHarvester = _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id
+    );
+    const mineralHauler = _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "mineralHauler" && c.memory.workTarget === container.id
+    );
+    this.spawnMineralHarvester(room, container, mineral);
+    mineralHarvester.map((c) => this.runHarvester(c, container, mineral));
+    mineralHauler.map((c) => this.runHauler(c, container, terminal, mineral.mineralType));
   }
   private static runTerminalOrders(terminal: StructureTerminal): void {
     const store = terminal.store;
@@ -88,37 +126,34 @@ export class MineralDirector {
         }
       });
   }
-  private static createMineralContainer(room: Room, mineral: Mineral): void {
-    const hasContainer =
-      mineral.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }).length >
-        0 ||
-      mineral.pos.findInRange(FIND_CONSTRUCTION_SITES, 1, { filter: (s) => s.structureType === STRUCTURE_CONTAINER })
-        .length > 0;
-    if (!hasContainer && !Memory.roomStore[room.name].buildingThisTick) {
-      const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
-      UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos).createConstructionSite(STRUCTURE_CONTAINER);
-    }
+  private static getTerminal(room: Room): StructureTerminal | null {
+    return room.find<StructureTerminal>(FIND_MY_STRUCTURES, {
+      filter: (c) => c.structureType === STRUCTURE_TERMINAL
+    })[0];
   }
-  private static createRoadsToMineral(room: Room, mineral: Mineral): void {
-    // need to set done flag here
-    // need to cache road route in director
-    // put down road sites if no other construction sites
+
+  private static getExtractor(room: Room): StructureExtractor | null {
+    return room.find<StructureExtractor>(FIND_MY_STRUCTURES, {
+      filter: (c) => c.structureType === STRUCTURE_EXTRACTOR
+    })[0];
+  }
+  private static getContainer(room: Room, mineral: Mineral | null): StructureContainer | null {
+    return room.find<StructureContainer>(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && mineral && s.pos.isNearTo(mineral)
+    })[0];
   }
   public static run(room: Room) {
     const correctLevel = room.controller && room.controller.level >= 6;
-    const terminal = room.find<StructureTerminal>(FIND_MY_STRUCTURES, {
-      filter: (c) => c.structureType === STRUCTURE_TERMINAL
-    })[0];
-    const extractor = room.find<StructureExtractor>(FIND_MY_STRUCTURES, {
-      filter: (c) => c.structureType === STRUCTURE_EXTRACTOR
-    })[0];
-    const mineral = extractor ? extractor.pos.lookFor(LOOK_MINERALS)[0] : false;
+    const terminal = this.getTerminal(room);
+    const extractor = this.getExtractor(room);
+    const mineral = extractor ? extractor.pos.lookFor(LOOK_MINERALS)[0] : null;
+    const container = this.getContainer(room, mineral);
     if (terminal && Game.time % 500 === 0) {
       console.log("Running Terminal Sales");
       this.runTerminalOrders(terminal);
     }
-    if (correctLevel && terminal && extractor && mineral) {
-      this.operate(room, terminal, mineral);
+    if (correctLevel && terminal && extractor && mineral && container) {
+      this.operate(room, terminal, mineral, container);
     }
   }
 }

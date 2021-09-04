@@ -77,6 +77,11 @@ export class ConstructionTemplates {
     const mineral = room.find(FIND_MINERALS)[0];
     return new RoomPosition(mineral.pos.x, mineral.pos.y, mineral.pos.roomName);
   }
+  public static extractorContainer(room: Room): RoomPosition {
+    const mineral = room.find(FIND_MINERALS)[0];
+    const anchor = this.getAnchor(room);
+    return UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos);
+  }
   private static getRoadMask(room: Room): RoomPosition[] {
     const store = Memory.roomStore[room.name].constructionDirector;
     return store.containerTemplate

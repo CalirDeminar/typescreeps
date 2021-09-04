@@ -10,7 +10,7 @@ export class Constants {
   public static haulerVolume = 200;
   public static maxExtensions = [0, 0, 5, 10, 20, 30, 40, 50, 60];
   public static maxTowers = [0, 0, 0, 1, 1, 2, 2, 3, 6];
-  public static maxContainers = [0, 0, 0, 3, 3, 3, 3, 3, 3];
+  public static maxContainers = [0, 0, 0, 3, 3, 3, 4, 4, 4];
   public static maxStorage = [0, 0, 0, 0, 1, 1, 1, 1, 1];
   public static maxTerminal = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static maxExtractor = [0, 0, 0, 0, 0, 0, 1, 1, 1];
