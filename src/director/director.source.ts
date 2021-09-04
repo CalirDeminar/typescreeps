@@ -29,7 +29,7 @@ export class SourceDirector {
     link: StructureLink | null
   ): void {
     const controller = room.controller;
-    const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0;
+    const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0 || Memory.roomStore[room.name].buildingThisTick;
     if (controller && !activeSite) {
       const level = controller.level;
       const shouldHaveContainers = Constants.maxContainers[level] > 0 && !link;

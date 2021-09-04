@@ -180,40 +180,58 @@ export class RoomManager {
   }
   public static run(room: Room): void {
     if (room.controller && room.controller.my) {
+      this.memorySetup(room);
       this.setRoomFlags(room);
       let lastCpu = Game.cpu.getUsed();
       let cpu = lastCpu;
-      this.memorySetup(room);
       ConstructionDirector.run(room);
       cpu = Game.cpu.getUsed();
+      const constructionCpu = cpu - lastCpu;
       // console.log(`Construction Director: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       MineralDirector.run(room);
       cpu = Game.cpu.getUsed();
+      const mineralCpu = cpu - lastCpu;
       // console.log(`Mineral Director: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       RemoteManager.run(room);
       cpu = Game.cpu.getUsed();
+      const remoteScoutingCpu = cpu - lastCpu;
       // console.log(`Remote Manager: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       this.ManageBuilders(room);
       this.ManageUpgraders(room);
       cpu = Game.cpu.getUsed();
+      const buildingUpgraderCpu = cpu - lastCpu;
       // console.log(`Manage Builders & Upgraders: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       RemoteHarvestingDirector.run(room);
       cpu = Game.cpu.getUsed();
+      const remoteHarvestingCpu = cpu - lastCpu;
       // console.log(`Remote Harvesting Director: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       SourceDirector.run(room);
       cpu = Game.cpu.getUsed();
+      const sourceCpu = cpu - lastCpu;
       // console.log(`Source Director: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       DefenseManager.run(room);
       cpu = Game.cpu.getUsed();
+      const defenseCpu = cpu - lastCpu;
       // console.log(`Defense Manager: ${cpu.toPrecision(5)}`);
       lastCpu = cpu;
       this.ManageHaulers(room);
+      if (Game.time % 5 === 0) {
+        // console.log(
+        //   `CPU Usage: ConstructionDirector: ${constructionCpu.toPrecision(3)}` +
+        //     `  Mineral Director: ${mineralCpu.toPrecision(3)}` +
+        //     ` RemoteManager(Scouting): ${remoteScoutingCpu.toPrecision(3)}` +
+        //     ` Building+Upgraders: ${buildingUpgraderCpu.toPrecision(3)}` +
+        //     `  RemoteHarvestingDirector: ${remoteHarvestingCpu.toPrecision(3)}` +
+        //     `  SourceDirector: ${sourceCpu.toPrecision(3)}` +
+        //     `  DefenseDirector: ${defenseCpu.toPrecision(3)}`
+        // );
+      }
       const toSpawn = Memory.roomStore[room.name].nextSpawn;
       if (toSpawn != null) {
         const mainSpawn = room.find(FIND_MY_SPAWNS)[0];

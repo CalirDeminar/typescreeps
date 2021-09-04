@@ -107,7 +107,17 @@ export class ConstructionTemplates {
     return room
       .find(FIND_SOURCES)
       .map((s) => {
-        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1, ignore: mask });
+        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1 });
+        return path.map((p) => new RoomPosition(p.x, p.y, room.name));
+      })
+      .reduce((acc, arr) => acc.concat(arr), []);
+  }
+  public static mineralRoads(room: Room): RoomPosition[] {
+    const anchor = this.getAnchor(room);
+    return room
+      .find(FIND_MINERALS)
+      .map((s) => {
+        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1 });
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })
       .reduce((acc, arr) => acc.concat(arr), []);

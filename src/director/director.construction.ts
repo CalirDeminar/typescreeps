@@ -24,14 +24,11 @@ export class ConstructionDirector {
     Memory.roomStore[room.name].constructionDirector.buildingsCreated = true;
   }
   private static populateRoadStore(room: Room): void {
-    Memory.roomStore[room.name].constructionDirector.internalRoadTemplate =
-      ConstructionTemplates.surroundingRoads(room);
+    Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = ConstructionTemplates.surroundingRoads(
+      room
+    );
     Memory.roomStore[room.name].constructionDirector.routeRoadTemplate = [
-      ...new Set(
-        ConstructionTemplates.sourceRoads(room)
-          .concat(ConstructionTemplates.controllerRoads(room))
-          .concat(ConstructionTemplates.remoteSourceRoads(room))
-      )
+      ...new Set(ConstructionTemplates.sourceRoads(room).concat(ConstructionTemplates.controllerRoads(room)))
     ];
     Memory.roomStore[room.name].constructionDirector.roadsCreated = true;
   }
@@ -124,18 +121,18 @@ export class ConstructionDirector {
           room.name
         ) ||
         this.nextStructure(
-          STRUCTURE_ROAD,
-          structures,
-          level > 3 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
-          store.routeRoadTemplate,
-          terrain,
-          room.name
-        ) ||
-        this.nextStructure(
           STRUCTURE_TOWER,
           structures,
           Constants.maxTowers[level],
           store.towerTemplate,
+          terrain,
+          room.name
+        ) ||
+        this.nextStructure(
+          STRUCTURE_ROAD,
+          structures,
+          level > 3 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
+          store.routeRoadTemplate,
           terrain,
           room.name
         ) ||

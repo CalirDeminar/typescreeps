@@ -216,6 +216,7 @@ export class RemoteHarvestingDirector {
   }
   private static runHarvester(creep: Creep, anchor: Flag, constructionSite: ConstructionSite | null): void {
     if (creep.ticksToLive) {
+      // TODO - periodic huge CPU spike from this function on the % 100 tick mark
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
       this.setWorkingState(creep);
       CreepBase.maintainRoad(creep);
@@ -251,10 +252,10 @@ export class RemoteHarvestingDirector {
             CreepBase.findContainer(creep) ||
             CreepBase.findSpawn(creep) ||
             CreepBase.findExtension(creep);
-          if (storeTarget && source) {
+          if (storeTarget) {
             if (creep.pos.isNearTo(storeTarget)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
-              if (creep.pos.isNearTo(source)) {
+              if (source && creep.pos.isNearTo(source)) {
                 if (source.energy > 0) {
                   creep.harvest(source);
                 }
@@ -382,12 +383,42 @@ export class RemoteHarvestingDirector {
     });
   }
   private static runRoom(room: RemoteDirectorStore, index: number) {
+    let cpu = Game.cpu.getUsed();
+    let lastCpu = cpu;
     this.updateRoomFromIntel(room, index);
+    cpu = Game.cpu.getUsed();
+    const updateRoomsCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.runConstruction(room, index);
+    cpu = Game.cpu.getUsed();
+    const constructionCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.spawnHarvesters(room);
+    cpu = Game.cpu.getUsed();
+    const spawnHarvesterCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.runHarvesters(room);
+    cpu = Game.cpu.getUsed();
+    const runHarvesterCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.runDefense(room);
+    cpu = Game.cpu.getUsed();
+    const runDefenseCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.runReserver(room);
+    cpu = Game.cpu.getUsed();
+    const runReserverCpu = cpu - lastCpu;
+    if (Game.time % 5 === 0) {
+      // console.log(
+      //   `Run Remote Room CPU Usage:` +
+      //     `Update Rooms: ${updateRoomsCpu.toPrecision(3)} ` +
+      //     `Run Construction: ${constructionCpu.toPrecision(3)} ` +
+      //     `Spawn Harvester CPU: ${spawnHarvesterCpu.toPrecision(3)}  ` +
+      //     `Run Harvester CPU: ${runHarvesterCpu.toPrecision(3)}  ` +
+      //     `Run Defense Cpu: ${runDefenseCpu.toPrecision(3)} ` +
+      //     `Run Reserver CPU: ${runReserverCpu.toPrecision(3)}`
+      // );
+    }
   }
   private static getRemoteRooms(room: Room): RemoteDirectorStore[] {
     return _.map(Memory.roomStore[room.name].remoteDirector, (r) => r);

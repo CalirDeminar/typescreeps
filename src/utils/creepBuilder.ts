@@ -3,7 +3,7 @@ export class CreepBuilder {
     const noParts = Math.floor(energy / 250);
     let body: (WORK | CARRY | MOVE)[] = [];
     for (let i = 0; i < noParts; i++) {
-      body = body.concat([WORK, CARRY, CARRY, MOVE]);
+      body = body.concat([WORK, CARRY, MOVE, MOVE]);
     }
     return body;
   }
