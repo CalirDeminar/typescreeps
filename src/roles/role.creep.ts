@@ -48,7 +48,7 @@ export class CreepBase {
   }
   public static flee(creep: Creep, hostile: Creep) {
     if (creep.fatigue <= 0) {
-      let path = PathFinder.search(creep.pos, hostile.pos, { flee: true }).path;
+      let path = PathFinder.search(creep.pos, { pos: hostile.pos, range: 50 }, { flee: true }).path;
       creep.moveByPath(path);
     }
   }
@@ -56,8 +56,10 @@ export class CreepBase {
     const hostile = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
     if (hostile === null) {
       return false;
-    } else {
+    } else if (creep.fatigue <= 0) {
       this.flee(creep, hostile);
+      return true;
+    } else {
       return true;
     }
   }

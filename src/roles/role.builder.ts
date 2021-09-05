@@ -69,6 +69,12 @@ export class Builder extends CreepBase {
           } else {
             creep.withdraw(sourceTarget, RESOURCE_ENERGY);
           }
+        } else {
+          const anchor = creep.room.find(FIND_FLAGS, { filter: (f) => f.name === `${creep.room.name}-Anchor` })[0];
+          if (anchor && creep.pos.getRangeTo(anchor) <= 3) {
+            const path = PathFinder.search(creep.pos, { pos: anchor.pos, range: 4 }, { flee: true }).path;
+            creep.moveByPath(path);
+          }
         }
       }
     }
