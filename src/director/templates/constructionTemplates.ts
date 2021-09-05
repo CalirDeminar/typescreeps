@@ -194,4 +194,21 @@ export class ConstructionTemplates {
       return UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, containers);
     });
   }
+  public static ramparts(room: Room): RoomPosition[] {
+    const anchor = this.getAnchor(room);
+    const rtn = _.range(-10, 11)
+      .map((x) => {
+        return _.range(-10, 11)
+          .map((y) => {
+            if (Math.abs(x) + Math.abs(y) === 10) {
+              return new RoomPosition(anchor.pos.x + x, anchor.pos.y + y, room.name);
+            } else {
+              return null;
+            }
+          })
+          .filter((p): p is RoomPosition => p !== null);
+      })
+      .reduce((acc, s) => acc.concat(s), []);
+    return rtn;
+  }
 }

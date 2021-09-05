@@ -4,7 +4,10 @@ export class DefenseManager {
     towers.map((t) => {
       if (t.structureType === STRUCTURE_TOWER && t.store[RESOURCE_ENERGY] / 1000 > 0.5) {
         const target = t.room
-          .find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax - 500 && s.hits < 200_000 })
+          .find(FIND_STRUCTURES, {
+            filter: (s) =>
+              s.hits < s.hitsMax - 500 && s.hits < (s.structureType === STRUCTURE_RAMPART ? 10_000 : 200_000)
+          })
           .sort((a, b) => a.hits - b.hits)[0];
         if (target) {
           t.repair(target);
