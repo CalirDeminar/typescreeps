@@ -86,10 +86,13 @@ export class RemoteHarvestingDirector {
             (p) =>
               p.roomName === homeRoom.name &&
               Object.keys(Game.rooms).includes(p.roomName) &&
-              new RoomPosition(p.x, p.y, p.roomName).lookFor(LOOK_STRUCTURES).length === 0
+              new RoomPosition(p.x, p.y, p.roomName)
+                .lookFor(LOOK_STRUCTURES)
+                .filter((s) => s.structureType !== STRUCTURE_RAMPART).length === 0
           );
           if (nextSite) {
-            homeRoom.createConstructionSite(nextSite.x, nextSite.y, STRUCTURE_ROAD);
+            const rtn = homeRoom.createConstructionSite(nextSite.x, nextSite.y, STRUCTURE_ROAD);
+            Memory.roomStore[homeRoom.name].buildingThisTick = rtn === OK;
           }
         }
 
@@ -229,6 +232,10 @@ export class RemoteHarvestingDirector {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       // TODO - periodic huge CPU spike from this function on the % 100 tick mark
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
+      const remRoom = Memory.roomStore[creep.memory.homeRoom].remoteDirector.find(
+        (r) => r.roomName === creep.memory.targetRoom
+      );
+      const targetRoomHostile = remRoom ? remRoom.hostileCreepCount > 0 : false;
       this.setWorkingState(creep);
       CreepBase.maintainRoad(creep);
       const working = creep.memory.working;
@@ -243,7 +250,7 @@ export class RemoteHarvestingDirector {
             CreepBase.travelTo(creep, source.pos, "orange");
           }
           break;
-        case working && creep.pos.roomName !== creep.memory.targetRoom:
+        case working && !targetRoomHostile && creep.pos.roomName !== creep.memory.targetRoom:
           CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
           break;
         case !working && creep.pos.roomName !== creep.memory.homeRoom:
