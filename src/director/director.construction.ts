@@ -152,19 +152,10 @@ export class ConstructionDirector {
     const creeps = _.filter(Game.creeps, (c) => c.memory.role === "builder");
     creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
   }
-  private static simulateRamparts(room: Room): void {
-    const controller = room.controller;
-    if (controller && controller.level >= 4) {
-      ConstructionTemplates.ramparts(room).map((p) => {
-        room.createConstructionSite(p, STRUCTURE_RAMPART);
-      });
-    }
-  }
   public static run(room: Room): void {
     this.setAnchor(room);
     this.populate(room);
     this.nextSite(room);
     this.buildSites(room);
-    this.simulateRamparts(room);
   }
 }

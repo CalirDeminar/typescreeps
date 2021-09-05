@@ -8,11 +8,11 @@ export class SourceDirector {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
   }
   private static getLink(source: Source): StructureLink | null {
-    return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1).filter((s) => s.structureType === "link")[0];
+    return source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 2).filter((s) => s.structureType === "link")[0];
   }
   private static getContainer(source: Source): StructureContainer | null {
     return source.pos
-      .findInRange<StructureContainer>(FIND_STRUCTURES, 1)
+      .findInRange<StructureContainer>(FIND_STRUCTURES, 2)
       .filter((s) => s.structureType === "container")[0];
   }
   private static doPlaceStructure(pos: RoomPosition, type: BuildableStructureConstant): boolean {
@@ -40,7 +40,14 @@ export class SourceDirector {
           this.doPlaceStructure(
             new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName),
             STRUCTURE_CONTAINER
-          ) || this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
+          ) ||
+          this.doPlaceStructure(
+            UtilPosition.getClosestSurroundingTo(
+              UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos),
+              anchor.pos
+            ),
+            STRUCTURE_CONTAINER
+          );
         if (built) {
           console.log("built container");
           Memory.roomStore[room.name].buildingThisTick = true;
@@ -57,7 +64,7 @@ export class SourceDirector {
               STRUCTURE_LINK
             ) ||
             UtilPosition.getClosestSurroundingTo(
-              source.pos,
+              UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos),
               anchor.pos,
               container ? [container.pos] : []
             ).createConstructionSite(STRUCTURE_LINK) === OK;

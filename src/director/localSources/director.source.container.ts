@@ -7,7 +7,7 @@ export class SourceContainerDirector {
     return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
   }
   private static shouldReplaceCreeps(creeps: Creep[], max: number): boolean {
-    return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 100));
+    return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 200));
   }
   private static spawnStaticHarvester(room: Room, source: Source, container: StructureContainer): boolean {
     const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
@@ -38,9 +38,13 @@ export class SourceContainerDirector {
   private static spawnHaulers(room: Room, container: StructureContainer, anchor: Flag): boolean {
     const allHaulers = _.filter(Game.creeps, (c: Creep) => c.memory.role === "hauler");
     const activeHaulers = this.getCreepRoleAt("hauler", container.id);
-    const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, Constants.maxHaulers);
+    const maxHaulers = room.energyCapacityAvailable > 1000 ? 1 : Constants.maxHaulers;
+    const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, maxHaulers);
     if (shouldReplaceHauler) {
-      const toSpend = allHaulers.length < 1 ? 200 : Math.min(room.energyCapacityAvailable, 1000);
+      const toSpend =
+        allHaulers.length < 1
+          ? Math.max(200, Math.min(room.energyAvailable, 1000))
+          : Math.min(room.energyCapacityAvailable, 1000);
       Memory.roomStore[room.name].nextSpawn = {
         template: CreepBuilder.buildHaulingCreep(toSpend),
         memory: {
@@ -92,7 +96,7 @@ export class SourceContainerDirector {
           }
           break;
         case working:
-          CreepBase.travelTo(creep, source, "orange");
+          CreepBase.travelTo(creep, container ? container.pos : source, "orange");
           break;
         case !working && container && creep.pos.isNearTo(container):
           if (container) {

@@ -119,7 +119,7 @@ export class CoreDirector {
       if (
         currentLinkHaulers.length < 1 ||
         (currentLinkHaulers.length === 1 &&
-          _.filter(currentLinkHaulers, (c) => c.ticksToLive && c.ticksToLive < 50) &&
+          _.filter(currentLinkHaulers, (c) => c.ticksToLive && c.ticksToLive < 50).length > 0 &&
           !spawning)
       ) {
         // TODO - update template
@@ -196,7 +196,7 @@ export class CoreDirector {
       builders.length < Constants.builders
     ) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1000)),
+        template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
           role: "builder",
@@ -211,6 +211,9 @@ export class CoreDirector {
   private static createConstructionSites(room: Room): void {
     const controller = room.controller;
     if (controller) {
+      // inner roads at lvl 2/3
+      // middle roads at lvl 5
+      // outer roads at lvl 6
       const anchor = this.getAnchor(room);
       const alreadyBuilding = Memory.roomStore[room.name].buildingThisTick;
       switch (true) {
@@ -282,11 +285,11 @@ export class CoreDirector {
     }
   }
   private static runDirectors(room: Room): void {
+    SourceDirector.run(room);
     ConstructionDirector.run(room);
     MineralDirector.run(room);
     RemoteManager.run(room);
     RemoteHarvestingDirector.run(room);
-    SourceDirector.run(room);
     DefenseManager.run(room);
   }
   public static run(room: Room): void {

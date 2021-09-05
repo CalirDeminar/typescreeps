@@ -42,7 +42,7 @@ export class Builder extends CreepBase {
           true;
       }
       if (working) {
-        const buildTarget: ConstructionSite | null = Game.getObjectById(creep.memory.workTarget);
+        const buildTarget = Game.getObjectById<ConstructionSite>(creep.memory.workTarget);
         const buildTargetInRange = buildTarget && creep.pos.getRangeTo(buildTarget) <= 3;
         switch (true) {
           case buildTarget && buildTargetInRange:

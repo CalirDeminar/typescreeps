@@ -100,7 +100,7 @@ export class CreepBase {
     });
   }
   public static findLink(creep: Creep, ignore: string[] = []): Structure | null {
-    return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
+    return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
       filter: (s) => s.structureType === STRUCTURE_LINK && !ignore.includes(s.id) && s.store[RESOURCE_ENERGY] < 750
     })[0];
   }

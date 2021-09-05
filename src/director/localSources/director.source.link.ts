@@ -75,12 +75,12 @@ export class SourceLinkDirector {
         this.runHarvester(c, source);
       });
   }
-  private static runLink(link: StructureLink, anchor: Flag): void{
+  private static runLink(link: StructureLink, anchor: Flag): void {
     const anchorLink = this.getAnchorLink(link.room, anchor);
-    if(link && anchorLink && link.cooldown === 0){
+    if (link && anchorLink && link.cooldown === 0) {
       const toTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
       const transferBoundary = 200;
-      if(toTransfer > transferBoundary){
+      if (toTransfer > transferBoundary) {
         link.transferEnergy(anchorLink, toTransfer);
       }
     }
@@ -92,7 +92,7 @@ export class SourceLinkDirector {
   }
   public static run(room: Room, source: Source, link: StructureLink, anchor: Flag): void {
     this.runHarvesters(source);
-    this.spawnStaticHarvester(room, source, link)
+    this.spawnStaticHarvester(room, source, link);
     this.runLink(link, anchor);
   }
 }

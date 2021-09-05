@@ -12,9 +12,6 @@ export class Queen extends CreepBase {
       anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_CONTAINER
       })[0] ||
-      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
-        filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] >= 100
-      })[0] ||
       null
     );
   }
@@ -25,18 +22,10 @@ export class Queen extends CreepBase {
   }
   private static isWorking(
     creep: Creep,
-    container: StructureContainer | StructureStorage | StructureLink,
-    link: StructureLink | null
+    container: StructureContainer | StructureStorage | StructureLink
   ): "work" | "fuel" | "dump" {
     const target = Game.getObjectById<StructureSpawn | StructureExtension>(creep.memory.workTarget);
     switch (true) {
-      case link &&
-        creep.store.getUsedCapacity() !== 0 &&
-        creep.store.getFreeCapacity() <= 200 &&
-        link.store.getFreeCapacity(RESOURCE_ENERGY) < 50:
-        return "dump";
-      case link && creep.store.getFreeCapacity() > 200 && link.store.getFreeCapacity(RESOURCE_ENERGY) <= 200:
-        return "fuel";
       case creep.store.getUsedCapacity() < 50:
         return "fuel";
       case creep.store.getFreeCapacity() > 0 && creep.pos.isNearTo(container):
@@ -127,9 +116,8 @@ export class Queen extends CreepBase {
       const room = creep.room;
       const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
       const container = this.getContainer(anchor);
-      const link = this.getLink(anchor);
       if (container) {
-        switch (this.isWorking(creep, container, link)) {
+        switch (this.isWorking(creep, container)) {
           case "work":
             this.fillCore(creep);
             break;

@@ -107,8 +107,11 @@ export class ConstructionTemplates {
     const mask = this.getRoadMask(room);
     return room
       .find(FIND_SOURCES)
-      .map((s) => {
-        const path = anchor.pos.findPathTo(s, { ignoreCreeps: true, swampCost: 1 });
+      .map((source) => {
+        const path = anchor.pos.findPathTo(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), {
+          ignoreCreeps: true,
+          swampCost: 1
+        });
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })
       .reduce((acc, arr) => acc.concat(arr), []);
