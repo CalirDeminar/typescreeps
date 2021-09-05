@@ -5,11 +5,13 @@ Remote Harvesting Director
         Should be done? double check
     Move scouting out to the scouting Director
 Construction Director
-    Check why roads to home sources and controller is not working
     Add roads around outside of second ring of extensions
     Look into extra movement space around the Storage?
+    * Look into why source roads, mineral roads do not initially path
+    Move Source
 Source Director
     Add creep to transfer all energy from anchor link to the storage
+    Get static harvester to move away from construction sites
 Add scouting Director
     Finding adjacent remote rooms
     Finding expansion rooms
@@ -18,7 +20,6 @@ Add scouting Director
 Mineral Director
     Add additional scaling to MineralHarvester
     Container Mining?
-    Road to Mineral
     Add support to other Directors for spawning boosted creeps
         Have code for Labs to handle making boosts available for fresh creeps
     Handle getting hold of energy from storage to fund market transactions

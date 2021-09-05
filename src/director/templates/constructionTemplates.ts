@@ -84,11 +84,7 @@ export class ConstructionTemplates {
   }
   private static getRoadMask(room: Room): RoomPosition[] {
     const store = Memory.roomStore[room.name].constructionDirector;
-    return store.containerTemplate
-      .concat(store.extensionTemplate)
-      .concat(store.towerTemplate)
-      .concat(store.containerTemplate)
-      .concat(store.sourceLinks);
+    return store.extensionTemplate.concat(store.towerTemplate).concat(store.sourceLinks);
   }
   public static surroundingRoads(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);

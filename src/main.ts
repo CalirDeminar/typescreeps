@@ -1,10 +1,7 @@
 import { ErrorMapper } from "utils/ErrorMapper";
-import { RoomManager } from "./managers/manager.room";
-import { Upgrader } from "./roles/role.upgrader";
-import { Builder } from "./roles/role.builder";
 import { Scout } from "roles/role.scout";
-import { Queen } from "roles/role.queen";
 import { Logger } from "./utils/logger";
+import { CoreDirector } from "director/director.core";
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
@@ -17,26 +14,8 @@ export const loop = ErrorMapper.wrapLoop(() => {
     } else {
       const creep = Game.creeps[name];
       switch (creep.memory.role) {
-        case "upgrader":
-          Upgrader.run(creep);
-          cpu = Game.cpu.getUsed();
-          // console.log(`${creep.name} - ${(cpu - lastCpu).toPrecision(5)}`);
-          lastCpu = cpu;
-          break;
-        case "builder":
-          Builder.run(creep);
-          cpu = Game.cpu.getUsed();
-          // console.log(`${creep.name} - ${(cpu - lastCpu).toPrecision(5)}`);
-          lastCpu = cpu;
-          break;
         case "scout":
           Scout.run(creep);
-          cpu = Game.cpu.getUsed();
-          // console.log(`${creep.name} - ${(cpu - lastCpu).toPrecision(5)}`);
-          lastCpu = cpu;
-          break;
-        case "queen":
-          Queen.run(creep);
           cpu = Game.cpu.getUsed();
           // console.log(`${creep.name} - ${(cpu - lastCpu).toPrecision(5)}`);
           lastCpu = cpu;
@@ -46,7 +25,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
   }
   const creepTime = Game.cpu.getUsed();
   for (const room in Game.rooms) {
-    RoomManager.run(Game.rooms[room]);
+    CoreDirector.run(Game.rooms[room]);
   }
   const roomManagerTime = Game.cpu.getUsed() - creepTime;
   // console.log(`CPU: Creeps: ${creepTime.toPrecision(5)}   RoomManager: ${roomManagerTime.toPrecision(5)}`);

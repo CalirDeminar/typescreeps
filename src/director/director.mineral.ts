@@ -131,7 +131,13 @@ export class MineralDirector {
       filter: (c) => c.structureType === STRUCTURE_TERMINAL
     })[0];
   }
-
+  private static placeExtractor(room: Room): boolean {
+    const mineral = room.find(FIND_MINERALS)[0];
+    if (mineral) {
+      return room.createConstructionSite(mineral.pos.x, mineral.pos.y, STRUCTURE_EXTRACTOR) === OK;
+    }
+    return false;
+  }
   private static getExtractor(room: Room): StructureExtractor | null {
     return room.find<StructureExtractor>(FIND_MY_STRUCTURES, {
       filter: (c) => c.structureType === STRUCTURE_EXTRACTOR
@@ -142,17 +148,45 @@ export class MineralDirector {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER && mineral && s.pos.isNearTo(mineral)
     })[0];
   }
+  private static placeContainer(room: Room): boolean {
+    const mineral = room.find(FIND_MINERALS)[0];
+    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+    if (mineral && anchor) {
+      const containerSpot = UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos);
+      return containerSpot.createConstructionSite(STRUCTURE_CONTAINER) === OK;
+    }
+    return false;
+  }
+
+  private static placeStructures(
+    room: Room,
+    extractor: StructureExtractor | null,
+    container: StructureContainer | null
+  ): void {
+    const isBuilding = Memory.roomStore[room.name].buildingThisTick;
+    switch (true) {
+      case !isBuilding && !extractor:
+        this.placeExtractor(room);
+        break;
+      case !isBuilding && !container:
+        this.placeContainer(room);
+        break;
+      default:
+        undefined;
+    }
+  }
   public static run(room: Room) {
     const correctLevel = room.controller && room.controller.level >= 6;
     const terminal = this.getTerminal(room);
     const extractor = this.getExtractor(room);
     const mineral = extractor ? extractor.pos.lookFor(LOOK_MINERALS)[0] : null;
     const container = this.getContainer(room, mineral);
+    this.placeStructures(room, extractor, container);
     if (terminal && Game.time % 500 === 0) {
       console.log("Running Terminal Sales");
       this.runTerminalOrders(terminal);
     }
-    if (correctLevel && terminal && extractor && mineral && container) {
+    if (terminal && extractor && mineral && container) {
       this.operate(room, terminal, mineral, container);
     }
   }

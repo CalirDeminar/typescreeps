@@ -9,9 +9,9 @@ export class RemoteHarvestingDirector {
     return boundaries.includes(x) || boundaries.includes(y);
   }
   private static getRoadsToAnchor(remRoom: RemoteDirectorStore): RoomPosition[] {
-    if (Object.keys(Game.rooms).includes(remRoom.roomName)) {
+    const anchor = Game.flags[remRoom.anchorId];
+    if (Object.keys(Game.rooms).includes(remRoom.roomName) && Object.keys(Game.rooms).includes(anchor.pos.roomName)) {
       const room = Game.rooms[remRoom.roomName];
-      const anchor = Game.flags[remRoom.anchorId];
       const homeRoom = Game.rooms[anchor.pos.roomName];
       const roads = room
         .find(FIND_SOURCES)
@@ -27,6 +27,8 @@ export class RemoteHarvestingDirector {
           ) {
             const sourceExit = source.pos.findClosestByPath(sourceToAnchorExitDir);
             const anchorExit = UtilPosition.getOtherSideOfExit(sourceExit || source.pos);
+            console.log(`Source Exit: ${JSON.stringify(sourceExit)}`);
+            console.log(`Anchor Exit: ${JSON.stringify(anchorExit)}`);
             if (anchorExit && sourceExit) {
               const sourcePath = source.pos
                 .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
@@ -53,7 +55,8 @@ export class RemoteHarvestingDirector {
     if (homeRoom) {
       const homeController = homeRoom.controller;
       const level = homeController ? homeController.level : 0;
-      if (!room.roadsPathed) {
+      // Roads to Source and around Core
+      if (!room.roadsPathed && Object.keys(Game.rooms).includes(room.roomName)) {
         // if (true) {
         const roads = this.getRoadsToAnchor(room);
         Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
@@ -62,9 +65,9 @@ export class RemoteHarvestingDirector {
           roadsPathed: true
         };
       }
-      if (!room.roadsConstructed && room.roadQueue.length > 0 && level >= 3) {
+      if (!room.roadsConstructed && room.roadQueue.length > 0 && level > 3) {
         // remote room
-        const remRoom = Game.rooms[room.roomName];
+        const remRoom = Object.keys(Game.rooms).includes(room.roomName) ? Game.rooms[room.roomName] : null;
         if (remRoom) {
           const remRoomHasConstructionSite = remRoom.find(FIND_CONSTRUCTION_SITES).length > 0;
           if (!remRoomHasConstructionSite) {
@@ -82,6 +85,7 @@ export class RemoteHarvestingDirector {
           const nextSite = room.roadQueue.find(
             (p) =>
               p.roomName === homeRoom.name &&
+              Object.keys(Game.rooms).includes(p.roomName) &&
               new RoomPosition(p.x, p.y, p.roomName).lookFor(LOOK_STRUCTURES).length === 0
           );
           if (nextSite) {
@@ -90,7 +94,13 @@ export class RemoteHarvestingDirector {
         }
 
         // check roads done
-        if (!room.roadQueue.find((p) => new RoomPosition(p.x, p.y, p.roomName).lookFor(LOOK_STRUCTURES).length === 0)) {
+        if (
+          !room.roadQueue.find(
+            (p) =>
+              Object.keys(Game.rooms).includes(p.roomName) &&
+              new RoomPosition(p.x, p.y, p.roomName).lookFor(LOOK_STRUCTURES).length === 0
+          )
+        ) {
           Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
             ...Memory.roomStore[room.homeRoomName].remoteDirector[index],
             roadsConstructed: true
@@ -101,7 +111,7 @@ export class RemoteHarvestingDirector {
   }
   private static updateRoomFromIntel(room: RemoteDirectorStore, index: number): void {
     const intel = Memory.roomStore[room.homeRoomName].remoteRooms[room.roomName];
-    if (room.roomName in Object.keys(Game.rooms)) {
+    if (Object.keys(Game.rooms).includes(room.roomName)) {
       const localRoom = Game.rooms[room.roomName];
       // update remoteDirectorStore
       const hostileCreeps = localRoom.find(FIND_HOSTILE_CREEPS);
@@ -174,6 +184,7 @@ export class RemoteHarvestingDirector {
   }
   private static spawnHarvesters(room: RemoteDirectorStore): void {
     const sources = room.sources;
+    const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0 || room.hasInvaderCore;
     sources.find((s) => {
       const harvesters = _.filter(
         Game.creeps,
@@ -186,7 +197,7 @@ export class RemoteHarvestingDirector {
         Memory.roomStore[room.homeRoomName].nextSpawn &&
         (Memory.roomStore[room.homeRoomName].nextSpawn?.memory.role.includes("harvester") ||
           Memory.roomStore[room.homeRoomName].nextSpawn?.memory.role.includes("Harvester"));
-      if (harvesters.length < Constants.maxRemoteShuttles && !isSpawning) {
+      if (harvesters.length < Constants.maxRemoteShuttles && !isSpawning && !hostile) {
         const maxEnergy = Math.min(Game.rooms[room.homeRoomName].energyCapacityAvailable, 1200);
         Memory.roomStore[room.homeRoomName].nextSpawn = {
           template: CreepBuilder.buildShuttleCreep(maxEnergy),
@@ -270,7 +281,7 @@ export class RemoteHarvestingDirector {
     }
   }
   private static runHarvesters(room: RemoteDirectorStore): void {
-    const remRoom = Game.rooms[room.roomName];
+    const remRoom = Object.keys(Game.rooms).includes(room.roomName) ? Game.rooms[room.roomName] : null;
     const anchor = Game.flags[room.anchorId];
     const constructionSite = remRoom
       ? remRoom
@@ -289,22 +300,22 @@ export class RemoteHarvestingDirector {
   private static runDefense(room: RemoteDirectorStore): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const spawning = Memory.roomStore[room.homeRoomName].nextSpawn !== null;
-    const defenderCost = 390;
+    const defenderCost = 430;
     const currentDefenders = _.filter(
       Game.creeps,
       (c) => c.memory.role === "remoteDefender" && c.memory.targetRoom === room.roomName
     );
     const spawnDefender =
-      !spawning &&
       (room.hostileCreepCount === 1 || room.hasInvaderCore) &&
       room.hostileTowerCount === 0 &&
       homeRoom.energyCapacityAvailable > defenderCost;
     if (spawnDefender && currentDefenders.length < 1) {
+      console.log("Spawning Defender");
       const roomRoute = Game.map.findRoute(homeRoom.name, room.roomName);
       const roomReachable = roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance;
       if (roomReachable) {
         Memory.roomStore[homeRoom.name].nextSpawn = {
-          template: [ATTACK, ATTACK, ATTACK, MOVE, MOVE, MOVE],
+          template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK],
           memory: {
             ...CreepBase.baseMemory,
             role: "remoteDefender",
@@ -339,6 +350,7 @@ export class RemoteHarvestingDirector {
   private static runReserver(room: RemoteDirectorStore): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const spawning = Memory.roomStore[room.homeRoomName].nextSpawn !== null;
+    const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0 || room.hasInvaderCore;
     const reservers = _.filter(
       Game.creeps,
       (c) => c.memory.role === "reserver" && c.memory.targetRoom === room.roomName
@@ -347,7 +359,8 @@ export class RemoteHarvestingDirector {
     const needsReserver =
       (reservers.length < 1 || (reservers.length === 1 && reserverNearDeath)) &&
       !spawning &&
-      homeRoom.energyCapacityAvailable > 750;
+      homeRoom.energyCapacityAvailable > 750 &&
+      !hostile;
     if (needsReserver) {
       Memory.roomStore[room.homeRoomName].nextSpawn = {
         template: [MOVE, CLAIM],
@@ -360,7 +373,10 @@ export class RemoteHarvestingDirector {
       };
     }
     reservers.map((creep) => {
-      const controller = Game.rooms[room.roomName] ? Game.rooms[room.roomName].controller : undefined;
+      const controller =
+        Object.keys(Game.rooms).includes(room.roomName) && Game.rooms[room.roomName]
+          ? Game.rooms[room.roomName].controller
+          : undefined;
       if (creep.ticksToLive) {
         switch (true) {
           case creep.pos.roomName != room.roomName:
@@ -408,6 +424,9 @@ export class RemoteHarvestingDirector {
     this.runReserver(room);
     cpu = Game.cpu.getUsed();
     const runReserverCpu = cpu - lastCpu;
+    if (room.hostileCreepCount > 0) {
+      console.log(`Hostiles in room: ${room.roomName}`);
+    }
     if (Game.time % 5 === 0) {
       // console.log(
       //   `Run Remote Room CPU Usage:` +

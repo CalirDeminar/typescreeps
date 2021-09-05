@@ -42,7 +42,8 @@ export class RemoteManager {
     const shouldSpawnScout =
       room.controller &&
       room.controller.level > 1 &&
-      Game.time % (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) === 0 &&
+      (Game.time % (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) === 0 ||
+        Memory.roomStore[room.name].remoteRooms === {}) &&
       spawn &&
       scouts.length === 0;
     if (shouldSpawnScout) {

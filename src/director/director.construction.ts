@@ -16,13 +16,6 @@ export class ConstructionDirector {
   private static populateBuildingStore(room: Room): void {
     Memory.roomStore[room.name].constructionDirector.extensionTemplate = ConstructionTemplates.extensions(room);
     Memory.roomStore[room.name].constructionDirector.towerTemplate = ConstructionTemplates.towers(room);
-    Memory.roomStore[room.name].constructionDirector.storage = ConstructionTemplates.storage(room);
-    Memory.roomStore[room.name].constructionDirector.terminal = ConstructionTemplates.terminal(room);
-    Memory.roomStore[room.name].constructionDirector.extractor = ConstructionTemplates.extractor(room);
-    Memory.roomStore[room.name].constructionDirector.extractorContainer = ConstructionTemplates.extractorContainer(
-      room
-    );
-    Memory.roomStore[room.name].constructionDirector.anchorLink = ConstructionTemplates.anchorLink(room);
     Memory.roomStore[room.name].constructionDirector.sourceLinks = ConstructionTemplates.sourceLinks(room);
     Memory.roomStore[room.name].constructionDirector.buildingsCreated = true;
   }
@@ -57,6 +50,7 @@ export class ConstructionDirector {
     const currentCount = structures.filter((s) => s.structureType === targetType).length;
     if (pos && currentCount < currentMax) {
       pos = new RoomPosition(pos.x, pos.y, pos.roomName);
+      console.log(`Building: ${targetType} at ${JSON.stringify(pos)}`);
       return pos.createConstructionSite(targetType) === OK;
     }
     return false;
@@ -85,7 +79,7 @@ export class ConstructionDirector {
         );
       });
       if (next) {
-        const targetRoom = Game.rooms[next.roomName];
+        const targetRoom = Object.keys(Game.rooms).includes(next.roomName) ? Game.rooms[next.roomName] : null;
         if (targetRoom) {
           const rtn = targetRoom.createConstructionSite(next.x, next.y, targetType);
           return rtn === OK;
@@ -96,11 +90,7 @@ export class ConstructionDirector {
     return false;
   }
   private static nextSite(room: Room) {
-    const activeRooms = Object.keys(Memory.roomStore[room.name].remoteRooms)
-      .filter((n) => n in Game.rooms)
-      .map((n) => Game.rooms[n])
-      .concat([room])
-      .filter((r) => r.find(FIND_CONSTRUCTION_SITES).length > 0);
+    const activeRooms = room.find(FIND_CONSTRUCTION_SITES);
     const activeSite = activeRooms.length > 0;
     const structures = room.find(FIND_STRUCTURES);
     if (!activeSite && room.controller) {
@@ -135,19 +125,10 @@ export class ConstructionDirector {
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
-          level > 3 ? store.internalRoadTemplate.length + store.routeRoadTemplate.length : 0,
+          level > 3 ? 999999999 : 0,
           store.routeRoadTemplate,
           terrain,
           room.name
-        ) ||
-        this.nextSingleStructure(STRUCTURE_STORAGE, structures, Constants.maxStorage[level], store.storage) ||
-        this.nextSingleStructure(STRUCTURE_TERMINAL, structures, Constants.maxTerminal[level], store.terminal) ||
-        this.nextSingleStructure(STRUCTURE_EXTRACTOR, structures, Constants.maxExtractor[level], store.extractor) ||
-        this.nextSingleStructure(
-          STRUCTURE_CONTAINER,
-          structures,
-          Constants.maxContainers[level],
-          store.extractorContainer
         ) ||
         this.nextStructure(
           STRUCTURE_ROAD,

@@ -7,13 +7,13 @@ export class Queen extends CreepBase {
   private static getContainer(anchor: Flag): StructureContainer | StructureStorage | StructureLink | null {
     return (
       anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
-        filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] >= 100
-      })[0] ||
-      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_STORAGE
       })[0] ||
       anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_CONTAINER
+      })[0] ||
+      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
+        filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] >= 100
       })[0] ||
       null
     );

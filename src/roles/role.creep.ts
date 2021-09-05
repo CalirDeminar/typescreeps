@@ -26,7 +26,12 @@ export class CreepBase {
     const targetPos = "pos" in target ? target.pos : target;
     const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
-      creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby, range: range });
+      creep.moveTo(targetPos, {
+        visualizePathStyle: { stroke: pathColour },
+        ignoreCreeps: !creepNearby,
+        range: range,
+        reusePath: creepNearby ? 5 : 15
+      });
       // if (creep.room.name === targetPos.roomName) {
       //   const rangeToTarget = creep.pos.getRangeTo(target);
       //   if (rangeToTarget > 1) {

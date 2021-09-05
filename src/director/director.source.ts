@@ -42,6 +42,7 @@ export class SourceDirector {
             STRUCTURE_CONTAINER
           ) || this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
         if (built) {
+          console.log("built container");
           Memory.roomStore[room.name].buildingThisTick = true;
         }
       } else {
@@ -61,6 +62,7 @@ export class SourceDirector {
               container ? [container.pos] : []
             ).createConstructionSite(STRUCTURE_LINK) === OK;
           if (built) {
+            console.log("built link");
             Memory.roomStore[room.name].buildingThisTick = true;
           }
         }
