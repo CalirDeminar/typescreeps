@@ -17,9 +17,11 @@ export class UtilPosition {
       .filter((tile: { x: number; y: number }) => {
         return terrain.get(anchor.x + tile.x, anchor.y + tile.y) === 0;
       })
-      .map((tile: { x: number; y: number }): RoomPosition => {
-        return new RoomPosition(anchor.x + tile.x, anchor.y + tile.y, room.name);
-      })
+      .map(
+        (tile: { x: number; y: number }): RoomPosition => {
+          return new RoomPosition(anchor.x + tile.x, anchor.y + tile.y, room.name);
+        }
+      )
       .filter((p1) => avoid.find((p2) => p1.isEqualTo(p2)) === undefined)
       .sort((p1, p2) => {
         const len =
@@ -84,7 +86,7 @@ export class UtilPosition {
       // return { x: newX, y: pos.y, roomName: this.navigateRoomName(pos.roomName, xMovement, 0) };
       case !!yMovement:
         const newY = yMovement === 1 ? 49 : 0;
-        return new RoomPosition(pos.y, newY, this.navigateRoomName(pos.roomName, 0, yMovement));
+        return new RoomPosition(pos.x, newY, this.navigateRoomName(pos.roomName, 0, yMovement));
       // return { x: pos.x, y: newY, roomName: this.navigateRoomName(pos.roomName, 0, yMovement) };
       default:
         return pos;

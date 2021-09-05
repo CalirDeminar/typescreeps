@@ -26,17 +26,17 @@ export class RemoteHarvestingDirector {
             sourceToAnchorExitDir !== -10
           ) {
             const sourceExit = source.pos.findClosestByPath(sourceToAnchorExitDir);
-            const anchorExit = UtilPosition.getOtherSideOfExit(sourceExit || source.pos);
-            console.log(`Source Exit: ${JSON.stringify(sourceExit)}`);
-            console.log(`Anchor Exit: ${JSON.stringify(anchorExit)}`);
-            if (anchorExit && sourceExit) {
-              const sourcePath = source.pos
-                .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
-                .map((s) => new RoomPosition(s.x, s.y, source.pos.roomName));
-              const anchorPath = anchor.pos
-                .findPathTo(anchorExit, { ignoreCreeps: true, swampCost: 1 })
-                .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
-              return acc.concat(sourcePath).concat(anchorPath);
+            if (sourceExit) {
+              const anchorExit = UtilPosition.getOtherSideOfExit(sourceExit);
+              if (anchorExit && sourceExit) {
+                const sourcePath = source.pos
+                  .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
+                  .map((s) => new RoomPosition(s.x, s.y, source.pos.roomName));
+                const anchorPath = anchor.pos
+                  .findPathTo(anchorExit, { ignoreCreeps: true, swampCost: 1 })
+                  .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
+                return acc.concat(sourcePath).concat(anchorPath);
+              }
             }
           }
           return acc;
@@ -62,7 +62,7 @@ export class RemoteHarvestingDirector {
         Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
           ...Memory.roomStore[room.homeRoomName].remoteDirector[index],
           roadQueue: roads,
-          roadsPathed: true
+          roadsPathed: roads && roads.length > 0 ? true : false
         };
       }
       if (!room.roadsConstructed && room.roadQueue.length > 0 && level > 3) {
