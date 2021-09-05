@@ -46,6 +46,21 @@ export class CreepBase {
       // }
     }
   }
+  public static flee(creep: Creep, hostile: Creep) {
+    if (creep.fatigue <= 0) {
+      let path = PathFinder.search(creep.pos, hostile.pos, { flee: true }).path;
+      creep.moveByPath(path);
+    }
+  }
+  public static fleeHostiles(creep: Creep): boolean {
+    const hostile = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+    if (hostile === null) {
+      return false;
+    } else {
+      this.flee(creep, hostile);
+      return true;
+    }
+  }
   public static travelToRoom(creep: Creep, pathColour: string, targetRoom: string) {
     const roomCenter = new RoomPosition(25, 25, targetRoom);
     this.travelTo(creep, roomCenter, pathColour, 20);

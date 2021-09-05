@@ -226,7 +226,7 @@ export class RemoteHarvestingDirector {
     }
   }
   private static runHarvester(creep: Creep, anchor: Flag, constructionSite: ConstructionSite | null): void {
-    if (creep.ticksToLive) {
+    if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       // TODO - periodic huge CPU spike from this function on the % 100 tick mark
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
       this.setWorkingState(creep);

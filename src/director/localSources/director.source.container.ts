@@ -138,7 +138,7 @@ export class SourceContainerDirector {
     );
   }
   private static runHauler(creep: Creep, container: StructureContainer): void {
-    if (creep.ticksToLive) {
+    if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       let withdrawing = creep.memory.working;
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getFreeCapacity() === 0;
