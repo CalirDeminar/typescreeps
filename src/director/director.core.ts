@@ -6,10 +6,10 @@ import { Constants } from "utils/constants";
 import { Builder } from "roles/role.builder";
 import { ConstructionDirector } from "./director.construction";
 import { MineralDirector } from "./director.mineral";
-import { RemoteManager } from "managers/manager.remote";
 import { RemoteHarvestingDirector } from "./director.remoteHarvesting";
 import { SourceDirector } from "./director.source";
 import { DefenseDirector } from "director/director.defense";
+import { ScoutingDirector } from "./director.scouting";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -41,6 +41,10 @@ export class CoreDirector {
       rampartMap: [],
       hostileCreeps: [],
       activeTarget: null
+    },
+    scoutingDirector: {
+      scoutedRooms: [],
+      scoutQueue: []
     }
   };
   private static createAnchor(room: Room): void {
@@ -310,9 +314,9 @@ export class CoreDirector {
     cpu = Game.cpu.getUsed();
     const minDirCpu = cpu - lastCpu;
     lastCpu = cpu;
-    RemoteManager.run(room);
+    ScoutingDirector.run(room);
     cpu = Game.cpu.getUsed();
-    const remDirCpu = cpu - lastCpu;
+    const scoutDir = cpu - lastCpu;
     lastCpu = cpu;
     RemoteHarvestingDirector.run(room);
     cpu = Game.cpu.getUsed();
@@ -326,7 +330,7 @@ export class CoreDirector {
         `CPU: SourceDir: ${sourceDirCpu.toPrecision(2)} ` +
           `ConDir: ${conDirCpu.toPrecision(2)}  ` +
           `MinDir: ${minDirCpu.toPrecision(2)}  ` +
-          `RemDir: ${remDirCpu.toPrecision(2)}  ` +
+          `ScoutDir: ${scoutDir.toPrecision(2)}  ` +
           `RemHarvDir: ${remHarvDirCpu.toPrecision(2)}  ` +
           `DefMan: ${defManCpu.toPrecision(2)}  `
       );

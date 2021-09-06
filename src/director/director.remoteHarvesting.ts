@@ -149,13 +149,13 @@ export class RemoteHarvestingDirector {
   }
   private static addRoomsToRemote(roomName: string): void {
     if (Game.time % 100 === 0) {
-      const intel = Memory.roomStore[roomName].remoteRooms;
-      _.map(intel, (intelRoom, intelRoomName) => {
+      const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
+      _.map(intel, (intelRoom) => {
         const alreadyRemoteHarvesting = !!Memory.roomStore[roomName].remoteDirector.find((rd) => {
-          return rd.roomName === intelRoomName;
+          return rd.roomName === intelRoom.name;
         });
-        if (intelRoomName && !alreadyRemoteHarvesting) {
-          const route = Game.map.findRoute(roomName, intelRoomName);
+        if (!alreadyRemoteHarvesting) {
+          const route = Game.map.findRoute(roomName, intelRoom.name);
           const homeRoom = Game.rooms[roomName];
           const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
             filter: (f) => f.name === `${roomName}-Anchor`
@@ -169,15 +169,15 @@ export class RemoteHarvestingDirector {
                 roomName: intelRoom.name,
                 homeRoomName: anchor.pos.roomName,
                 anchorId: anchor ? anchor.name : "",
-                controllerId: homeRoom.controller.id,
+                controllerId: intelRoom.controller ? intelRoom.controller.id : "",
                 sources: sources,
                 roadQueue: [],
                 roadsPathed: false,
                 roadsConstructed: false,
-                hasInvaderCore: intelRoom.invaderCore,
-                hasHostileCreeps: intelRoom.hostileCreepCount > 0,
-                hostileCreepCount: intelRoom.hostileCreepCount,
-                hostileTowerCount: intelRoom.hostileTowerCount
+                hasInvaderCore: intelRoom.invaderCore !== null,
+                hasHostileCreeps: false,
+                hostileCreepCount: 0,
+                hostileTowerCount: intelRoom.towers.length
               }
             ]);
           }

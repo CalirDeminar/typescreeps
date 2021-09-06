@@ -3,6 +3,7 @@ import { CreepCombat } from "utils/creepCombat";
 // import { UtilPosition } from "utils/util.position";
 import { loop } from "../../src/main";
 import { Game, Memory } from "./mock";
+import { UtilPosition } from "utils/util.position";
 
 describe("main", () => {
   before(() => {
@@ -114,5 +115,10 @@ describe("main", () => {
     console.log(attacker);
     const healer = CreepCombat.getCreepCombatFigures(healerBody);
     console.log(healer);
+  });
+  it("Test Room Coordinate Navigration", () => {
+    assert.equal(UtilPosition.navigateRoomName("N3E4", -1, -1), "N4E5");
+    assert.equal(UtilPosition.navigateRoomName("N1E1", 1, 1), "N0E0");
+    assert.equal(UtilPosition.navigateRoomName("N0E0", 1, 1), "S0W0");
   });
 });
