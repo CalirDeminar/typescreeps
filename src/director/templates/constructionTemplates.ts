@@ -199,11 +199,12 @@ export class ConstructionTemplates {
   }
   public static ramparts(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
-    const rtn = _.range(-10, 11)
+    const rtn = _.range(-12, 13)
       .map((x) => {
-        return _.range(-10, 11)
+        return _.range(-12, 13)
           .map((y) => {
-            if (Math.abs(x) + Math.abs(y) === 10) {
+            const range = Math.abs(x) + Math.abs(y);
+            if (range === 10 || range === 11) {
               return new RoomPosition(anchor.pos.x + x, anchor.pos.y + y, room.name);
             } else {
               return null;
