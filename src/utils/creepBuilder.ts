@@ -31,4 +31,10 @@ export class CreepBuilder {
 
     return [CARRY, ...new Array(moveParts).fill(MOVE), ...new Array(workParts).fill(WORK)];
   }
+  public static buildRoadHauler(energy: number): (WORK | CARRY | MOVE)[] {
+    const thirds = Math.floor(energy / 3 / 50);
+    const moveParts = thirds;
+    const carryParts = thirds * 2;
+    return [...new Array(moveParts).fill(MOVE), ...new Array(carryParts).fill(CARRY)];
+  }
 }

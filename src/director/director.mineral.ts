@@ -14,7 +14,7 @@ export class MineralDirector {
       (mineralHarvester.length === Constants.maxMineralHarvester && creepNearDeath);
     if (shouldSpawnAnother) {
       Memory.roomStore[room.name].nextSpawn = {
-        template: CreepBuilder.buildMineralHarvester(400),
+        template: CreepBuilder.buildMineralHarvester(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
           role: "mineralHarvester",
@@ -62,7 +62,7 @@ export class MineralDirector {
         } else {
           CreepBase.travelTo(creep, terminal.pos, "blue");
         }
-      } else {
+      } else if (creep.ticksToLive > 100) {
         // pick up cargo
         const nearContainer = creep.pos.isNearTo(container);
         if (nearContainer) {
@@ -73,6 +73,27 @@ export class MineralDirector {
           CreepBase.travelTo(creep, container.pos, "blue");
         }
       }
+    }
+  }
+  private static spawnHauler(room: Room, container: StructureContainer, mineral: Mineral): void {
+    const mineralHaulers = _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
+    );
+    if (mineralHaulers.length < 1) {
+      Memory.roomStore[room.name].nextSpawn = {
+        template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
+        memory: {
+          ...CreepBase.baseMemory,
+          role: "mineralHauler",
+          working: false,
+          born: Game.time,
+          targetSource: mineral.id,
+          dropOffTarget: container.id,
+          homeRoom: room.name,
+          targetRoom: room.name
+        }
+      };
     }
   }
   private static operate(
@@ -90,6 +111,10 @@ export class MineralDirector {
       (c) => c.memory.role === "mineralHauler" && c.memory.workTarget === container.id
     );
     this.spawnMineralHarvester(room, container, mineral);
+    this.spawnHauler(room, container, mineral);
+    _.filter(Game.creeps, (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name).map((c) =>
+      this.runHauler(c, container, terminal, mineral.mineralType)
+    );
     mineralHarvester.map((c) => this.runHarvester(c, container, mineral));
     mineralHauler.map((c) => this.runHauler(c, container, terminal, mineral.mineralType));
   }
