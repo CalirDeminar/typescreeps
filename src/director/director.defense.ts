@@ -25,11 +25,12 @@ export class DefenseDirector {
       }
     });
   }
-  private static getTarget(room: Room, targets: Creep[], towers: StructureTower[]): Creep {
+  private static getTarget(room: Room, targets: Creep[], towers: StructureTower[]): Creep | null {
     // check for volleyable targets
     const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     const store = Memory.roomStore[room.name].defenseDirector;
     const stats = store.hostileCreeps;
+    const totalHealing = stats.reduce((acc, s) => acc + s.maxRawHealing, 0);
     const damagesTaken = targets.map((creep) => {
       const stat = stats.find((stat) => stat.name === creep.name);
       if (stat) {
@@ -42,7 +43,11 @@ export class DefenseDirector {
       }
       return { creep: creep, damage: 0 };
     });
-    return damagesTaken.sort((a, b) => a.damage - b.damage)[0].creep;
+    const bestTarget = damagesTaken.sort((a, b) => a.damage - b.damage)[0];
+    if (bestTarget.damage > totalHealing) {
+      return bestTarget.creep;
+    }
+    return null;
   }
   public static defendRoom(room: Room, targets: Creep[]): void {
     let store = Memory.roomStore[room.name].defenseDirector;
@@ -52,8 +57,11 @@ export class DefenseDirector {
       });
       const currentTargetAlive = !!targets.find((t) => t.name === store.activeTarget);
       if (!currentTargetAlive) {
-        Memory.roomStore[room.name].defenseDirector.activeTarget = this.getTarget(room, targets, towers).name;
-        store = Memory.roomStore[room.name].defenseDirector;
+        const newTarget = this.getTarget(room, targets, towers);
+        if (newTarget) {
+          Memory.roomStore[room.name].defenseDirector.activeTarget = newTarget.name;
+          store = Memory.roomStore[room.name].defenseDirector;
+        }
       }
       const target = targets.find((t) => t.name === store.activeTarget);
       if (target) {
@@ -89,6 +97,9 @@ export class DefenseDirector {
     const terrain = room.getTerrain();
     const store = Memory.roomStore[room.name].defenseDirector;
     const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+    // rampartMap.map((r) => {
+    //   room.visual = room.visual.text("R", new RoomPosition(r.x, r.y, room.name), { stroke: "Black" });
+    // });
     if (controller && rampartMap.length > 0 && controller.level >= 4) {
       rampartMap.map((p) => {
         if (
@@ -100,7 +111,7 @@ export class DefenseDirector {
       });
     }
   }
-  private static runMaintinenceTech(creep: Creep): void {
+  private static runMason(creep: Creep): void {
     if (creep.ticksToLive) {
       const repairLimit = 2_000_000;
       const storage = Game.getObjectById<StructureStorage>(creep.memory.refuelTarget);
@@ -131,13 +142,13 @@ export class DefenseDirector {
       }
     }
   }
-  private static runMaintinenceTechs(room: Room): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "maintinenceTech" && c.memory.homeRoom === room.name).map((c) =>
-      this.runMaintinenceTech(c)
+  private static runMasons(room: Room): void {
+    _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name).map((c) =>
+      this.runMason(c)
     );
   }
-  private static spawnMaintinenceTech(room: Room): void {
-    const techs = _.filter(Game.creeps, (c) => c.memory.role === "maintinenceTech" && c.memory.homeRoom === room.name);
+  private static spawnMasons(room: Room): void {
+    const techs = _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name);
     const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
     })[0];
@@ -150,7 +161,7 @@ export class DefenseDirector {
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
-          role: "maintinenceTech",
+          role: "mason",
           homeRoom: room.name,
           targetRoom: room.name,
           refuelTarget: storage.id
@@ -212,10 +223,10 @@ export class DefenseDirector {
       });
     Memory.roomStore[room.name].defenseDirector.hostileCreeps = baselineSheets.concat(sheetsToAdd);
   }
-  private static getPeakHostilesTank(room: Room): number {
+  private static getMinHostileTank(room: Room): number {
     const store = Memory.roomStore[room.name].defenseDirector;
     console.log(JSON.stringify(store.hostileCreeps));
-    const maxMultiplier = Math.max(...store.hostileCreeps.map((c) => c.toughHealMultiplier));
+    const maxMultiplier = Math.min(...store.hostileCreeps.map((c) => c.toughHealMultiplier));
     const totalHealing = store.hostileCreeps.reduce((acc, c) => acc + c.maxRawHealing, 0);
     return maxMultiplier * totalHealing;
   }
@@ -248,7 +259,7 @@ export class DefenseDirector {
       store = Memory.roomStore[room.name].defenseDirector;
       const timeWithHostiles = Game.time - store.alertStartTimestamp;
       const refillLimit = 25;
-      const hostileTank = this.getPeakHostilesTank(room);
+      const hostileTank = this.getMinHostileTank(room);
       const currentRange = Math.min(...targets.map((c) => anchor.pos.getRangeTo(c.pos)));
       const maxTowerDamage = towerCount * 400;
       const currentTowerDamage = towerCount * (this.towerDamage(currentRange) * 600);
@@ -280,7 +291,7 @@ export class DefenseDirector {
       // killable with current towers && timeWithHostiles > 25 - lvl 2
       //    need to start giving towers energy priority
       // killable with current towers && timeWithHostiles > 25 && ramparts getting low - lvl 3
-      //    maintinence tech then queen have energy priority
+      //    mason then queen have energy priority
       //    calculate incoming rampart damage
       //      spawn more techs if needed
       // Unkillable with current towers - lvl 4
@@ -298,7 +309,7 @@ export class DefenseDirector {
     this.runTowers(room, targets);
     this.makeRamparts(room);
     this.checkToSafeMode(room);
-    this.spawnMaintinenceTech(room);
-    this.runMaintinenceTechs(room);
+    this.spawnMasons(room);
+    this.runMasons(room);
   }
 }
