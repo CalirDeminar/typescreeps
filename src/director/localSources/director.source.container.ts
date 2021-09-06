@@ -7,7 +7,7 @@ export class SourceContainerDirector {
     return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
   }
   private static shouldReplaceCreeps(creeps: Creep[], max: number): boolean {
-    return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 200));
+    return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 150));
   }
   private static spawnStaticHarvester(room: Room, source: Source, container: StructureContainer): boolean {
     const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
@@ -86,6 +86,9 @@ export class SourceContainerDirector {
       const repairContainer =
         container && creep.store.getUsedCapacity() > workParts && container.hits < container.hitsMax - workParts * 100;
       switch (true) {
+        case container && creep.pos.getRangeTo(container) > 0:
+          CreepBase.travelTo(creep, container ? container : source, "orange", 0);
+          break;
         case repairContainer && container && creep.pos.isNearTo(container):
           if (container) {
             creep.repair(container);
@@ -96,7 +99,7 @@ export class SourceContainerDirector {
           }
           break;
         case working:
-          CreepBase.travelTo(creep, container ? container.pos : source, "orange");
+          CreepBase.travelTo(creep, container ? container : source, "orange", 0);
           break;
         case !working && container && creep.pos.isNearTo(container):
           if (container) {

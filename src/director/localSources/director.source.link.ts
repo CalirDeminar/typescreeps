@@ -1,6 +1,7 @@
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
+import { UtilPosition } from "utils/util.position";
 export class SourceLinkDirector {
   private static getCreepRoleAt(role: string, sourceId: string): Creep[] {
     return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
@@ -45,10 +46,16 @@ export class SourceLinkDirector {
     if (creep.ticksToLive) {
       this.setWorkingState(creep);
       const working = creep.memory.working;
-      const link = working ? null : CreepBase.findLink(creep);
+      const link = CreepBase.findLink(creep);
+      const spot = link ? UtilPosition.getClosestSurroundingTo(source.pos, link.pos) : null;
       switch (true) {
-        case working && creep.pos.isNearTo(source):
+        case working && creep.pos.isNearTo(source) && link && creep.pos.isNearTo(link):
           creep.harvest(source);
+          break;
+        case working && spot !== null:
+          if (spot !== null) {
+            CreepBase.travelTo(creep, spot, "orange");
+          }
           break;
         case working:
           CreepBase.travelTo(creep, source, "orange");
