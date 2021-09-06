@@ -15,11 +15,7 @@ export class Queen extends CreepBase {
       null
     );
   }
-  private static getLink(anchor: Flag): StructureLink | null {
-    return anchor.pos.findInRange<StructureLink>(FIND_STRUCTURES, 1, {
-      filter: (s) => s.structureType === STRUCTURE_LINK
-    })[0];
-  }
+
   private static isWorking(
     creep: Creep,
     container: StructureContainer | StructureStorage | StructureLink
@@ -56,12 +52,18 @@ export class Queen extends CreepBase {
       filter: (s) => s.structureType === type && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
   }
+  private static getTerminal(creep: Creep): StructureTerminal | null {
+    return creep.room.find<StructureTerminal>(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_TERMINAL && s.store.getUsedCapacity(RESOURCE_ENERGY) < 1000
+    })[0];
+  }
   private static findTarget(creep: Creep): string {
     const room = creep.room;
     const towers = creep.room.find<StructureTower>(FIND_MY_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_TOWER
     });
     const lowTowers = towers.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 250);
+    const terminal = this.getTerminal(creep);
     const spawningFill = room.energyAvailable < room.energyCapacityAvailable;
     if (spawningFill) {
       const target =
@@ -70,6 +72,8 @@ export class Queen extends CreepBase {
     } else if (lowTowers.length > 0) {
       const target = creep.pos.findClosestByPath(lowTowers);
       return target ? target.id : "";
+    } else if (terminal && terminal.store.getUsedCapacity(RESOURCE_ENERGY) < 1000) {
+      return terminal.id;
     }
     return "";
   }
@@ -83,7 +87,8 @@ export class Queen extends CreepBase {
       switch (true) {
         case target === null:
           break;
-        case target && target.store.getFreeCapacity(RESOURCE_ENERGY) === 0:
+        case target &&
+          (target.store.getFreeCapacity(RESOURCE_ENERGY) === 0 || target.store.getUsedCapacity(RESOURCE_ENERGY) > 1000):
           creep.memory.workTarget = "";
           break;
         case target && creep.pos.isNearTo(target):
