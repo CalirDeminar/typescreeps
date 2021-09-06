@@ -100,9 +100,14 @@ export class CreepBase {
     });
   }
   public static findLink(creep: Creep, ignore: string[] = []): Structure | null {
-    return creep.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
-      filter: (s) => s.structureType === STRUCTURE_LINK && !ignore.includes(s.id) && s.store[RESOURCE_ENERGY] < 750
-    })[0];
+    const source = Game.getObjectById<Source>(creep.memory.targetSource);
+    if (source) {
+      return source.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
+        filter: (s) => s.structureType === STRUCTURE_LINK && !ignore.includes(s.id) && s.store[RESOURCE_ENERGY] < 750
+      })[0];
+    } else {
+      return null;
+    }
   }
   static getSourceTarget(creep: Creep): Structure | null {
     const homeRoom = Game.rooms[creep.memory.homeRoom];
