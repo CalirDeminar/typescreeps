@@ -73,7 +73,9 @@ export class CreepCombat {
   public static getCreepSafeEHP(body: Creep["body"]): number {
     return body
       .filter((part) => part.type !== "heal")
-      .reduce((acc, part) => acc + this.getEHP(part.type, part.boost, part.hits), 0);
+      .reduce((acc, part) => {
+        return acc + this.getEHP(part.type, part.boost, part.hits);
+      }, 0);
   }
   public static getCreepToughEHP(body: Creep["body"]): number {
     return body
@@ -86,7 +88,7 @@ export class CreepCombat {
   public static getAvgHealMultiplier(body: Creep["body"]): number {
     const toughEHP = this.getCreepToughEHP(body);
     const rawHP = body.filter((part) => part.type === "tough").length * 100;
-    return toughEHP / rawHP;
+    return rawHP > 0 ? toughEHP / rawHP : 1;
   }
   public static getCreepEffectiveHealing(body: Creep["body"]): number {
     return Math.ceil(this.getCreepRawHealing(body) * this.getAvgHealMultiplier(body));
@@ -100,9 +102,13 @@ export class CreepCombat {
   public static getCreepRangedPower(body: Creep["body"]): number {
     return body.reduce((acc, part) => acc + this.getRangedAttackPower(part.type, part.boost), 0);
   }
-  public static getCreepCombatFigures(body: Creep["body"]): {
+  public static getCreepCombatFigures(
+    body: Creep["body"]
+  ): {
     maxEffectiveHealing: number;
+    maxRawHealing: number;
     toughBuffer: number;
+    toughHealMultiplier: number;
     safeBuffer: number;
     dismantlePower: number;
     meleePower: number;
@@ -110,7 +116,9 @@ export class CreepCombat {
   } {
     return {
       maxEffectiveHealing: this.getCreepEffectiveHealing(body),
+      maxRawHealing: this.getCreepRawHealing(body),
       toughBuffer: this.getCreepToughEHP(body),
+      toughHealMultiplier: this.getAvgHealMultiplier(body),
       safeBuffer: this.getCreepSafeEHP(body),
       dismantlePower: this.getCreepDismantlePower(body),
       meleePower: this.getCreepMeleePower(body),

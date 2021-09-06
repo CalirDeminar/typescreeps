@@ -56,9 +56,24 @@ declare global {
     nextSpawn: CreepRecipie;
   }
   interface DefenseDirectorStore {
-    towerIds: string[];
-    alertLevel: 0 | 1 | 2 | 3;
+    towers: string[];
+    alertLevel: 0 | 1 | 2 | 3 | 4;
+    alertStartTimestamp: number;
     defenders: string[];
+    rampartMap: RoomPosition[];
+    hostileCreeps: CreepCombatSheet[];
+    activeTarget: string | null;
+  }
+  interface CreepCombatSheet {
+    name: string;
+    maxEffectiveHealing: number;
+    maxRawHealing: number;
+    toughBuffer: number;
+    toughHealMultiplier: number;
+    safeBuffer: number;
+    dismantlePower: number;
+    meleePower: number;
+    rangedPower: number;
   }
   interface RemoteDirectorStore {
     roomName: string;
@@ -100,6 +115,7 @@ declare global {
     nextSpawn: CreepRecipie | null;
     buildingThisTick: boolean;
     remoteRooms: { [roomid: string]: remoteRoom };
+    defenseDirector: DefenseDirectorStore;
   }
   interface Memory {
     uuid: number;

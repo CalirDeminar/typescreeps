@@ -43,45 +43,76 @@ describe("main", () => {
   //   assert.deepEqual(UtilPosition.getOtherSideOfExit(q5), a5);
   // });
 
-  it("Test Creep Calculation ", () => {
-    const heal = new Array(20).fill({ type: "heal", hits: 100, boost: "XLHO2" });
-    const movement = new Array(10).fill({ type: "move", hits: 100 });
-    const tough = new Array(10).fill({ type: "tough", hits: 100, boost: "XGHO2" });
-    const newBody = heal.concat(movement).concat(tough);
-    assert.deepEqual(CreepCombat.getCreepCombatFigures(newBody), {
-      maxEffectiveHealing: 3207,
-      toughBuffer: 3340,
-      safeBuffer: 4340,
-      dismantlePower: 0,
-      meleePower: 0,
-      rangedPower: 0
-    });
-    assert.equal(
-      CreepCombat.getCreepEffectiveHealing([
-        { type: "tough", hits: 100 },
-        { type: "tough", hits: 100 },
-        { type: "heal", hits: 100 }
-      ]),
-      12,
-      "basic components"
-    );
-    assert.equal(
-      CreepCombat.getCreepEffectiveHealing([
-        { type: "tough", hits: 100 },
-        { type: "tough", hits: 100 },
-        { type: "heal", hits: 100, boost: "XLHO2" }
-      ]),
-      48,
-      "boosted heal"
-    );
-    assert.equal(
-      CreepCombat.getCreepEffectiveHealing([
-        { type: "tough", hits: 100, boost: "XGHO2" },
-        { type: "tough", hits: 100, boost: "XGHO2" },
-        { type: "heal", hits: 100, boost: "XLHO2" }
-      ]),
-      161,
-      "boosted heal & tough"
-    );
+  // it("Test Creep Calculation ", () => {
+  //   const heal = new Array(20).fill({ type: "heal", hits: 100, boost: "XLHO2" });
+  //   const movement = new Array(10).fill({ type: "move", hits: 100 });
+  //   const tough = new Array(10).fill({ type: "tough", hits: 100, boost: "XGHO2" });
+  //   const newBody = heal.concat(movement).concat(tough);
+  //   assert.deepEqual(CreepCombat.getCreepCombatFigures(newBody), {
+  //     maxEffectiveHealing: 3207,
+  //     toughBuffer: 3340,
+  //     safeBuffer: 4340,
+  //     toughHealMultiplier: 3.34,
+  //     maxRawHealing: 960,
+  //     dismantlePower: 0,
+  //     meleePower: 0,
+  //     rangedPower: 0
+  //   });
+  //   assert.equal(
+  //     CreepCombat.getCreepEffectiveHealing([
+  //       { type: "tough", hits: 100 },
+  //       { type: "tough", hits: 100 },
+  //       { type: "heal", hits: 100 }
+  //     ]),
+  //     12,
+  //     "basic components"
+  //   );
+  //   assert.equal(
+  //     CreepCombat.getCreepEffectiveHealing([
+  //       { type: "tough", hits: 100 },
+  //       { type: "tough", hits: 100 },
+  //       { type: "heal", hits: 100, boost: "XLHO2" }
+  //     ]),
+  //     48,
+  //     "boosted heal"
+  //   );
+  //   assert.equal(
+  //     CreepCombat.getCreepEffectiveHealing([
+  //       { type: "tough", hits: 100, boost: "XGHO2" },
+  //       { type: "tough", hits: 100, boost: "XGHO2" },
+  //       { type: "heal", hits: 100, boost: "XLHO2" }
+  //     ]),
+  //     161,
+  //     "boosted heal & tough"
+  //   );
+  // });
+
+  it("Test Invader Parsign", () => {
+    // 24 move
+    // 25 heal
+    // 1 move
+    const healerBody = [
+      ...new Array(24).fill({ type: "move", hits: 100 }),
+      ...new Array(25).fill({ type: "heal", hits: 100 }),
+      ...new Array(1).fill({ type: "move", hits: 100 })
+    ];
+    // 15 tough
+    // 24 move
+    // 3 ranged attack
+    // 4 work
+    // 2 attack
+    // 1 move
+    const attackerBody = [
+      ...new Array(15).fill({ type: "tough", hits: 100 }),
+      ...new Array(24).fill({ type: "move", hits: 100 }),
+      ...new Array(3).fill({ type: "rangedAttack", hits: 100 }),
+      ...new Array(4).fill({ type: "work", hits: 100 }),
+      ...new Array(2).fill({ type: "attack", hits: 100 }),
+      { type: "move", hits: 100 }
+    ];
+    const attacker = CreepCombat.getCreepCombatFigures(attackerBody);
+    console.log(attacker);
+    const healer = CreepCombat.getCreepCombatFigures(healerBody);
+    console.log(healer);
   });
 });

@@ -16,7 +16,11 @@ export class SourceDirector {
       .filter((s) => s.structureType === "container")[0];
   }
   private static doPlaceStructure(pos: RoomPosition, type: BuildableStructureConstant): boolean {
-    if (pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0) {
+    if (
+      pos
+        .lookFor(LOOK_STRUCTURES)
+        .filter((s) => s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_RAMPART).length === 0
+    ) {
       return pos.createConstructionSite(type) === OK;
     }
     return false;
@@ -40,14 +44,7 @@ export class SourceDirector {
           this.doPlaceStructure(
             new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName),
             STRUCTURE_CONTAINER
-          ) ||
-          this.doPlaceStructure(
-            UtilPosition.getClosestSurroundingTo(
-              UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos),
-              anchor.pos
-            ),
-            STRUCTURE_CONTAINER
-          );
+          ) || this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
         if (built) {
           console.log("built container");
           Memory.roomStore[room.name].buildingThisTick = true;

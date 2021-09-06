@@ -9,7 +9,7 @@ import { MineralDirector } from "./director.mineral";
 import { RemoteManager } from "managers/manager.remote";
 import { RemoteHarvestingDirector } from "./director.remoteHarvesting";
 import { SourceDirector } from "./director.source";
-import { DefenseManager } from "managers/manager.defense";
+import { DefenseDirector } from "director/director.defense";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -32,7 +32,16 @@ export class CoreDirector {
       buildingsCreated: false,
       roadsCreated: false
     },
-    remoteDirector: []
+    remoteDirector: [],
+    defenseDirector: {
+      towers: [],
+      alertLevel: 0,
+      alertStartTimestamp: -1,
+      defenders: [],
+      rampartMap: [],
+      hostileCreeps: [],
+      activeTarget: null
+    }
   };
   private static createAnchor(room: Room): void {
     const spawn = room.find(FIND_MY_SPAWNS)[0];
@@ -269,6 +278,9 @@ export class CoreDirector {
         buildingThisTick: room.find(FIND_CONSTRUCTION_SITES).length > 0
       };
     }
+    if (!Object.keys(Memory.roomStore[room.name]).includes("defenderDirector")) {
+      Memory.roomStore[room.name].defenseDirector = this.baseMemory.defenseDirector;
+    }
   }
   private static runSpawn(room: Room): void {
     const toSpawn = Memory.roomStore[room.name].nextSpawn;
@@ -306,7 +318,7 @@ export class CoreDirector {
     cpu = Game.cpu.getUsed();
     const remHarvDirCpu = cpu - lastCpu;
     lastCpu = cpu;
-    DefenseManager.run(room);
+    DefenseDirector.run(room);
     cpu = Game.cpu.getUsed();
     const defManCpu = cpu - lastCpu;
     if (Game.time % 5 === 0) {
