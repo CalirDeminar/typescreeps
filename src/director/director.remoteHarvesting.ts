@@ -357,7 +357,7 @@ export class RemoteHarvestingDirector {
   private static runReserver(room: RemoteDirectorStore): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const spawning = Memory.roomStore[room.homeRoomName].nextSpawn !== null;
-    const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0 || room.hasInvaderCore;
+    const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0;
     const reservers = _.filter(
       Game.creeps,
       (c) => c.memory.role === "reserver" && c.memory.targetRoom === room.roomName
@@ -431,7 +431,7 @@ export class RemoteHarvestingDirector {
     this.runReserver(room);
     cpu = Game.cpu.getUsed();
     const runReserverCpu = cpu - lastCpu;
-    if (room.hostileCreepCount > 0) {
+    if (room.hostileCreepCount > 0 && room.hostileCreepCount < 2) {
       console.log(`Hostiles in room: ${room.roomName}`);
     }
     if (Game.time % 5 === 0) {
