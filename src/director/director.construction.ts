@@ -133,7 +133,7 @@ export class ConstructionDirector {
         this.nextStructure(
           STRUCTURE_ROAD,
           structures,
-          Constants.maxExtractor[level] > 0 ? store.mineralRoadTemplate.length : 0,
+          Constants.maxExtractor[level] > 0 ? 999999999 : 0,
           store.mineralRoadTemplate,
           terrain,
           room.name
