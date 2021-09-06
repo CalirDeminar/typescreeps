@@ -285,12 +285,40 @@ export class CoreDirector {
     }
   }
   private static runDirectors(room: Room): void {
+    let lastCpu = Game.cpu.getUsed();
     SourceDirector.run(room);
+    let cpu = Game.cpu.getUsed();
+    const sourceDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
     ConstructionDirector.run(room);
+    cpu = Game.cpu.getUsed();
+    const conDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
     MineralDirector.run(room);
+    cpu = Game.cpu.getUsed();
+    const minDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
     RemoteManager.run(room);
+    cpu = Game.cpu.getUsed();
+    const remDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
     RemoteHarvestingDirector.run(room);
+    cpu = Game.cpu.getUsed();
+    const remHarvDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
     DefenseManager.run(room);
+    cpu = Game.cpu.getUsed();
+    const defManCpu = cpu - lastCpu;
+    if (Game.time % 5 === 0) {
+      console.log(
+        `CPU: SourceDir: ${sourceDirCpu.toPrecision(2)} ` +
+          `ConDir: ${conDirCpu.toPrecision(2)}  ` +
+          `MinDir: ${minDirCpu.toPrecision(2)}  ` +
+          `RemDir: ${remDirCpu.toPrecision(2)}  ` +
+          `RemHarvDir: ${remHarvDirCpu.toPrecision(2)}  ` +
+          `DefMan: ${defManCpu.toPrecision(2)}  `
+      );
+    }
   }
   public static run(room: Room): void {
     if (room.controller && room.controller.my && room.controller.level >= 1) {
