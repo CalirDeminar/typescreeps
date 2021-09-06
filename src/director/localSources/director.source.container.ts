@@ -152,7 +152,7 @@ export class SourceContainerDirector {
       // setup working state
       switch (true) {
         case withdrawing && container.store.getUsedCapacity() === 0:
-        case !withdrawing && empty:
+        case !withdrawing && empty && creep.ticksToLive > 100:
           creep.memory.working = true;
           break;
         case withdrawing && full:
