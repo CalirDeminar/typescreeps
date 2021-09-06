@@ -16,7 +16,6 @@ export class ScoutingDirector {
   private static getExits(creep: Creep): RoomPosition[] {
     const room = creep.room;
     const existingRooms = Memory.roomStore[creep.memory.homeRoom].scoutingDirector.scoutedRooms.map((r) => r.name);
-    const currentRoomQueue = creep.memory.scoutPositions.map((r) => r.roomName);
     const exitMap = Game.map.describeExits(room.name);
     const rtn = Object.entries(exitMap).reduce((acc: RoomPosition[], r) => {
       if (r[1]) {
@@ -24,6 +23,7 @@ export class ScoutingDirector {
       }
       return acc;
     }, []);
+    console.log(JSON.stringify(rtn));
     return rtn.filter((r) => !existingRooms.includes(r.roomName));
   }
   private static recordRoom(creep: Creep): void {
@@ -32,7 +32,7 @@ export class ScoutingDirector {
       .map((r) => r.name)
       .includes(creep.room.name);
     console.log(`Room ${creep.room.name} exists: ${roomExists}`);
-    if (roomExists) {
+    if (!roomExists) {
       const sources = room.find(FIND_SOURCES).map((s) => {
         return { id: s.id, pos: s.pos };
       });
