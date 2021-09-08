@@ -71,7 +71,6 @@ declare global {
       keeperLair: { id: string; pos: RoomPosition }[];
       invaderCore: { id: string; pos: RoomPosition } | null;
       towers: { id: string; pos: RoomPosition }[];
-      terrain: RoomTerrain;
       name: string;
     }[];
     scoutQueue: RoomPosition[];
