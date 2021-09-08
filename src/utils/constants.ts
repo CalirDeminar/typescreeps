@@ -1,4 +1,10 @@
 export class Constants {
+  public static expansionTimingOffset = 1;
+  public static constructionTimingOffset = 2;
+  public static defenseTimingOffset = 3;
+  public static remoteHarvestingTimingOffset = 7;
+  public static scoutingTimingOffset = 11;
+  public static mineralTimingOffset = 13;
   public static upgraders = 1;
   public static builders = 15;
   public static maxShuttles = 4;

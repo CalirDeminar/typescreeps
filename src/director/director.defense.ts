@@ -1,5 +1,6 @@
 import { ConstructionTemplates } from "director/templates/constructionTemplates";
 import { CreepBase } from "roles/role.creep";
+import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepCombat } from "utils/creepCombat";
 import { UtilPosition } from "utils/util.position";
@@ -200,7 +201,7 @@ export class DefenseDirector {
     }
     // periodic refresh
     const period = store.alertLevel ? 5 : 1000;
-    if (Game.time % period === 0) {
+    if ((Game.time + Constants.defenseTimingOffset) % period === 0) {
       const rampartMap = ConstructionTemplates.ramparts(room).concat(this.makeSourceRamparts(room));
       Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
     }

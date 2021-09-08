@@ -207,7 +207,7 @@ export class MineralDirector {
     const mineral = extractor ? extractor.pos.lookFor(LOOK_MINERALS)[0] : null;
     const container = this.getContainer(room, mineral);
     this.placeStructures(room, extractor, container);
-    if (terminal && Game.time % 500 === 0) {
+    if (terminal && (Game.time + Constants.mineralTimingOffset) % 500 === 0) {
       console.log("Running Terminal Sales");
       this.runTerminalOrders(terminal);
     }

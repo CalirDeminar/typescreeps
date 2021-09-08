@@ -1,5 +1,6 @@
 import { Constants } from "utils/constants";
 import { CreepBase } from "roles/role.creep";
+import { ExpansionScouting } from "./scoutingExpansions/expansionScouting";
 export class ScoutingDirector {
   private static getRoomCenter(roomName: string): RoomPosition {
     return new RoomPosition(25, 25, roomName);
@@ -74,7 +75,8 @@ export class ScoutingDirector {
         invaderCore: invaderCore,
         towers: towers,
         terrain: {},
-        name: room.name
+        name: room.name,
+        settleable: false
       };
       Memory.roomStore[creep.memory.homeRoom].scoutingDirector.scoutedRooms = Memory.roomStore[
         creep.memory.homeRoom
@@ -113,7 +115,9 @@ export class ScoutingDirector {
     const shouldSpawnScout =
       room.controller &&
       room.controller.level > 1 &&
-      (Game.time % (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) === 0 ||
+      ((Game.time + Constants.scoutingTimingOffset) %
+        (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) ===
+        0 ||
         Memory.roomStore[room.name].scoutingDirector.scoutedRooms === []) &&
       scouts.length === 0;
     if (shouldSpawnScout) {
@@ -129,8 +133,20 @@ export class ScoutingDirector {
       };
     }
   }
+  public static updateSettlementIntel(room: Room): void {
+    if ((Game.time + Constants.expansionTimingOffset) % 1000 === 0) {
+      const updatedRooms = Memory.roomStore[room.name].scoutingDirector.scoutedRooms.map((scoutedRoom) => {
+        return {
+          ...scoutedRoom,
+          settleable: ExpansionScouting.expandable(scoutedRoom) && ExpansionScouting.isExpandableByTerrain(scoutedRoom)
+        };
+      });
+      Memory.roomStore[room.name].scoutingDirector.scoutedRooms = updatedRooms;
+    }
+  }
   public static run(room: Room): void {
     this.spawnScout(room);
     this.runScouts(room);
+    this.updateSettlementIntel(room);
   }
 }

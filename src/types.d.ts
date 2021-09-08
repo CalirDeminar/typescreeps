@@ -56,24 +56,26 @@ declare global {
     nextSpawn: CreepRecipie;
   }
   interface ScoutingDirectorStore {
-    scoutedRooms: {
-      sources: { id: string; pos: RoomPosition }[];
-      mineral: { id: string; pos: RoomPosition; mineralType: MineralConstant } | null;
-      controller: { id: string; owner: string | null; reservation: string | null; pos: RoomPosition } | null;
-      deposit: {
-        id: string;
-        type: DepositConstant;
-        pos: RoomPosition;
-        ticksToDecay: number;
-        lastCooldown: number;
-      } | null;
-      powerBank: { id: string; pos: RoomPosition; power: number } | null;
-      keeperLair: { id: string; pos: RoomPosition }[];
-      invaderCore: { id: string; pos: RoomPosition } | null;
-      towers: { id: string; pos: RoomPosition }[];
-      name: string;
-    }[];
+    scoutedRooms: ScoutedRoom[];
     scoutQueue: RoomPosition[];
+  }
+  interface ScoutedRoom {
+    sources: { id: string; pos: RoomPosition }[];
+    mineral: { id: string; pos: RoomPosition; mineralType: MineralConstant } | null;
+    controller: { id: string; owner: string | null; reservation: string | null; pos: RoomPosition } | null;
+    deposit: {
+      id: string;
+      type: DepositConstant;
+      pos: RoomPosition;
+      ticksToDecay: number;
+      lastCooldown: number;
+    } | null;
+    powerBank: { id: string; pos: RoomPosition; power: number } | null;
+    keeperLair: { id: string; pos: RoomPosition }[];
+    invaderCore: { id: string; pos: RoomPosition } | null;
+    towers: { id: string; pos: RoomPosition }[];
+    name: string;
+    settleable: boolean;
   }
   interface DefenseDirectorStore {
     towers: string[];

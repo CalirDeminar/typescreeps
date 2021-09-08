@@ -148,7 +148,7 @@ export class RemoteHarvestingDirector {
     }
   }
   private static addRoomsToRemote(roomName: string): void {
-    if (Game.time % 100 === 0) {
+    if ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0) {
       const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
       _.map(intel, (intelRoom) => {
         const alreadyRemoteHarvesting = !!Memory.roomStore[roomName].remoteDirector.find((rd) => {
