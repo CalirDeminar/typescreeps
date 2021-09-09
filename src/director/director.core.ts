@@ -10,6 +10,7 @@ import { RemoteHarvestingDirector } from "./director.remoteHarvesting";
 import { SourceDirector } from "./director.source";
 import { DefenseDirector } from "director/director.defense";
 import { ScoutingDirector } from "./director.scouting";
+import { RoomHelperDirector } from "./director.roomHelper";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -45,7 +46,8 @@ export class CoreDirector {
     scoutingDirector: {
       scoutedRooms: [],
       scoutQueue: []
-    }
+    },
+    helpOtherRoom: false
   };
   private static createAnchor(room: Room): void {
     const spawn = room.find(FIND_MY_SPAWNS)[0];
@@ -57,6 +59,9 @@ export class CoreDirector {
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
   }
+  private static findStructuresByAnchor(anchor: Flag, type: BuildableStructureConstant): Structure[] {
+    return anchor.pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type);
+  }
   private static findStructureByAnchor(anchor: Flag, type: BuildableStructureConstant): Structure | null {
     return anchor.pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type)[0];
   }
@@ -64,9 +69,10 @@ export class CoreDirector {
     Queen.run(creep);
   }
   private static runQueens(room: Room, container: StructureContainer | StructureStorage): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "queen" && c.memory.targetRoom === room.name).map((c) =>
-      this.runQueen(c, container)
-    );
+    _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "queen" && c.memory.targetRoom === room.name && c.memory.homeRoom === room.name
+    ).map((c) => this.runQueen(c, container));
   }
   private static spawnQueen(room: Room, container: StructureContainer | StructureStorage | null): void {
     if (container && container.store.getUsedCapacity() > 0) {
@@ -250,6 +256,14 @@ export class CoreDirector {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
+        case controller.level >= 7 &&
+          !alreadyBuilding &&
+          this.findStructuresByAnchor(anchor, STRUCTURE_TERMINAL).length < 2:
+          if (room.createConstructionSite(anchor.pos.x + 1, anchor.pos.y + 1, STRUCTURE_SPAWN) === OK) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+
         default:
           undefined;
       }
@@ -300,6 +314,33 @@ export class CoreDirector {
       }
     }
   }
+  private static runCore(room: Room): void {
+    let anchor = this.getAnchor(room);
+    if (!anchor) {
+      this.createAnchor(room);
+      anchor = this.getAnchor(room);
+    }
+    if (anchor) {
+      const container = anchor.pos
+        .findInRange<StructureContainer>(FIND_STRUCTURES, 1)
+        .filter((s) => s.structureType === STRUCTURE_CONTAINER)[0];
+      const storage = anchor.pos
+        .findInRange<StructureStorage>(FIND_STRUCTURES, 1)
+        .filter((s) => s.structureType === STRUCTURE_STORAGE)[0];
+      const link = anchor.pos
+        .findInRange<StructureLink>(FIND_STRUCTURES, 1)
+        .filter((s) => s.structureType === STRUCTURE_LINK)[0];
+      this.createConstructionSites(room);
+      this.spawnLinkHauler(room, link);
+      this.runLinkHaulers(room, link, storage, anchor);
+      this.runQueens(room, storage || container);
+      this.spawnUpgrader(room);
+      this.runUpgraders(room);
+      this.spawnBuilder(room);
+      this.runBuilders(room);
+      this.spawnQueen(room, storage || container);
+    }
+  }
   private static runDirectors(room: Room): void {
     let lastCpu = Game.cpu.getUsed();
     SourceDirector.run(room);
@@ -325,44 +366,31 @@ export class CoreDirector {
     DefenseDirector.run(room);
     cpu = Game.cpu.getUsed();
     const defManCpu = cpu - lastCpu;
+    RoomHelperDirector.run(room);
+    cpu = Game.cpu.getUsed();
+    const roomHelpDirCpu = cpu - lastCpu;
+    lastCpu = cpu;
+    this.runCore(room);
+    cpu = Game.cpu.getUsed();
+    const coreDirCpu = cpu - lastCpu;
     if (Game.time % 5 === 0) {
       console.log(
-        `CPU: SourceDir: ${sourceDirCpu.toPrecision(2)} ` +
+        `CPU: Room: ${room.name}  ` +
+          `SourceDir: ${sourceDirCpu.toPrecision(2)} ` +
           `ConDir: ${conDirCpu.toPrecision(2)}  ` +
           `MinDir: ${minDirCpu.toPrecision(2)}  ` +
           `ScoutDir: ${scoutDir.toPrecision(2)}  ` +
           `RemHarvDir: ${remHarvDirCpu.toPrecision(2)}  ` +
-          `DefMan: ${defManCpu.toPrecision(2)}  `
+          `DefMan: ${defManCpu.toPrecision(2)}  ` +
+          `RoomHelperDir: ${roomHelpDirCpu.toPrecision(2)}  ` +
+          `CoreDir: ${coreDirCpu.toPrecision(2)}  `
       );
     }
   }
   public static run(room: Room): void {
     if (room.controller && room.controller.my && room.controller.level >= 1) {
       this.initMemory(room);
-      let anchor = this.getAnchor(room);
-      if (!anchor) {
-        this.createAnchor(room);
-        anchor = this.getAnchor(room);
-      }
-      const container = anchor.pos
-        .findInRange<StructureContainer>(FIND_STRUCTURES, 1)
-        .filter((s) => s.structureType === STRUCTURE_CONTAINER)[0];
-      const storage = anchor.pos
-        .findInRange<StructureStorage>(FIND_STRUCTURES, 1)
-        .filter((s) => s.structureType === STRUCTURE_STORAGE)[0];
-      const link = anchor.pos
-        .findInRange<StructureLink>(FIND_STRUCTURES, 1)
-        .filter((s) => s.structureType === STRUCTURE_LINK)[0];
-      this.createConstructionSites(room);
-      this.spawnLinkHauler(room, link);
-      this.runLinkHaulers(room, link, storage, anchor);
-      this.runQueens(room, storage || container);
-      this.spawnUpgrader(room);
-      this.runUpgraders(room);
-      this.spawnBuilder(room);
-      this.runBuilders(room);
       this.runDirectors(room);
-      this.spawnQueen(room, storage || container);
       this.runSpawn(room);
       // memory init
       //      handle initialising non-existent keys

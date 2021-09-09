@@ -97,17 +97,20 @@ export class DefenseDirector {
     const controller = room.controller;
     const terrain = room.getTerrain();
     const store = Memory.roomStore[room.name].defenseDirector;
+    const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_STORAGE
+    })[0];
     const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
     // rampartMap.map((r) => {
     //   room.visual = room.visual.text("R", new RoomPosition(r.x, r.y, room.name), { stroke: "Black" });
     // });
-    if (controller && rampartMap.length > 0 && controller.level >= 4) {
+    if (controller && rampartMap.length > 0 && controller.level >= 4 && !!storage) {
       rampartMap.map((p) => {
         if (
           terrain.get(p.x, p.y) !== 1 &&
           p.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_RAMPART).length === 0
         ) {
-          room.createConstructionSite(p, STRUCTURE_RAMPART);
+          new RoomPosition(p.x, p.y, p.roomName).createConstructionSite(STRUCTURE_RAMPART);
         }
       });
     }
@@ -304,7 +307,12 @@ export class DefenseDirector {
     }
   }
   public static run(room: Room): void {
-    const targets = room.find(FIND_HOSTILE_CREEPS);
+    const targets = room.find(FIND_HOSTILE_CREEPS, {
+      filter: (s) =>
+        s.body.some(
+          (b) => b.type === WORK || b.type === ATTACK || b.type === RANGED_ATTACK || b.type === HEAL || b.type === CLAIM
+        )
+    });
     this.populateMemory(room);
     this.setAlert(room, targets);
     this.runTowers(room, targets);

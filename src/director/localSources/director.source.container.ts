@@ -3,19 +3,22 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
 
 export class SourceContainerDirector {
-  private static getCreepRoleAt(role: string, sourceId: string): Creep[] {
-    return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
+  private static getCreepRoleAt(role: string, sourceId: string, roomName: string): Creep[] {
+    return _.filter(
+      Game.creeps,
+      (c) => c.memory.role === role && c.memory.targetSource === sourceId && c.memory.homeRoom === roomName
+    );
   }
   private static shouldReplaceCreeps(creeps: Creep[], max: number): boolean {
     return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 150));
   }
   private static spawnStaticHarvester(room: Room, source: Source, container: StructureContainer): boolean {
-    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
+    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id, room.name);
     const hasHarvesterActive = !!activeHarvesters.find((c) => !!c.ticksToLive);
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, Constants.maxStatic);
     // clean up old shuttles
     if (hasHarvesterActive) {
-      this.getCreepRoleAt("harvesterShuttle", source.id).map((c) => c.suicide());
+      this.getCreepRoleAt("harvesterShuttle", source.id, room.name).map((c) => c.suicide());
     }
     if (shouldReplaceHarvester) {
       Memory.roomStore[source.room.name].nextSpawn = {
@@ -36,13 +39,16 @@ export class SourceContainerDirector {
     return false;
   }
   private static spawnHaulers(room: Room, container: StructureContainer, anchor: Flag): boolean {
-    const allHaulers = _.filter(Game.creeps, (c: Creep) => c.memory.role === "hauler");
-    const activeHaulers = this.getCreepRoleAt("hauler", container.id);
+    const allHaulers = _.filter(
+      Game.creeps,
+      (c: Creep) => c.memory.role === "hauler" && c.memory.homeRoom === room.name
+    );
+    const activeHaulers = this.getCreepRoleAt("hauler", container.id, room.name);
     const maxHaulers = room.energyCapacityAvailable > 1000 ? 1 : Constants.maxHaulers;
     const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, maxHaulers);
     if (shouldReplaceHauler) {
       const toSpend =
-        allHaulers.length < 1
+        allHaulers.length > 0
           ? Math.max(200, Math.min(room.energyAvailable, 1000))
           : Math.min(room.energyCapacityAvailable, 1000);
       Memory.roomStore[room.name].nextSpawn = {
@@ -117,7 +123,13 @@ export class SourceContainerDirector {
     }
   }
   private static runHarvesters(source: Source): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id)
+    _.filter(
+      Game.creeps,
+      (c) =>
+        c.memory.role === "harvesterStatic" &&
+        c.memory.targetSource === source.id &&
+        c.memory.homeRoom === source.room.name
+    )
       .sort((a, b) => a.store.getUsedCapacity() - b.store.getUsedCapacity())
       .map((c) => {
         this.runHarvester(c, source);
@@ -187,7 +199,13 @@ export class SourceContainerDirector {
     }
   }
   private static runHaulers(container: StructureContainer, anchor: Flag): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id).map((c) => {
+    _.filter(
+      Game.creeps,
+      (c) =>
+        c.memory.role === "hauler" &&
+        c.memory.targetSource === container.id &&
+        c.memory.homeRoom === container.room.name
+    ).map((c) => {
       this.runHauler(c, container);
     });
   }

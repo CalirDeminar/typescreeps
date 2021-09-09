@@ -6,7 +6,8 @@ export class MineralDirector {
   private static spawnMineralHarvester(room: Room, container: StructureContainer, mineral: Mineral): void {
     const mineralHarvester = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id
+      (c) =>
+        c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id && c.memory.homeRoom === room.name
     );
     const creepNearDeath = mineralHarvester.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const shouldSpawnAnother =
@@ -104,11 +105,13 @@ export class MineralDirector {
   ): void {
     const mineralHarvester = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id
+      (c) =>
+        c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id && c.memory.homeRoom === room.name
     );
     const mineralHauler = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "mineralHauler" && c.memory.workTarget === container.id
+      (c) =>
+        c.memory.role === "mineralHauler" && c.memory.workTarget === container.id && c.memory.homeRoom === room.name
     );
     this.spawnMineralHarvester(room, container, mineral);
     this.spawnHauler(room, container, mineral);

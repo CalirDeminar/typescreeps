@@ -1,6 +1,7 @@
 import { ErrorMapper } from "utils/ErrorMapper";
 import { Logger } from "./utils/logger";
 import { CoreDirector } from "director/director.core";
+import { ExpansionDirector } from "director/director.expansion";
 // When compiling TS to JS and bundling with rollup, the line numbers and file names in error messages change
 // This utility uses source maps to get the line numbers and file names of the original, TS source code
 export const loop = ErrorMapper.wrapLoop(() => {
@@ -10,7 +11,7 @@ export const loop = ErrorMapper.wrapLoop(() => {
       delete Memory.creeps[name];
     }
   }
-  const creepTime = Game.cpu.getUsed();
+  ExpansionDirector.run();
   for (const room in Game.rooms) {
     CoreDirector.run(Game.rooms[room]);
   }

@@ -205,7 +205,7 @@ export class ConstructionTemplates {
           .map((y) => {
             const range = Math.abs(x) + Math.abs(y);
             if (range === 10 || range === 11) {
-              return new RoomPosition(anchor.pos.x + x, anchor.pos.y + y, room.name);
+              return new RoomPosition(anchor.pos.x + x, anchor.pos.y + y, anchor.pos.roomName);
             } else {
               return null;
             }

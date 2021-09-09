@@ -151,9 +151,9 @@ export class RemoteHarvestingDirector {
     if ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0) {
       const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
       _.map(intel, (intelRoom) => {
-        const alreadyRemoteHarvesting = !!Memory.roomStore[roomName].remoteDirector.find((rd) => {
-          return rd.roomName === intelRoom.name;
-        });
+        const alreadyRemoteHarvesting = Object.values(Memory.roomStore)
+          .reduce((acc: string[], roomStore) => acc.concat(roomStore.remoteDirector.map((rd) => rd.roomName)), [])
+          .includes(intelRoom.name);
         if (!alreadyRemoteHarvesting) {
           const route = Game.map.findRoute(roomName, intelRoom.name);
           const homeRoom = Game.rooms[roomName];
@@ -298,7 +298,10 @@ export class RemoteHarvestingDirector {
 
     const harvesters = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "remoteHarvester" && c.memory.targetRoom === room.roomName
+      (c) =>
+        c.memory.role === "remoteHarvester" &&
+        c.memory.targetRoom === room.roomName &&
+        c.memory.homeRoom === room.homeRoomName
     );
     harvesters.map((creep) => {
       this.runHarvester(creep, anchor, constructionSite);
@@ -310,7 +313,10 @@ export class RemoteHarvestingDirector {
     const defenderCost = 430;
     const currentDefenders = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "remoteDefender" && c.memory.targetRoom === room.roomName
+      (c) =>
+        c.memory.role === "remoteDefender" &&
+        c.memory.targetRoom === room.roomName &&
+        c.memory.homeRoom === room.homeRoomName
     );
     const spawnDefender =
       (room.hostileCreepCount === 1 || room.hasInvaderCore) &&
@@ -360,13 +366,14 @@ export class RemoteHarvestingDirector {
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0;
     const reservers = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "reserver" && c.memory.targetRoom === room.roomName
+      (c) =>
+        c.memory.role === "reserver" && c.memory.targetRoom === room.roomName && c.memory.homeRoom === room.homeRoomName
     );
     const reserverNearDeath = reservers.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const needsReserver =
       (reservers.length < 1 || (reservers.length === 1 && reserverNearDeath)) &&
       !spawning &&
-      homeRoom.energyCapacityAvailable > 750 &&
+      homeRoom.energyCapacityAvailable > 1000 &&
       !hostile;
     if (needsReserver) {
       Memory.roomStore[room.homeRoomName].nextSpawn = {

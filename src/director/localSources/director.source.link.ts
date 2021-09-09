@@ -3,14 +3,17 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
 export class SourceLinkDirector {
-  private static getCreepRoleAt(role: string, sourceId: string): Creep[] {
-    return _.filter(Game.creeps, (c) => c.memory.role === role && c.memory.targetSource === sourceId);
+  private static getCreepRoleAt(role: string, sourceId: string, roomName: string): Creep[] {
+    return _.filter(
+      Game.creeps,
+      (c) => c.memory.role === role && c.memory.targetSource === sourceId && c.memory.homeRoom === roomName
+    );
   }
   private static shouldReplaceCreeps(creeps: Creep[], max: number): boolean {
     return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 100));
   }
   private static spawnStaticHarvester(room: Room, source: Source, link: StructureLink): boolean {
-    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id);
+    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id, room.name);
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, Constants.maxStatic);
     if (shouldReplaceHarvester) {
       Memory.roomStore[source.room.name].nextSpawn = {
@@ -76,7 +79,13 @@ export class SourceLinkDirector {
     }
   }
   private static runHarvesters(source: Source): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id)
+    _.filter(
+      Game.creeps,
+      (c) =>
+        c.memory.role === "harvesterStatic" &&
+        c.memory.targetSource === source.id &&
+        c.memory.homeRoom === source.room.name
+    )
       .sort((a, b) => a.store.getUsedCapacity() - b.store.getUsedCapacity())
       .map((c) => {
         this.runHarvester(c, source);

@@ -25,7 +25,8 @@ export class SourceShuttleDirector {
     const maxMissing = this.getMaxMissingShuttles();
     const activeHarvesters = _.filter(
       Game.creeps,
-      (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id
+      (c) =>
+        c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
     );
     const missingHarvesters = Constants.maxShuttles - activeHarvesters.length;
     const harvestersEmpty = missingHarvesters >= Constants.maxShuttles;
@@ -91,14 +92,18 @@ export class SourceShuttleDirector {
   private static runShuttles(source: Source): void {
     // list of extensions being delivered to already
     let storeTargets: string[] = [];
-    _.filter(Game.creeps, (c) => c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id).map(
-      (creep) => {
-        const source = Game.getObjectById<Source>(creep.memory.targetSource);
-        if (source) {
-          storeTargets = this.runShuttle(creep, source, storeTargets);
-        }
+    _.filter(
+      Game.creeps,
+      (c) =>
+        c.memory.role === "harvesterShuttle" &&
+        c.memory.targetSource === source.id &&
+        c.memory.homeRoom === source.room.name
+    ).map((creep) => {
+      const source = Game.getObjectById<Source>(creep.memory.targetSource);
+      if (source) {
+        storeTargets = this.runShuttle(creep, source, storeTargets);
       }
-    );
+    });
   }
   public static run(room: Room, source: Source, anchor: Flag): void {
     this.spawnShuttles(room, source);

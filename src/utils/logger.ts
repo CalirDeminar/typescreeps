@@ -17,6 +17,7 @@ export class Logger {
       console.log(
         `Tick: ${Game.time} Bucket: ${Game.cpu.bucket}    Execution Time: ${Game.cpu.getUsed().toPrecision(5)}` + report
       );
+      console.log("-------------------------------");
     }
   }
 }

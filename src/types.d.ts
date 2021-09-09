@@ -139,6 +139,13 @@ declare global {
     remoteRooms: { [roomid: string]: remoteRoom };
     defenseDirector: DefenseDirectorStore;
     scoutingDirector: ScoutingDirectorStore;
+    helpOtherRoom: boolean;
+  }
+  interface ExpansionDirectorStore {
+    targetRoom: string | null;
+    controllerId: string | null;
+    newSpawnPosition: RoomPosition | null;
+    helperRooms: string[];
   }
   interface Memory {
     uuid: number;
@@ -146,6 +153,7 @@ declare global {
     roomStore: {
       [key: string]: RoomType;
     };
+    expansionDirector: ExpansionDirectorStore;
   }
 }
 

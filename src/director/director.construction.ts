@@ -149,7 +149,10 @@ export class ConstructionDirector {
     const target = room
       .find(FIND_CONSTRUCTION_SITES)
       .sort((a, b) => a.progressTotal - a.progress - (b.progressTotal - b.progress))[0];
-    const creeps = _.filter(Game.creeps, (c) => c.memory.role === "builder");
+    const creeps = _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "builder" && c.memory.homeRoom === room.name && c.memory.targetRoom === room.name
+    );
     creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
   }
   public static run(room: Room): void {
