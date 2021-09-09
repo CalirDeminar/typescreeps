@@ -65,8 +65,9 @@ export class ExpansionDirector {
       !!Memory.expansionDirector.targetRoom &&
       Memory.expansionDirector.helperRooms.length > 0 &&
       !(
-        Game.rooms[Memory.expansionDirector.targetRoom].controller! &&
-        Game.rooms[Memory.expansionDirector.targetRoom].controller!.my
+        Game.rooms[Memory.expansionDirector.targetRoom] &&
+        Game.rooms[Memory.expansionDirector.targetRoom].controller !== undefined &&
+        Game.rooms[Memory.expansionDirector.targetRoom].controller?.my
       )
     ) {
       const helperRoomName = Memory.expansionDirector.helperRooms[0];
