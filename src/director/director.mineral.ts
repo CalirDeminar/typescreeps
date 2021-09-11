@@ -9,12 +9,16 @@ export class MineralDirector {
       (c) =>
         c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id && c.memory.homeRoom === room.name
     );
+    const mineralHarvesterQueue = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) =>
+        c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id && c.memory.homeRoom === room.name
+    );
     const creepNearDeath = mineralHarvester.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const shouldSpawnAnother =
-      mineralHarvester.length < Constants.maxMineralHarvester ||
-      (mineralHarvester.length === Constants.maxMineralHarvester && creepNearDeath);
+      mineralHarvester.length + mineralHarvester.length < Constants.maxMineralHarvester ||
+      (mineralHarvester.length + mineralHarvesterQueue.length === Constants.maxMineralHarvester && creepNearDeath);
     if (shouldSpawnAnother) {
-      Memory.roomStore[room.name].nextSpawn = {
+      Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildMineralHarvester(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
@@ -26,7 +30,7 @@ export class MineralDirector {
           homeRoom: room.name,
           targetRoom: room.name
         }
-      };
+      });
     }
   }
   private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
@@ -81,8 +85,11 @@ export class MineralDirector {
       Game.creeps,
       (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
     );
-    if (mineralHaulers.length < 1) {
-      Memory.roomStore[room.name].nextSpawn = {
+    const mineralHaulerQueue = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
+    );
+    if (mineralHaulers.length + mineralHaulerQueue.length < 1) {
+      Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
         memory: {
           ...CreepBase.baseMemory,
@@ -94,7 +101,7 @@ export class MineralDirector {
           homeRoom: room.name,
           targetRoom: room.name
         }
-      };
+      });
     }
   }
   private static operate(

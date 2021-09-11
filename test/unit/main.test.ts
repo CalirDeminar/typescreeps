@@ -4,6 +4,8 @@ import { CreepCombat } from "utils/creepCombat";
 import { loop } from "../../src/main";
 import { Game, Memory } from "./mock";
 import { UtilPosition } from "utils/util.position";
+import { CreepBase } from "roles/role.creep";
+import { CoreDirector } from "director/director.core";
 
 describe("main", () => {
   before(() => {
@@ -120,5 +122,123 @@ describe("main", () => {
     assert.equal(UtilPosition.navigateRoomName("N3E4", -1, -1), "N4E5");
     assert.equal(UtilPosition.navigateRoomName("N1E1", 1, 1), "N0E0");
     assert.equal(UtilPosition.navigateRoomName("N0E0", 1, 1), "S0W0");
+  });
+  it("spawnQueue sorting with energy in link, containers and storage", () => {
+    const emptyCreepRec = { template: [], memory: { ...CreepBase.baseMemory } };
+    const preRoleOrder = ["queen", "linkHauler", "harvesterStatic", "hauler", "remoteHarvester"];
+
+    const preQueue = preRoleOrder.map((r) => {
+      return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
+    });
+    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, true, true, true).map((cr) => cr.memory.role);
+    console.log(postRoleOrder);
+    assert.deepEqual(postRoleOrder, ["queen", "hauler", "harvesterStatic", "linkHauler", "remoteHarvester"]);
+  });
+  it("spawnQueue sorting with no energy in link, containers or storage", () => {
+    const emptyCreepRec = { template: [], memory: { ...CreepBase.baseMemory } };
+    const preRoleOrder = [
+      "remoteHarvester",
+      "remoteDefender",
+      "reserver",
+      "hauler",
+      "harvesterStatic",
+      "linkHauler",
+      "queen",
+      "remoteHarvester"
+    ];
+
+    const preQueue = preRoleOrder.map((r) => {
+      return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
+    });
+    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
+    console.log(postRoleOrder);
+    assert.deepEqual(postRoleOrder, [
+      "harvesterStatic",
+      "linkHauler",
+      "hauler",
+      "queen",
+      "remoteHarvester",
+      "remoteHarvester",
+      "reserver",
+      "remoteDefender"
+    ]);
+  });
+  it("spawnQueue sorting with no energy in link, containers or storage", () => {
+    const emptyCreepRec = { template: [], memory: { ...CreepBase.baseMemory } };
+    const preRoleOrder = [
+      "queen",
+      "linkHauler",
+      "harvesterStatic",
+      "hauler",
+      "remoteHarvester",
+      "reserver",
+      "remoteDefender"
+    ];
+
+    const preQueue = preRoleOrder.map((r) => {
+      return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
+    });
+    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
+    console.log(postRoleOrder);
+    assert.deepEqual(postRoleOrder, [
+      "harvesterStatic",
+      "linkHauler",
+      "hauler",
+      "queen",
+      "remoteHarvester",
+      "reserver",
+      "remoteDefender"
+    ]);
+  });
+  it("spawnQueue sorting with no energy in link or storage, but in containers", () => {
+    const emptyCreepRec = { template: [], memory: { ...CreepBase.baseMemory } };
+    const preRoleOrder = [
+      "queen",
+      "linkHauler",
+      "harvesterStatic",
+      "hauler",
+      "remoteHarvester",
+      "reserver",
+      "remoteDefender"
+    ];
+
+    const preQueue = preRoleOrder.map((r) => {
+      return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
+    });
+    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
+    console.log(postRoleOrder);
+    assert.deepEqual(postRoleOrder, [
+      "hauler",
+      "harvesterStatic",
+      "linkHauler",
+      "queen",
+      "remoteHarvester",
+      "reserver",
+      "remoteDefender"
+    ]);
+  });
+  it("spawnQueue sorting with no energy in link or storage, but in containers", () => {
+    const emptyCreepRec = { template: [], memory: { ...CreepBase.baseMemory } };
+    const preRoleOrder = [
+      "remoteHarvester",
+      "remoteHarvester",
+      "remoteHarvester",
+      "remoteHarvester",
+      "remoteHarvester",
+      "remoteHarvester",
+      "remoteHarvester",
+      "reserver",
+      "reserver",
+      "mason",
+      "harvesterStatic",
+      "harvesterStatic",
+      "remoteHarvester"
+    ];
+
+    const preQueue = preRoleOrder.map((r) => {
+      return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
+    });
+    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
+    console.log(postRoleOrder);
   });
 });

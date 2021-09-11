@@ -135,6 +135,7 @@ declare global {
     controllerId: string;
     minerals: string[];
     nextSpawn: CreepRecipie | null;
+    spawnQueue: CreepRecipie[];
     buildingThisTick: boolean;
     remoteRooms: { [roomid: string]: remoteRoom };
     defenseDirector: DefenseDirectorStore;

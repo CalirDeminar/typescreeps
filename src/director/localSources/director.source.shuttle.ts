@@ -28,10 +28,14 @@ export class SourceShuttleDirector {
       (c) =>
         c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
     );
-    const missingHarvesters = Constants.maxShuttles - activeHarvesters.length;
+    const queuedHarvesters = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) =>
+        c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
+    );
+    const missingHarvesters = Constants.maxShuttles - (activeHarvesters.length + queuedHarvesters.length);
     const harvestersEmpty = missingHarvesters >= Constants.maxShuttles;
     if (missingHarvesters > 0 && missingHarvesters >= maxMissing) {
-      Memory.roomStore[source.room.name].nextSpawn = {
+      Memory.roomStore[source.room.name].spawnQueue.push({
         template: CreepBuilder.buildShuttleCreep(harvestersEmpty ? 250 : source.room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
@@ -42,7 +46,7 @@ export class SourceShuttleDirector {
           homeRoom: source.room.name,
           targetRoom: source.room.name
         }
-      };
+      });
     }
   }
   private static setWorkingState(creep: Creep) {

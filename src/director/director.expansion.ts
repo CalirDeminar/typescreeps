@@ -4,7 +4,7 @@ import { ExpansionScouting } from "./scoutingExpansions/expansionScouting";
 
 export class ExpansionDirector {
   private static memoryInit(): void {
-    if (!Memory.expansionDirector) {
+    if (Memory.expansionDirector === undefined) {
       Memory.expansionDirector = {
         targetRoom: null,
         controllerId: null,
@@ -77,8 +77,11 @@ export class ExpansionDirector {
         Game.creeps,
         (c) => c.memory.role === "claimer" && c.memory.targetRoom === Memory.expansionDirector.targetRoom
       );
-      if (helperRoomStore.nextSpawn === null && helperRoom.energyAvailable > 650 && claimers.length === 0) {
-        Memory.roomStore[helperRoomName].nextSpawn = {
+      const claimerQueue = helperRoomStore.spawnQueue.filter(
+        (c) => c.memory.role === "claimer" && c.memory.targetRoom === Memory.expansionDirector.targetRoom
+      );
+      if (helperRoom.energyAvailable > 650 && claimers.length + claimerQueue.length === 0) {
+        Memory.roomStore[helperRoomName].spawnQueue.push({
           template: [CLAIM, MOVE],
           memory: {
             ...CreepBase.baseMemory,
@@ -87,7 +90,7 @@ export class ExpansionDirector {
             workTarget: Memory.expansionDirector.controllerId || "",
             homeRoom: helperRoomName
           }
-        };
+        });
       }
     }
   }
@@ -159,8 +162,8 @@ export class ExpansionDirector {
     }
   }
   public static run(): void {
+    this.memoryInit();
     if (Memory.roomStore && Memory.expansionDirector) {
-      this.memoryInit();
       this.chooseRoom();
       this.spawnClaimer();
       this.runClaimers();

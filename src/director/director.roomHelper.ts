@@ -76,8 +76,11 @@ export class RoomHelperDirector {
       Game.creeps,
       (c) => c.memory.role === "helper" && c.memory.targetRoom === targetRoom && c.memory.homeRoom === room.name
     );
-    if (helpers.length < 2 && Memory.roomStore[room.name].nextSpawn === null) {
-      Memory.roomStore[room.name].nextSpawn = {
+    const spawningHelpers = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) => c.memory.role === "helper" && c.memory.targetRoom === targetRoom && c.memory.homeRoom === room.name
+    );
+    if (helpers.length + spawningHelpers.length < 2) {
+      Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
@@ -86,7 +89,7 @@ export class RoomHelperDirector {
           homeRoom: room.name,
           working: false
         }
-      };
+      });
     }
   }
   private static stopHelp(room: Room): void {

@@ -111,7 +111,10 @@ export class ScoutingDirector {
     });
   }
   private static spawnScout(room: Room): void {
-    const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout");
+    const scouts = _.filter(Game.creeps, (c) => c.memory.role === "scout" && c.memory.homeRoom === room.name);
+    const spawningScouts = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) => c.memory.role === "scout" && c.memory.homeRoom === room.name
+    );
     const shouldSpawnScout =
       room.controller &&
       room.controller.level > 1 &&
@@ -119,10 +122,10 @@ export class ScoutingDirector {
         (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) ===
         0 ||
         Memory.roomStore[room.name].scoutingDirector.scoutedRooms === []) &&
-      scouts.length === 0;
+      scouts.length + spawningScouts.length === 0;
     if (shouldSpawnScout) {
       const initialTargets = this.getSurroundingRoomNames(room);
-      Memory.roomStore[room.name].nextSpawn = {
+      Memory.roomStore[room.name].spawnQueue.push({
         template: [MOVE],
         memory: {
           ...CreepBase.baseMemory,
@@ -130,7 +133,7 @@ export class ScoutingDirector {
           homeRoom: room.name,
           scoutPositions: initialTargets
         }
-      };
+      });
     }
   }
   public static updateSettlementIntel(room: Room): void {

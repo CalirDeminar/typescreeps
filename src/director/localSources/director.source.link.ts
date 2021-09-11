@@ -9,15 +9,25 @@ export class SourceLinkDirector {
       (c) => c.memory.role === role && c.memory.targetSource === sourceId && c.memory.homeRoom === roomName
     );
   }
-  private static shouldReplaceCreeps(creeps: Creep[], max: number): boolean {
-    return creeps.length < max || (creeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 100));
+  private static shouldReplaceCreeps(creeps: Creep[], queuedCreeps: CreepRecipie[], max: number): boolean {
+    return (
+      creeps.length + queuedCreeps.length < max ||
+      (creeps.length + queuedCreeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 150))
+    );
   }
   private static spawnStaticHarvester(room: Room, source: Source, link: StructureLink): boolean {
     const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id, room.name);
-    const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, Constants.maxStatic);
+    const queuedHarvesters = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) =>
+        c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
+    );
+    const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, [], Constants.maxStatic);
+    const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === source.room.name).length < 4;
     if (shouldReplaceHarvester) {
-      Memory.roomStore[source.room.name].nextSpawn = {
-        template: CreepBuilder.buildStaticHarvester(source.room.energyCapacityAvailable),
+      const template = {
+        template: CreepBuilder.buildStaticHarvester(
+          deadRoom ? source.room.energyAvailable : source.room.energyCapacityAvailable
+        ),
         memory: {
           ...CreepBase.baseMemory,
           role: "harvesterStatic",
@@ -29,6 +39,21 @@ export class SourceLinkDirector {
           targetStore: link.id
         }
       };
+      if (queuedHarvesters.length > 0) {
+        const index = Memory.roomStore[source.room.name].spawnQueue.findIndex(
+          (c) =>
+            c.memory.role === "harvesterStatic" &&
+            c.memory.targetSource === source.id &&
+            c.memory.homeRoom === room.name &&
+            c.memory.targetRoom === room.name &&
+            c.memory.targetStore === link.id
+        );
+        if (index >= 0) {
+          Memory.roomStore[source.room.name].spawnQueue[index] = template;
+        }
+      } else {
+        Memory.roomStore[source.room.name].spawnQueue.push(template);
+      }
       return true;
     }
     return false;

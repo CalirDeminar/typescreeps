@@ -111,7 +111,7 @@ export class CreepBase {
   }
   static getSourceTarget(creep: Creep): Structure | null {
     const homeRoom = Game.rooms[creep.memory.homeRoom];
-    const isSpawning = Memory.roomStore[homeRoom.name].nextSpawn !== null;
+    const isSpawning = Memory.roomStore[homeRoom.name].spawnQueue.length > 0;
     if (creep.room.name !== creep.memory.homeRoom) {
       this.travelToRoom(creep, "", homeRoom.name);
       return null;

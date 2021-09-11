@@ -152,16 +152,19 @@ export class DefenseDirector {
     );
   }
   private static spawnMasons(room: Room): void {
-    const techs = _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name);
+    const activeMasons = _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name);
+    const queuedMasons = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name
+    );
     const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
     })[0];
     const needsTech =
-      techs.length < 1 &&
+      activeMasons.length + queuedMasons.length < 1 &&
       storage &&
       room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART }).length > 0;
     if (needsTech) {
-      Memory.roomStore[room.name].nextSpawn = {
+      Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
@@ -170,7 +173,7 @@ export class DefenseDirector {
           targetRoom: room.name,
           refuelTarget: storage.id
         }
-      };
+      });
     }
   }
   private static checkToSafeMode(room: Room): void {

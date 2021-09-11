@@ -196,13 +196,15 @@ export class RemoteHarvestingDirector {
           c.memory.homeRoom === room.homeRoomName &&
           c.memory.targetSource === s.sourceId
       );
-      const isSpawning =
-        Memory.roomStore[room.homeRoomName].nextSpawn &&
-        (Memory.roomStore[room.homeRoomName].nextSpawn?.memory.role.includes("harvester") ||
-          Memory.roomStore[room.homeRoomName].nextSpawn?.memory.role.includes("Harvester"));
-      if (harvesters.length < Constants.maxRemoteShuttles && !isSpawning && !hostile) {
+      const harvestersInQueue = Memory.roomStore[room.homeRoomName].spawnQueue.filter(
+        (c) =>
+          c.memory.role === "remoteHarvester" &&
+          c.memory.homeRoom === room.homeRoomName &&
+          c.memory.targetSource === s.sourceId
+      );
+      if (harvesters.length + harvestersInQueue.length < Constants.maxRemoteShuttles && !hostile) {
         const maxEnergy = Math.min(Game.rooms[room.homeRoomName].energyCapacityAvailable, 1200);
-        Memory.roomStore[room.homeRoomName].nextSpawn = {
+        Memory.roomStore[room.homeRoomName].spawnQueue.push({
           template: CreepBuilder.buildShuttleCreep(maxEnergy),
           memory: {
             ...CreepBase.baseMemory,
@@ -212,7 +214,7 @@ export class RemoteHarvestingDirector {
             role: "remoteHarvester",
             working: true
           }
-        };
+        });
       }
     });
   }
@@ -309,10 +311,15 @@ export class RemoteHarvestingDirector {
   }
   private static runDefense(room: RemoteDirectorStore): void {
     const homeRoom = Game.rooms[room.homeRoomName];
-    const spawning = Memory.roomStore[room.homeRoomName].nextSpawn !== null;
     const defenderCost = 430;
     const currentDefenders = _.filter(
       Game.creeps,
+      (c) =>
+        c.memory.role === "remoteDefender" &&
+        c.memory.targetRoom === room.roomName &&
+        c.memory.homeRoom === room.homeRoomName
+    );
+    const spawningDefenders = Memory.roomStore[room.homeRoomName].spawnQueue.filter(
       (c) =>
         c.memory.role === "remoteDefender" &&
         c.memory.targetRoom === room.roomName &&
@@ -322,12 +329,12 @@ export class RemoteHarvestingDirector {
       (room.hostileCreepCount === 1 || room.hasInvaderCore) &&
       room.hostileTowerCount === 0 &&
       homeRoom.energyCapacityAvailable > defenderCost;
-    if (spawnDefender && currentDefenders.length < 1) {
+    if (spawnDefender && currentDefenders.length + spawningDefenders.length < 1) {
       console.log("Spawning Defender");
       const roomRoute = Game.map.findRoute(homeRoom.name, room.roomName);
       const roomReachable = roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance;
       if (roomReachable) {
-        Memory.roomStore[homeRoom.name].nextSpawn = {
+        Memory.roomStore[homeRoom.name].spawnQueue.push({
           template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK],
           memory: {
             ...CreepBase.baseMemory,
@@ -337,7 +344,7 @@ export class RemoteHarvestingDirector {
             targetRoom: room.roomName,
             homeRoom: homeRoom.name
           }
-        };
+        });
       }
     }
     currentDefenders.map((creep) => {
@@ -362,21 +369,23 @@ export class RemoteHarvestingDirector {
   }
   private static runReserver(room: RemoteDirectorStore): void {
     const homeRoom = Game.rooms[room.homeRoomName];
-    const spawning = Memory.roomStore[room.homeRoomName].nextSpawn !== null;
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0;
     const reservers = _.filter(
       Game.creeps,
       (c) =>
         c.memory.role === "reserver" && c.memory.targetRoom === room.roomName && c.memory.homeRoom === room.homeRoomName
     );
+    const spawningReservers = Memory.roomStore[room.homeRoomName].spawnQueue.filter(
+      (c) =>
+        c.memory.role === "reserver" && c.memory.targetRoom === room.roomName && c.memory.homeRoom === room.homeRoomName
+    );
     const reserverNearDeath = reservers.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const needsReserver =
-      (reservers.length < 1 || (reservers.length === 1 && reserverNearDeath)) &&
-      !spawning &&
+      (reservers.length + spawningReservers.length < 1 || (reservers.length === 1 && reserverNearDeath)) &&
       homeRoom.energyCapacityAvailable > 1000 &&
       !hostile;
     if (needsReserver) {
-      Memory.roomStore[room.homeRoomName].nextSpawn = {
+      const template = {
         template: [MOVE, CLAIM],
         memory: {
           ...CreepBase.baseMemory,
@@ -385,6 +394,19 @@ export class RemoteHarvestingDirector {
           targetRoom: room.roomName
         }
       };
+      if (spawningReservers.length > 0) {
+        const index = Memory.roomStore[room.homeRoomName].spawnQueue.findIndex(
+          (c) =>
+            c.memory.role === "reserver" &&
+            c.memory.homeRoom === room.homeRoomName &&
+            c.memory.targetRoom === room.roomName
+        );
+        if (index >= 0) {
+          Memory.roomStore[room.homeRoomName].spawnQueue[index] = template;
+        }
+      } else {
+        Memory.roomStore[room.homeRoomName].spawnQueue.push(template);
+      }
     }
     reservers.map((creep) => {
       const controller =
