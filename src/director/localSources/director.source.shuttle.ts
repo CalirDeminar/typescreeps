@@ -32,11 +32,12 @@ export class SourceShuttleDirector {
       (c) =>
         c.memory.role === "harvesterShuttle" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
     );
-    const missingHarvesters = Constants.maxShuttles - (activeHarvesters.length + queuedHarvesters.length);
+    const missingHarvesters = Constants.maxShuttles - activeHarvesters.length;
     const harvestersEmpty = missingHarvesters >= Constants.maxShuttles;
+    const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === source.room.name).length < 4;
     if (missingHarvesters > 0 && missingHarvesters >= maxMissing) {
-      Memory.roomStore[source.room.name].spawnQueue.push({
-        template: CreepBuilder.buildShuttleCreep(harvestersEmpty ? 250 : source.room.energyCapacityAvailable),
+      const template = {
+        template: CreepBuilder.buildShuttleCreep(deadRoom ? room.energyAvailable : source.room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
           role: "harvesterShuttle",
@@ -46,7 +47,21 @@ export class SourceShuttleDirector {
           homeRoom: source.room.name,
           targetRoom: source.room.name
         }
-      });
+      };
+      if (queuedHarvesters.length > 0) {
+        const index = Memory.roomStore[source.room.name].spawnQueue.findIndex(
+          (c) =>
+            c.memory.role === "harvesterShuttle" &&
+            c.memory.homeRoom === room.name &&
+            c.memory.targetRoom === room.name &&
+            c.memory.targetSource === source.id
+        );
+        if (index >= 0) {
+          Memory.roomStore[source.room.name].spawnQueue[index] = template;
+        }
+      } else {
+        Memory.roomStore[source.room.name].spawnQueue.push(template);
+      }
     }
   }
   private static setWorkingState(creep: Creep) {
