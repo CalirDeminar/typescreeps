@@ -95,7 +95,7 @@ export class RoomHelperDirector {
   private static stopHelp(room: Room): void {
     if (Memory.expansionDirector.controllerId) {
       const targetController = Game.getObjectById<StructureController>(Memory.expansionDirector.controllerId);
-      if (targetController && targetController.level >= 3) {
+      if (targetController && targetController.level >= 4) {
         Memory.expansionDirector = {
           targetRoom: null,
           controllerId: null,

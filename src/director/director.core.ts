@@ -1,6 +1,7 @@
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "../utils/creepBuilder";
 import { Queen } from "../roles/role.queen";
+import { QueenDirector } from "./core/director.queen";
 import { Upgrader } from "roles/role.upgrader";
 import { Constants } from "utils/constants";
 import { Builder } from "roles/role.builder";
@@ -12,6 +13,8 @@ import { DefenseDirector } from "director/director.defense";
 import { ScoutingDirector } from "./director.scouting";
 import { RoomHelperDirector } from "./director.roomHelper";
 import { lookup } from "dns";
+import { SpawnDirector } from "./core/director.spawn";
+import { LinkHaulerDirector } from "./core/director.linkHauler";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -66,142 +69,6 @@ export class CoreDirector {
   }
   private static findStructureByAnchor(anchor: Flag, type: BuildableStructureConstant): Structure | null {
     return anchor.pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type)[0];
-  }
-  private static runQueen(creep: Creep, container: StructureContainer | StructureStorage): void {
-    Queen.run(creep);
-  }
-  private static runQueens(room: Room, container: StructureContainer | StructureStorage): void {
-    _.filter(
-      Game.creeps,
-      (c) => c.memory.role === "queen" && c.memory.targetRoom === room.name && c.memory.homeRoom === room.name
-    ).map((c) => this.runQueen(c, container));
-  }
-  private static spawnQueen(room: Room, container: StructureContainer | StructureStorage | null): void {
-    if (container && container.store.getUsedCapacity() > 0) {
-      const activeQueens = _.filter(
-        Game.creeps,
-        (c) => c.memory.role === "queen" && c.memory.targetRoom === room.name && c.memory.homeRoom === room.name
-      );
-      const queuedQueens = Memory.roomStore[room.name].spawnQueue.filter(
-        (c) => c.memory.role === "queen" && c.memory.targetRoom === room.name && c.memory.homeRoom === room.name
-      );
-      if (
-        activeQueens.length < 1 ||
-        (activeQueens.length === 1 &&
-          activeQueens[0] &&
-          activeQueens[0].ticksToLive &&
-          activeQueens[0].ticksToLive < 100)
-      ) {
-        const optimalEnergy = activeQueens.length === 1 ? 1000 : Math.max(room.energyAvailable, 300);
-        const template = {
-          template: CreepBuilder.buildHaulingCreep(optimalEnergy),
-          memory: {
-            ...CreepBase.baseMemory,
-            role: "queen",
-            working: false,
-            born: Game.time,
-            homeRoom: room.name,
-            targetRoom: room.name
-          }
-        };
-        if (queuedQueens.length > 0) {
-          const index = Memory.roomStore[room.name].spawnQueue.findIndex(
-            (c) => c.memory.role === "queen" && c.memory.homeRoom === room.name && c.memory.targetRoom === room.name
-          );
-          if (index >= 0) {
-            Memory.roomStore[room.name].spawnQueue[index] = template;
-          }
-        } else {
-          Memory.roomStore[room.name].spawnQueue.push(template);
-        }
-      }
-    }
-  }
-  private static runLinkHauler(creep: Creep, link: StructureLink, storage: StructureStorage, anchor: Flag): void {
-    if (creep.ticksToLive) {
-      const onStation = creep.pos.isEqualTo(anchor.pos);
-      if (!onStation) {
-        CreepBase.travelTo(creep, anchor.pos, "black");
-      } else {
-        const hasCargo = creep.store.getUsedCapacity() > 0;
-        const canWithdraw =
-          link.store.getUsedCapacity(RESOURCE_ENERGY) > Math.min(400, creep.store.getCapacity()) &&
-          creep.store.getFreeCapacity() > 100;
-        const spawn = creep.pos.findInRange<StructureSpawn>(FIND_STRUCTURES, 1, {
-          filter: (s) => s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-        })[0];
-
-        if (hasCargo) {
-          if (spawn) {
-            creep.transfer(spawn, RESOURCE_ENERGY);
-          } else {
-            creep.transfer(storage, RESOURCE_ENERGY);
-          }
-        }
-        if (canWithdraw) {
-          creep.withdraw(link, RESOURCE_ENERGY);
-        }
-      }
-    }
-  }
-  private static runLinkHaulers(
-    room: Room,
-    link: StructureLink | null,
-    storage: StructureStorage | null,
-    anchor: Flag
-  ): void {
-    if (link && storage) {
-      _.filter(Game.creeps, (c) => c.memory.role === "linkHauler" && c.memory.homeRoom === room.name).map((c) =>
-        this.runLinkHauler(c, link, storage, anchor)
-      );
-    }
-  }
-  private static spawnLinkHauler(room: Room, link: StructureLink | null): void {
-    if (link) {
-      const currentLinkHaulers = _.filter(
-        Game.creeps,
-        (c) => c.memory.role === "linkHauler" && c.memory.homeRoom === room.name
-      );
-      const queuedLinkHaulers = Memory.roomStore[room.name].spawnQueue.filter(
-        (c) => c.memory.role === "linkHauler" && c.memory.homeRoom === room.name
-      );
-      const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === room.name).length < 4;
-      if (
-        currentLinkHaulers.length < 1 ||
-        (currentLinkHaulers.length === 1 &&
-          _.filter(currentLinkHaulers, (c) => c.ticksToLive && c.ticksToLive < 50).length > 0)
-      ) {
-        // TODO - update template
-        const template = {
-          template: deadRoom
-            ? [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY]
-            : [MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
-          memory: {
-            ...CreepBase.baseMemory,
-            role: "linkHauler",
-            working: false,
-            born: Game.time,
-            homeRoom: room.name,
-            targetRoom: room.name,
-            workTarget: link.id
-          }
-        };
-        if (queuedLinkHaulers.length > 0) {
-          const index = Memory.roomStore[room.name].spawnQueue.findIndex(
-            (c) =>
-              c.memory.role === "linkHauler" &&
-              c.memory.homeRoom === room.name &&
-              c.memory.targetRoom === room.name &&
-              c.memory.workTarget === link.id
-          );
-          if (index >= 0) {
-            Memory.roomStore[room.name].spawnQueue[index] = template;
-          }
-        } else {
-          Memory.roomStore[room.name].spawnQueue.push(template);
-        }
-      }
-    }
   }
   private static runUpgrader(creep: Creep): void {
     Upgrader.run(creep);
@@ -367,111 +234,7 @@ export class CoreDirector {
       Memory.roomStore[room.name].defenseDirector = this.baseMemory.defenseDirector;
     }
   }
-  private static getRoleScore(
-    role: string,
-    storedEnergy: boolean,
-    hasFilledLink: boolean,
-    energyInContainers: boolean
-  ): number {
-    switch (role) {
-      case "queen":
-        return storedEnergy ? 9999999999 : 31;
-      case "linkHauler":
-        return !storedEnergy && hasFilledLink ? 9999999998 : 49;
-      case "hauler":
-        return energyInContainers ? 95 : 45;
-      case "harvesterStatic":
-        return 50;
-      case "harvesterShuttle":
-        return 40;
-      case "remoteHarvester":
-        return 30;
-      case "reserver":
-        return 29;
-      case "mason":
-        return 28;
-      case "remoteDefender":
-        return 25;
-      case "upgrader":
-        return 20;
-      case "claimer":
-        return 15;
-      case "helper":
-        return 10;
-      default:
-        return 0;
-    }
-  }
-  public static sortSpawnQueue(
-    queue: CreepRecipie[],
-    storedEnergy: boolean,
-    hasFilledLink: boolean,
-    energyInContainers: boolean
-  ): CreepRecipie[] {
-    return [...queue]
-      .sort((a, b) => {
-        return (
-          this.getRoleScore(a.memory.role, storedEnergy, hasFilledLink, energyInContainers) -
-          this.getRoleScore(b.memory.role, storedEnergy, hasFilledLink, energyInContainers)
-        );
-      })
-      .reverse();
-  }
-  private static costCreep(creep: CreepRecipie): number {
-    return creep.template.reduce((acc: number, part: BodyPartConstant) => {
-      switch (part) {
-        case CARRY:
-        case MOVE:
-          return acc + 50;
-        case WORK:
-          return acc + 100;
-        case ATTACK:
-          return acc + 80;
-        case RANGED_ATTACK:
-          return acc + 150;
-        case HEAL:
-          return acc + 250;
-        case CLAIM:
-          return acc + 600;
-        case TOUGH:
-          return acc + 10;
-        default:
-          return acc;
-      }
-    }, 0);
-  }
-  private static runSpawn(room: Room): void {
-    const spawnQueue = Memory.roomStore[room.name].spawnQueue;
-    const storedEnergy = room.storage ? room.storage.store[RESOURCE_ENERGY] > room.energyCapacityAvailable * 3 : true;
-    const hasFilledLink =
-      room.find(FIND_STRUCTURES, {
-        filter: (s) => s.structureType === STRUCTURE_LINK && s.store[RESOURCE_ENERGY] > 1200
-      }).length > 0;
-    const energyInContainers =
-      room
-        .find<StructureContainer>(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER })
-        .reduce((acc, cont) => acc + cont.store[RESOURCE_ENERGY], 0) > 3000;
-    const sortedQueue = this.sortSpawnQueue(spawnQueue, storedEnergy, hasFilledLink, energyInContainers);
-    Memory.roomStore[room.name].spawnQueue = sortedQueue;
-    const toSpawn = sortedQueue[0];
-    // console.log(`${toSpawn.memory.role}: ` + JSON.stringify(toSpawn.template));
-    if (toSpawn) {
-      const freeSpawn = room.find(FIND_MY_SPAWNS, { filter: (s) => !s.spawning })[0];
-      // TODO - check here that the room can currently afford to spawn a creep of this cost
-      if (freeSpawn && this.costCreep(toSpawn) <= room.energyAvailable) {
-        const resp = freeSpawn.spawnCreep(toSpawn.template, `${toSpawn.memory.role}-${Game.time}`, {
-          memory: toSpawn.memory
-        });
-        if (resp === OK) {
-          Memory.roomStore[room.name].nextSpawn = null;
-          Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
-        }
-      }
-      if (this.costCreep(toSpawn) > room.energyAvailable) {
-        Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
-      }
-    }
-  }
+
   private static runCore(room: Room): void {
     let anchor = this.getAnchor(room);
     if (!anchor) {
@@ -489,14 +252,14 @@ export class CoreDirector {
         .findInRange<StructureLink>(FIND_STRUCTURES, 1)
         .filter((s) => s.structureType === STRUCTURE_LINK)[0];
       this.createConstructionSites(room);
-      this.spawnLinkHauler(room, link);
-      this.runLinkHaulers(room, link, storage, anchor);
-      this.runQueens(room, storage || container);
+      LinkHaulerDirector.spawnLinkHauler(room, link);
+      LinkHaulerDirector.runLinkHaulers(room, link, storage, anchor);
+      QueenDirector.runQueens(room, storage || container);
       this.spawnUpgrader(room);
       this.runUpgraders(room);
       this.spawnBuilder(room);
       this.runBuilders(room);
-      this.spawnQueen(room, storage || container);
+      QueenDirector.spawnQueen(room, storage || container);
     }
   }
   private static runDirectors(room: Room): void {
@@ -549,7 +312,7 @@ export class CoreDirector {
     if (room.controller && room.controller.my && room.controller.level >= 1) {
       this.initMemory(room);
       this.runDirectors(room);
-      this.runSpawn(room);
+      SpawnDirector.runSpawn(room);
       // memory init
       //      handle initialising non-existent keys
       // handle primary structure construction away from the main construction manager

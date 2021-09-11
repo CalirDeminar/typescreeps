@@ -160,7 +160,15 @@ export class RemoteHarvestingDirector {
           const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
             filter: (f) => f.name === `${roomName}-Anchor`
           })[0];
-          if (route !== -2 && route.length < 2 && intelRoom.sources.length > 0 && homeRoom.controller) {
+          const isFirstOwnedRoom =
+            _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
+          if (
+            route !== -2 &&
+            route.length < 2 &&
+            intelRoom.sources.length > 0 &&
+            homeRoom.controller &&
+            isFirstOwnedRoom
+          ) {
             const sources = intelRoom.sources.map((s) => {
               return { sourceId: s.id, targetContainerId: null };
             });
@@ -251,6 +259,11 @@ export class RemoteHarvestingDirector {
           if (source) {
             CreepBase.travelTo(creep, source.pos, "orange");
           }
+          break;
+        case targetRoomHostile &&
+          creep.pos.roomName !== creep.memory.targetRoom &&
+          UtilPosition.isBoundary(creep.pos.x, creep.pos.y):
+          CreepBase.travelTo(creep, anchor, "orange");
           break;
         case working && !targetRoomHostile && creep.pos.roomName !== creep.memory.targetRoom:
           CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
