@@ -22,7 +22,7 @@ export class Upgrader extends CreepBase {
           creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
         }
       } else {
-        const sourceTarget: Structure | null =
+        const sourceTarget: Structure | Tombstone | null =
           creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetSource) : this.getSourceTarget(creep);
         if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
           creep.moveTo(sourceTarget, {

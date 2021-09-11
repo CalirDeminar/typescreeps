@@ -99,6 +99,11 @@ export class CreepBase {
         s.structureType === STRUCTURE_EXTENSION && !ignore.includes(s.id) && s.store.energy < s.energyCapacity
     });
   }
+  public static findFilledTombstone(creep: Creep): Tombstone | null {
+    return creep.pos.findClosestByPath(FIND_TOMBSTONES, {
+      filter: (t) => t.store.getUsedCapacity(RESOURCE_ENERGY) > 200
+    });
+  }
   public static findLink(creep: Creep, ignore: string[] = []): Structure | null {
     const source = Game.getObjectById<Source>(creep.memory.targetSource);
     if (source) {
@@ -109,7 +114,7 @@ export class CreepBase {
       return null;
     }
   }
-  static getSourceTarget(creep: Creep): Structure | null {
+  static getSourceTarget(creep: Creep): Structure | Tombstone | null {
     const homeRoom = Game.rooms[creep.memory.homeRoom];
     const isSpawning = Memory.roomStore[homeRoom.name].spawnQueue.length > 0;
     if (creep.room.name !== creep.memory.homeRoom) {
@@ -157,6 +162,10 @@ export class CreepBase {
           return harvestableExtension;
         }
         return null;
+      }
+      const tombStone = this.findFilledTombstone(creep);
+      if (tombStone) {
+        return tombStone;
       }
       return null;
     }

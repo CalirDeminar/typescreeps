@@ -61,7 +61,7 @@ export class Builder extends CreepBase {
             Upgrader.run(creep);
         }
       } else {
-        const sourceTarget: Structure | null = this.getSourceTarget(creep);
+        const sourceTarget: Structure | Tombstone | null = this.getSourceTarget(creep);
         if (sourceTarget) {
           const sourceTargetRange = creep.pos.getRangeTo(sourceTarget);
           if (sourceTargetRange > 1) {
