@@ -94,6 +94,7 @@ export class SourceLinkDirector {
             if (creep.pos.isNearTo(source)) {
               creep.harvest(source);
             }
+            creep.memory.working = true;
           }
           break;
         default:
