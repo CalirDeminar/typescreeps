@@ -138,6 +138,8 @@ export class CoreDirector {
         return acc + (creep.memory.working ? 0 : creep.store.getCapacity());
       }, 0) > 250;
     if (
+      room.controller &&
+      room.controller.level < 8 &&
       energyFull &&
       Memory.roomStore[room.name].spawnQueue.length === 0 &&
       !towersNeedEnergy &&
