@@ -84,7 +84,7 @@ export class ConstructionTemplates {
   }
   private static getRoadMask(room: Room): RoomPosition[] {
     const store = Memory.roomStore[room.name].constructionDirector;
-    return store.extensionTemplate.concat(store.towerTemplate).concat(store.sourceLinks);
+    return store.extensionTemplate.concat(store.towerTemplate);
   }
   public static surroundingRoads(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
@@ -110,7 +110,12 @@ export class ConstructionTemplates {
       .map((source) => {
         const path = anchor.pos.findPathTo(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), {
           ignoreCreeps: true,
-          swampCost: 1
+          swampCost: 1,
+          costCallback: (roomName, costMatrix) => {
+            const store = Memory.roomStore[roomName].constructionDirector;
+            const obsticals = store.extensionTemplate.concat(store.towerTemplate);
+            obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));
+          }
         });
         return path.map((p) => new RoomPosition(p.x, p.y, room.name));
       })

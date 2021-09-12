@@ -33,7 +33,19 @@ export class RemoteHarvestingDirector {
                   .findPathTo(sourceExit, { ignoreCreeps: true, swampCost: 1 })
                   .map((s) => new RoomPosition(s.x, s.y, source.pos.roomName));
                 const anchorPath = anchor.pos
-                  .findPathTo(anchorExit, { ignoreCreeps: true, swampCost: 1 })
+                  .findPathTo(anchorExit, {
+                    ignoreCreeps: true,
+                    swampCost: 1,
+                    costCallback: (roomName, costMatrix) => {
+                      const store = Memory.roomStore[roomName].constructionDirector;
+                      const obsticals = store.extensionTemplate
+                        .concat(store.towerTemplate)
+                        .concat(Memory.roomStore[room.name].defenseDirector.wallMap)
+                        .concat(store.labTemplate)
+                        .concat(store.singleStructures.map((s) => s.pos));
+                      obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));
+                    }
+                  })
                   .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
                 return acc.concat(sourcePath).concat(anchorPath);
               }

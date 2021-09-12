@@ -23,9 +23,6 @@ export class SourceContainerDirector {
     );
     const hasHarvesterActive = !!activeHarvesters.find((c) => !!c.ticksToLive);
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, [], Constants.maxStatic);
-    const noHarvesters =
-      _.filter(Game.creeps, (c) => c.memory.role === "harvesterStatic" || c.memory.role === "harvesterShuttle")
-        .length === 0;
     const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === source.room.name).length < 4;
     // clean up old shuttles
     if (hasHarvesterActive) {
@@ -70,17 +67,11 @@ export class SourceContainerDirector {
       Game.creeps,
       (c: Creep) => c.memory.role === "hauler" && c.memory.homeRoom === room.name
     );
-    const allQueuedHaulers = Memory.roomStore[room.name].spawnQueue.filter(
-      (c) => c.memory.role === "hauler" && c.memory.homeRoom === room.name
-    );
     const activeHaulers = this.getCreepRoleAt("hauler", container.id, room.name);
     const queuedHaulers = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id && c.memory.homeRoom === room.name
     );
     const maxHaulers = room.energyCapacityAvailable > 1000 ? 1 : Constants.maxHaulers;
-    // const currentHaulageCapacity =
-    //   activeHaulers.reduce((acc, c) => acc + c.store.getCapacity(), 0) +
-    //   queuedHaulers.reduce((acc, c) => acc + c.template.filter((p) => p === CARRY).length, 0);
     const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === room.name).length < 4;
     const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, [], maxHaulers);
     if (shouldReplaceHauler) {
@@ -136,11 +127,10 @@ export class SourceContainerDirector {
       creep.memory.working = false;
     }
   }
-  private static runHarvester(creep: Creep, source: Source): void {
+  private static runHarvester(creep: Creep, source: Source, container: StructureContainer): void {
     if (creep.ticksToLive) {
       this.setWorkingState(creep);
       const working = creep.memory.working;
-      const container = working ? null : CreepBase.findContainer(creep);
       const workParts = creep.body.filter((p) => p.type === WORK).length;
       const repairContainer =
         container && creep.store.getUsedCapacity() > workParts && container.hits < container.hitsMax - workParts * 100;
@@ -175,7 +165,7 @@ export class SourceContainerDirector {
       }
     }
   }
-  private static runHarvesters(source: Source): void {
+  private static runHarvesters(source: Source, container: StructureContainer): void {
     _.filter(
       Game.creeps,
       (c) =>
@@ -185,7 +175,7 @@ export class SourceContainerDirector {
     )
       .sort((a, b) => a.store.getUsedCapacity() - b.store.getUsedCapacity())
       .map((c) => {
-        this.runHarvester(c, source);
+        this.runHarvester(c, source, container);
       });
   }
   private static getStoreTarget(creep: Creep): Structure | null {
@@ -263,8 +253,26 @@ export class SourceContainerDirector {
     });
   }
   public static run(room: Room, source: Source, container: StructureContainer, anchor: Flag): void {
+    let cpu = Game.cpu.getUsed();
+    let lastCpu = cpu;
     this.spawnCreeps(room, source, container, anchor);
-    this.runHarvesters(source);
+    cpu = Game.cpu.getUsed();
+    const spawnCpu = lastCpu - cpu;
+    lastCpu = cpu;
+    this.runHarvesters(source, container);
+    cpu = Game.cpu.getUsed();
+    const harvesterCpu = lastCpu - cpu;
+    lastCpu = cpu;
     this.runHaulers(container, anchor);
+    cpu = Game.cpu.getUsed();
+    const haulerCpu = lastCpu - cpu;
+    if (Game.time % 5 === 0) {
+      console.log(
+        `Source Runner: ${source.id} - ` +
+          `SpawnCpu: ${spawnCpu.toPrecision(2)} - ` +
+          `harvesterCpu: ${harvesterCpu.toPrecision(2)} - ` +
+          `haulerCpu ${haulerCpu.toPrecision(2)}`
+      );
+    }
   }
 }

@@ -107,12 +107,29 @@ export class RoomHelperDirector {
     }
   }
   public static run(room: Room) {
+    let cpu = Game.cpu.getUsed();
+    let lastCpu = cpu;
     const helpRoom = this.getRoomToHelp(room);
+    cpu = Game.cpu.getUsed();
+    const getRoomCpu = cpu - lastCpu;
+    lastCpu = cpu;
     if (helpRoom) {
       this.spawnHelpers(room, helpRoom);
       this.stopHelp(room);
     }
+    cpu = Game.cpu.getUsed();
+    const roomCpu = cpu - lastCpu;
+    lastCpu = cpu;
     this.runHelpers(room);
+    cpu = Game.cpu.getUsed();
+    const helperCpu = cpu - lastCpu;
+    if (Game.time % 5 === 0) {
+      // console.log(
+      //   `Helper: Get Room to Help: ${getRoomCpu.toPrecision(2)} - Run Room Functions: ${roomCpu.toPrecision(
+      //     2
+      //   )} - Run Helper Creeps: ${helperCpu.toPrecision(2)}`
+      // );
+    }
     // spawn hauler
   }
 }

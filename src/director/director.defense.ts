@@ -4,6 +4,7 @@ import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepCombat } from "utils/creepCombat";
 import { UtilPosition } from "utils/util.position";
+import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
 export class DefenseDirector {
   // Alert Levels
   // 0 - No Hostiles
@@ -15,7 +16,9 @@ export class DefenseDirector {
     const towers = room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER });
     const target = room
       .find(FIND_STRUCTURES, {
-        filter: (s) => s.hits < s.hitsMax - 500 && s.hits < (s.structureType === STRUCTURE_RAMPART ? 2_500 : 200_000)
+        filter: (s) =>
+          s.hits < s.hitsMax - 500 &&
+          s.hits < (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL ? 2_500 : 200_000)
       })
       .sort((a, b) => a.hits - b.hits)[0];
     towers.map((t) => {
@@ -93,7 +96,7 @@ export class DefenseDirector {
       })
       .reduce((acc, p) => acc.concat(p), []);
   }
-  private static makeRamparts(room: Room): void {
+  private static makeFortification(room: Room): void {
     const controller = room.controller;
     const terrain = room.getTerrain();
     const store = Memory.roomStore[room.name].defenseDirector;
@@ -101,6 +104,7 @@ export class DefenseDirector {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
     })[0];
     const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+    const wallMap = store.wallMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
     // rampartMap.map((r) => {
     //   room.visual = room.visual.text("R", new RoomPosition(r.x, r.y, room.name), { stroke: "Black" });
     // });
@@ -108,9 +112,21 @@ export class DefenseDirector {
       rampartMap.map((p) => {
         if (
           terrain.get(p.x, p.y) !== 1 &&
-          p.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_RAMPART).length === 0
+          p
+            .lookFor(LOOK_STRUCTURES)
+            .filter((s) => s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL).length === 0
         ) {
           new RoomPosition(p.x, p.y, p.roomName).createConstructionSite(STRUCTURE_RAMPART);
+        }
+      });
+      wallMap.map((p) => {
+        if (
+          terrain.get(p.x, p.y) !== 1 &&
+          p
+            .lookFor(LOOK_STRUCTURES)
+            .filter((s) => s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL).length === 0
+        ) {
+          new RoomPosition(p.x, p.y, p.roomName).createConstructionSite(STRUCTURE_WALL);
         }
       });
     }
@@ -119,14 +135,23 @@ export class DefenseDirector {
     if (creep.ticksToLive) {
       const repairLimit = 2_000_000;
       const storage = Game.getObjectById<StructureStorage>(creep.memory.refuelTarget);
+      const allRamparts = creep.room.find(FIND_STRUCTURES, {
+        filter: (s) =>
+          (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) && s.hits < repairLimit
+      });
+      const currentAvg = allRamparts.reduce((acc, r) => acc + r.hits, 0) / allRamparts.length;
+      if (Game.time % 5 === 0) {
+        console.log(`Avg Fortification HP: ${currentAvg.toPrecision(8)}`);
+      }
       const currentTarget = creep.memory.workTarget
-        ? Game.getObjectById<StructureRampart>(creep.memory.workTarget)
-        : creep.room
-            .find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < repairLimit })
-            .sort((a, b) => a.hits - b.hits)[0];
+        ? Game.getObjectById<StructureRampart | StructureWall>(creep.memory.workTarget)
+        : allRamparts.sort((a, b) => a.hits - b.hits)[0];
       if (currentTarget && storage) {
         creep.memory.workTarget = currentTarget.id;
         switch (true) {
+          case currentTarget.hits > currentAvg + 10_000:
+            creep.memory.workTarget = "";
+            break;
           case creep.store.getUsedCapacity() === 0 && !creep.pos.isNearTo(storage):
             CreepBase.travelTo(creep, storage, "white");
             break;
@@ -136,10 +161,10 @@ export class DefenseDirector {
             creep.withdraw(storage, RESOURCE_ENERGY);
             creep.memory.workTarget = "";
             break;
-          case creep.store.getUsedCapacity() > 0 && !creep.pos.isNearTo(currentTarget):
+          case creep.store.getUsedCapacity() > 0 && !creep.pos.inRangeTo(currentTarget, 3):
             CreepBase.travelTo(creep, currentTarget, "white");
             break;
-          case creep.store.getUsedCapacity() > 0 && creep.pos.isNearTo(currentTarget):
+          case creep.store.getUsedCapacity() > 0 && creep.pos.inRangeTo(currentTarget, 3):
             creep.repair(currentTarget);
             break;
         }
@@ -202,14 +227,16 @@ export class DefenseDirector {
         .find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER })
         .map((s) => s.id);
       Memory.roomStore[room.name].defenseDirector.towers = towers;
-      const rampartMap = ConstructionTemplates.ramparts(room).concat(this.makeSourceRamparts(room));
+      const rampartMap = ConstructionBunker2Director.ramparts(room).concat(this.makeSourceRamparts(room));
       Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
+      Memory.roomStore[room.name].defenseDirector.wallMap = ConstructionBunker2Director.walls(room);
     }
     // periodic refresh
     const period = store.alertLevel ? 5 : 1000;
     if ((Game.time + Constants.defenseTimingOffset) % period === 0) {
-      const rampartMap = ConstructionTemplates.ramparts(room).concat(this.makeSourceRamparts(room));
+      const rampartMap = ConstructionBunker2Director.ramparts(room).concat(this.makeSourceRamparts(room));
       Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
+      Memory.roomStore[room.name].defenseDirector.wallMap = ConstructionBunker2Director.walls(room);
     }
     if (!Object.keys(store).includes("alertStartTimestamp")) {
       Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = -1;
@@ -319,7 +346,7 @@ export class DefenseDirector {
     this.populateMemory(room);
     this.setAlert(room, targets);
     this.runTowers(room, targets);
-    this.makeRamparts(room);
+    this.makeFortification(room);
     this.checkToSafeMode(room);
     this.spawnMasons(room);
     this.runMasons(room);

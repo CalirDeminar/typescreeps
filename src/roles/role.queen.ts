@@ -6,7 +6,7 @@ export class Queen extends CreepBase {
   }
   private static getContainer(anchor: Flag): StructureContainer | StructureStorage | StructureLink | null {
     return (
-      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
+      anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 2, {
         filter: (s) => s.structureType === STRUCTURE_STORAGE
       })[0] ||
       anchor.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
@@ -88,7 +88,9 @@ export class Queen extends CreepBase {
         case target === null:
           break;
         case target &&
-          (target.store.getFreeCapacity(RESOURCE_ENERGY) === 0 || target.store.getUsedCapacity(RESOURCE_ENERGY) > 1000):
+          (target.store.getFreeCapacity(RESOURCE_ENERGY) === 0 ||
+            target.store.getUsedCapacity(RESOURCE_ENERGY) > 1000 ||
+            (target.store.getFreeCapacity(RESOURCE_ENERGY) < 25 && target.structureType === STRUCTURE_TOWER)):
           creep.memory.workTarget = "";
           break;
         case target && creep.pos.isNearTo(target):
@@ -124,9 +126,11 @@ export class Queen extends CreepBase {
       if (container) {
         switch (this.isWorking(creep, container)) {
           case "work":
+            // console.log("Fill");
             this.fillCore(creep);
             break;
           case "fuel":
+            // console.log("fuel");
             this.refuelSelf(creep, container);
             break;
           case "dump":

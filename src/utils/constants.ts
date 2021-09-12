@@ -21,6 +21,12 @@ export class Constants {
   public static maxTerminal = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static maxExtractor = [0, 0, 0, 0, 0, 0, 1, 1, 1];
   public static maxLinks = [0, 0, 0, 0, 0, 2, 3, 4, 6];
+  public static maxLabs = [0, 0, 0, 0, 0, 0, 3, 6, 10];
+  public static maxSpawns = [0, 1, 1, 1, 1, 1, 1, 2, 3];
+  public static maxObservers = [0, 0, 0, 0, 0, 0, 0, 0, 1];
+  public static maxNukers = [0, 0, 0, 0, 0, 0, 0, 0, 1];
+  public static maxFactories = [0, 0, 0, 0, 0, 0, 0, 1, 1];
+  public static maxPowerSpawns = [0, 0, 0, 0, 0, 0, 0, 0, 1];
   public static buildRoadsFrom = 3;
   public static earlyScoutFrequency = 1500;
   public static lateScoutFrequency = 500;

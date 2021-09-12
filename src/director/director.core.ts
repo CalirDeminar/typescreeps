@@ -1,6 +1,5 @@
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "../utils/creepBuilder";
-import { Queen } from "../roles/role.queen";
 import { QueenDirector } from "./core/director.queen";
 import { Upgrader } from "roles/role.upgrader";
 import { Constants } from "utils/constants";
@@ -12,9 +11,9 @@ import { SourceDirector } from "./director.source";
 import { DefenseDirector } from "director/director.defense";
 import { ScoutingDirector } from "./director.scouting";
 import { RoomHelperDirector } from "./director.roomHelper";
-import { lookup } from "dns";
 import { SpawnDirector } from "./core/director.spawn";
 import { LinkHaulerDirector } from "./core/director.linkHauler";
+import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -26,17 +25,12 @@ export class CoreDirector {
     remoteRooms: {},
     sourceDirector: [],
     constructionDirector: {
-      anchor: null,
-      anchorContainer: null,
       internalRoadTemplate: [],
-      routeRoadTemplate: [],
-      mineralRoadTemplate: [],
       extensionTemplate: [],
-      baseTemplate: [],
       towerTemplate: [],
-      sourceLinks: [],
-      buildingsCreated: false,
-      roadsCreated: false
+      roadsCreated: false,
+      singleStructures: [],
+      labTemplate: []
     },
     remoteDirector: [],
     defenseDirector: {
@@ -45,6 +39,7 @@ export class CoreDirector {
       alertStartTimestamp: -1,
       defenders: [],
       rampartMap: [],
+      wallMap: [],
       hostileCreeps: [],
       activeTarget: null
     },
@@ -87,7 +82,7 @@ export class CoreDirector {
       Game.creeps,
       (c) => c.memory.role === "upgrader" && c.memory.homeRoom === room.name
     );
-    const shouldSpawnUpgrader = activeUpgraders.length;
+    const shouldSpawnUpgrader = activeUpgraders.length < 1;
     if (room.controller && room.controller.my && shouldSpawnUpgrader) {
       const template = {
         template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 400)),
@@ -129,6 +124,7 @@ export class CoreDirector {
   private static spawnBuilder(room: Room): void {
     const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0 || room.energyAvailable > 1000;
     const towersNeedEnergy =
+      _.filter(Game.creeps, (c) => c.memory.role === "queen").length > 0 &&
       _.filter(
         room.find(FIND_MY_STRUCTURES, {
           filter: (s) => {
@@ -171,33 +167,15 @@ export class CoreDirector {
       const alreadyBuilding = Memory.roomStore[room.name].buildingThisTick;
       switch (true) {
         case controller.level >= 3 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_CONTAINER):
-          if (room.createConstructionSite(anchor.pos.x, anchor.pos.y + 1, STRUCTURE_CONTAINER) === OK) {
-            Memory.roomStore[room.name].buildingThisTick = true;
-          }
-          break;
-        case controller.level >= 4 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_STORAGE):
-          if (room.createConstructionSite(anchor.pos.x - 1, anchor.pos.y, STRUCTURE_STORAGE) === OK) {
+          if (room.createConstructionSite(anchor.pos.x, anchor.pos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
         case controller.level >= 5 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_LINK):
-          if (room.createConstructionSite(anchor.pos.x - 1, anchor.pos.y - 1, STRUCTURE_LINK) === OK) {
+          if (room.createConstructionSite(anchor.pos.x, anchor.pos.y + 1, STRUCTURE_LINK) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
-        case controller.level >= 6 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_TERMINAL):
-          if (room.createConstructionSite(anchor.pos.x + 1, anchor.pos.y, STRUCTURE_TERMINAL) === OK) {
-            Memory.roomStore[room.name].buildingThisTick = true;
-          }
-          break;
-        case controller.level >= 7 &&
-          !alreadyBuilding &&
-          this.findStructuresByAnchor(anchor, STRUCTURE_TERMINAL).length < 2:
-          if (room.createConstructionSite(anchor.pos.x + 1, anchor.pos.y + 1, STRUCTURE_SPAWN) === OK) {
-            Memory.roomStore[room.name].buildingThisTick = true;
-          }
-          break;
-
         default:
           undefined;
       }
@@ -246,10 +224,10 @@ export class CoreDirector {
         .findInRange<StructureContainer>(FIND_STRUCTURES, 1)
         .filter((s) => s.structureType === STRUCTURE_CONTAINER)[0];
       const storage = anchor.pos
-        .findInRange<StructureStorage>(FIND_STRUCTURES, 1)
+        .findInRange<StructureStorage>(FIND_STRUCTURES, 2)
         .filter((s) => s.structureType === STRUCTURE_STORAGE)[0];
       const link = anchor.pos
-        .findInRange<StructureLink>(FIND_STRUCTURES, 1)
+        .findInRange<StructureLink>(FIND_STRUCTURES, 2)
         .filter((s) => s.structureType === STRUCTURE_LINK)[0];
       this.createConstructionSites(room);
       LinkHaulerDirector.spawnLinkHauler(room, link);
@@ -287,6 +265,7 @@ export class CoreDirector {
     DefenseDirector.run(room);
     cpu = Game.cpu.getUsed();
     const defManCpu = cpu - lastCpu;
+    lastCpu = cpu;
     RoomHelperDirector.run(room);
     cpu = Game.cpu.getUsed();
     const roomHelpDirCpu = cpu - lastCpu;
@@ -313,6 +292,7 @@ export class CoreDirector {
       this.initMemory(room);
       this.runDirectors(room);
       SpawnDirector.runSpawn(room);
+      ConstructionBunker2Director.run(room);
       // memory init
       //      handle initialising non-existent keys
       // handle primary structure construction away from the main construction manager

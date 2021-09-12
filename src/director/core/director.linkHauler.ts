@@ -2,9 +2,13 @@ import { CreepBase } from "roles/role.creep";
 export class LinkHaulerDirector {
   private static runLinkHauler(creep: Creep, link: StructureLink, storage: StructureStorage, anchor: Flag): void {
     if (creep.ticksToLive) {
-      const onStation = creep.pos.isEqualTo(anchor.pos);
+      const onStation = creep.pos.isNearTo(storage.pos) && creep.pos.isNearTo(link.pos);
       if (!onStation) {
-        CreepBase.travelTo(creep, anchor.pos, "black");
+        if (!creep.pos.isNearTo(storage.pos)) {
+          CreepBase.travelTo(creep, storage.pos, "black");
+        } else if (!creep.pos.isNearTo(link.pos)) {
+          CreepBase.travelTo(creep, link.pos, "black");
+        }
       } else {
         const hasCargo = creep.store.getUsedCapacity() > 0;
         const canWithdraw =

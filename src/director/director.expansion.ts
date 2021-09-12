@@ -134,6 +134,7 @@ export class ExpansionDirector {
       });
       if (spawns.length === 0 && constructionSites.length === 0) {
         pos.createConstructionSite(STRUCTURE_SPAWN);
+        room.createFlag(pos.x, pos.y + 1, `${room.name}-Anchor`);
       }
     }
   }

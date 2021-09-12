@@ -83,6 +83,7 @@ declare global {
     alertStartTimestamp: number;
     defenders: string[];
     rampartMap: RoomPosition[];
+    wallMap: RoomPosition[];
     hostileCreeps: CreepCombatSheet[];
     activeTarget: string | null;
   }
@@ -127,10 +128,18 @@ declare global {
     buildingsCreated: boolean;
     roadsCreated: boolean;
   }
+  interface ConstructionDirectorStore2 {
+    internalRoadTemplate: RoomPosition[];
+    towerTemplate: RoomPosition[];
+    extensionTemplate: RoomPosition[];
+    labTemplate: RoomPosition[];
+    singleStructures: { type: BuildableStructureConstant; pos: RoomPosition }[];
+    roadsCreated: boolean;
+  }
   interface RoomType {
     sources: string[];
     sourceDirector: SourceDirectorStore[];
-    constructionDirector: ConstructionDirectorStore;
+    constructionDirector: ConstructionDirectorStore2;
     remoteDirector: RemoteDirectorStore[];
     controllerId: string;
     minerals: string[];
