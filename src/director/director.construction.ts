@@ -26,7 +26,7 @@ export class ConstructionDirector {
       .map((p) => new RoomPosition(p.x, p.y, from.roomName));
   }
   private static populate(room: Room): void {
-    if (room.controller) {
+    if (room.controller && Memory.roomStore[room.name].constructionDirector.extensionTemplate.length === 0) {
       const anchor = this.getAnchor(room);
       Memory.roomStore[room.name].constructionDirector.extensionTemplate = ConstructionBunker2Director.extensions(room);
       Memory.roomStore[room.name].constructionDirector.towerTemplate = ConstructionBunker2Director.towers(room);
@@ -68,8 +68,10 @@ export class ConstructionDirector {
     const currentCount = currentTowers.length;
     const currentMax = Constants.maxTowers[level];
     if (currentCount < currentMax) {
-      const template = Memory.roomStore[room.name].constructionDirector.towerTemplate;
-      const unbuilt = template.filter((t) => !currentTowers.some((t) => t.pos.isEqualTo(t)));
+      const template = Memory.roomStore[room.name].constructionDirector.towerTemplate.map(
+        (p) => new RoomPosition(p.x, p.y, p.roomName)
+      );
+      const unbuilt = template.filter((t1) => !currentTowers.some((t2) => t1.isEqualTo(t2)));
       const next = unbuilt[0];
       if (next) {
         return next.createConstructionSite(STRUCTURE_TOWER) === OK;
@@ -192,8 +194,8 @@ export class ConstructionDirector {
         this.nextExtension(room, structures, level) ||
           this.singleStructures(room, structures, level) ||
           this.nextTower(room, structures, level) ||
-          // this.nextLab(room, structures, level) ||
           this.buildRoads(room, level);
+        // this.nextLab(room, structures, level) ||
         // search single buildings
         // search roads
       }
