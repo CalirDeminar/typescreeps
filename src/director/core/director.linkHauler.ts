@@ -4,11 +4,7 @@ export class LinkHaulerDirector {
     if (creep.ticksToLive) {
       const onStation = creep.pos.isNearTo(storage.pos) && creep.pos.isNearTo(link.pos);
       if (!onStation) {
-        if (!creep.pos.isNearTo(storage.pos)) {
-          CreepBase.travelTo(creep, storage.pos, "black");
-        } else if (!creep.pos.isNearTo(link.pos)) {
-          CreepBase.travelTo(creep, link.pos, "black");
-        }
+        CreepBase.travelTo(creep, new RoomPosition(storage.pos.x + 1, storage.pos.y, storage.pos.roomName), "black");
       } else {
         const hasCargo = creep.store.getUsedCapacity() > 0;
         const canWithdraw =
