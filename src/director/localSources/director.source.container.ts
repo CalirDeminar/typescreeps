@@ -115,10 +115,13 @@ export class SourceContainerDirector {
     // TODO - base spawn priority on amount of energy in room in containers
     this.spawnStaticHarvester(room, source, container) || this.spawnHaulers(room, container, anchor);
   }
-  private static setWorkingState(creep: Creep) {
+  private static setWorkingState(creep: Creep, container: StructureContainer) {
     const working = creep.memory.working;
     const workParts = creep.body.filter((p) => p.type === WORK).length;
-    const full = creep.store.getFreeCapacity() < workParts * 2;
+    const full =
+      creep.store.getFreeCapacity() < workParts * 2 &&
+      !creep.pos.isEqualTo(container.pos) &&
+      container.store.getFreeCapacity() >= creep.store.getUsedCapacity();
     const empty = creep.store.getUsedCapacity() === 0;
     if (!working && empty) {
       creep.memory.working = true;
@@ -129,7 +132,7 @@ export class SourceContainerDirector {
   }
   private static runHarvester(creep: Creep, source: Source, container: StructureContainer): void {
     if (creep.ticksToLive) {
-      this.setWorkingState(creep);
+      this.setWorkingState(creep, container);
       const working = creep.memory.working;
       const workParts = creep.body.filter((p) => p.type === WORK).length;
       const repairContainer =
@@ -201,6 +204,7 @@ export class SourceContainerDirector {
   }
   private static runHauler(creep: Creep, container: StructureContainer): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
+      const startCpu = Game.cpu.getUsed();
       let withdrawing = creep.memory.working;
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getFreeCapacity() === 0;
@@ -216,7 +220,8 @@ export class SourceContainerDirector {
       }
       withdrawing = creep.memory.working;
       const storeTarget: Structure | null =
-        creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : this.getStoreTarget(creep);
+        creep.memory.targetStore !== "" ? Game.getObjectById(creep.memory.targetStore) : null;
+      const setupCpu = Game.cpu.getUsed() - startCpu;
       switch (true) {
         case withdrawing && creep.pos.isNearTo(container):
           if (container.store.getUsedCapacity() > Math.min(creep.store.getFreeCapacity(), 2000)) {
@@ -229,6 +234,10 @@ export class SourceContainerDirector {
         case withdrawing:
           CreepBase.travelTo(creep, container, "blue");
           break;
+        case !withdrawing && creep.memory.targetStore === "":
+          const target = this.getStoreTarget(creep);
+          creep.memory.targetStore = target ? target.id : "";
+          break;
         case storeTarget && creep.pos.isNearTo(storeTarget):
           if (storeTarget) {
             creep.transfer(storeTarget, RESOURCE_ENERGY);
@@ -238,6 +247,10 @@ export class SourceContainerDirector {
           if (storeTarget) {
             CreepBase.travelTo(creep, storeTarget, "blue");
           }
+      }
+      const actionCpu = Game.cpu.getUsed() - (setupCpu + startCpu);
+      if (Game.time % 5 === 0) {
+        // console.log(`Hauler: ${creep.name}: setup: ${setupCpu.toPrecision(2)} - actions: ${actionCpu.toPrecision(2)}`);
       }
     }
   }
@@ -257,22 +270,22 @@ export class SourceContainerDirector {
     let lastCpu = cpu;
     this.spawnCreeps(room, source, container, anchor);
     cpu = Game.cpu.getUsed();
-    const spawnCpu = lastCpu - cpu;
+    const spawnCpu = cpu - lastCpu;
     lastCpu = cpu;
     this.runHarvesters(source, container);
     cpu = Game.cpu.getUsed();
-    const harvesterCpu = lastCpu - cpu;
+    const harvesterCpu = cpu - lastCpu;
     lastCpu = cpu;
     this.runHaulers(container, anchor);
     cpu = Game.cpu.getUsed();
-    const haulerCpu = lastCpu - cpu;
+    const haulerCpu = cpu - lastCpu;
     if (Game.time % 5 === 0) {
-      console.log(
-        `Source Runner: ${source.id} - ` +
-          `SpawnCpu: ${spawnCpu.toPrecision(2)} - ` +
-          `harvesterCpu: ${harvesterCpu.toPrecision(2)} - ` +
-          `haulerCpu ${haulerCpu.toPrecision(2)}`
-      );
+      // console.log(
+      //   `Source Runner: ${source.id} - ` +
+      //     `SpawnCpu: ${spawnCpu.toPrecision(2)} - ` +
+      //     `harvesterCpu: ${harvesterCpu.toPrecision(2)} - ` +
+      //     `haulerCpu ${haulerCpu.toPrecision(2)}`
+      // );
     }
   }
 }
