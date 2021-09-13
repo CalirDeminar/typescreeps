@@ -40,7 +40,7 @@ export class RemoteHarvestingDirector {
                       const store = Memory.roomStore[roomName].constructionDirector;
                       const obsticals = store.extensionTemplate
                         .concat(store.towerTemplate)
-                        .concat(Memory.roomStore[room.name].defenseDirector.wallMap)
+                        .concat(Memory.roomStore[roomName].defenseDirector.wallMap)
                         .concat(store.labTemplate)
                         .concat(store.singleStructures.map((s) => s.pos));
                       obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));

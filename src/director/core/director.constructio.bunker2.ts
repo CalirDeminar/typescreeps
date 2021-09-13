@@ -239,17 +239,17 @@ export class ConstructionBunker2Director {
     const labs = this.labs(room);
     const roads = this.staticRoads(room);
     roads.map((p) => room.visual.text("R", p, { stroke: "Black", opacity: 0.2 }));
-    labs.map((l) => room.visual.text("Lb", l, { stroke: "Black" }));
+    labs.map((l) => room.visual.text("Lb", l, { stroke: "Blue" }));
     extensions.map((ex) => {
-      room.visual.text("E", ex, { stroke: "Black" });
+      room.visual.text("E", ex, { stroke: "Orange", opacity: 0.4 });
     });
     towers.map((ex) => {
-      room.visual.text("T", ex, { stroke: "Black" });
+      room.visual.text("T", ex, { stroke: "Red" });
     });
     coreBuildings.map((cb) => {
       room.visual.text(this.getCoreBuildingPreviewLetter(cb.type), cb.pos, { stroke: "Black" });
     });
-    ramparts.map((r) => room.visual.text("R", r, { stroke: "Black", opacity: 0.2 }));
-    walls.map((w) => room.visual.text("W", w, { stroke: "Black", opacity: 0.2 }));
+    ramparts.map((r) => room.visual.text("R", r, { stroke: "Green", opacity: 0.2 }));
+    walls.map((w) => room.visual.text("W", w, { stroke: "Grey", opacity: 0.2 }));
   }
 }

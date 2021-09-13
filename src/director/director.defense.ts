@@ -105,12 +105,22 @@ export class DefenseDirector {
     })[0];
     const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
     const wallMap = store.wallMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+    const refreshFrequency = store.alertLevel === 0 ? 500 : 50;
+    const runThisTick = Game.time % refreshFrequency === 0;
     // rampartMap.map((r) => {
     //   room.visual = room.visual.text("R", new RoomPosition(r.x, r.y, room.name), { stroke: "Black" });
     // });
-    if (controller && rampartMap.length > 0 && controller.level >= 4 && !!storage) {
+    if (
+      runThisTick &&
+      rampartMap.length > 0 &&
+      controller &&
+      controller.level >= 4 &&
+      storage !== undefined &&
+      room.energyCapacityAvailable > 1000
+    ) {
       rampartMap.map((p) => {
         if (
+          p.roomName === room.name &&
           terrain.get(p.x, p.y) !== 1 &&
           p
             .lookFor(LOOK_STRUCTURES)
@@ -231,13 +241,6 @@ export class DefenseDirector {
       Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
       Memory.roomStore[room.name].defenseDirector.wallMap = ConstructionBunker2Director.walls(room);
     }
-    // periodic refresh
-    const period = store.alertLevel ? 5 : 1000;
-    if ((Game.time + Constants.defenseTimingOffset) % period === 0) {
-      const rampartMap = ConstructionBunker2Director.ramparts(room).concat(this.makeSourceRamparts(room));
-      Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
-      Memory.roomStore[room.name].defenseDirector.wallMap = ConstructionBunker2Director.walls(room);
-    }
     if (!Object.keys(store).includes("alertStartTimestamp")) {
       Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = -1;
     }
@@ -282,7 +285,9 @@ export class DefenseDirector {
       Memory.roomStore[room.name].defenseDirector.activeTarget = null;
       Memory.roomStore[room.name].defenseDirector.hostileCreeps = [];
     } else {
-      console.log("Hostiles In Room");
+      if (Game.time % 5 === 0) {
+        console.log("Hostiles In Room");
+      }
       const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
       const towers = room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER });
       const towerCount = towers.length;

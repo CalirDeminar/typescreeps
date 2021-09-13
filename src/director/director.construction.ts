@@ -54,7 +54,9 @@ export class ConstructionDirector {
     const currentCount = currentExtensions.length;
     const currentMax = Constants.maxExtensions[level];
     if (currentCount < currentMax) {
-      const template = Memory.roomStore[room.name].constructionDirector.extensionTemplate;
+      const template = Memory.roomStore[room.name].constructionDirector.extensionTemplate.map(
+        (p) => new RoomPosition(p.x, p.y, p.roomName)
+      );
       const unbuilt = template.filter((t) => !currentExtensions.some((e) => e.pos.isEqualTo(t)));
       const next = unbuilt[0];
       if (next) {
@@ -88,7 +90,7 @@ export class ConstructionDirector {
       const unbuilt = template.filter((t) => !currentLabs.some((l) => l.pos.isEqualTo(t)));
       const next = unbuilt[0];
       if (next) {
-        return next.createConstructionSite(STRUCTURE_LAB) === OK;
+        return new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(STRUCTURE_LAB) === OK;
       }
     }
     return false;
@@ -114,7 +116,9 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_SPAWN
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_SPAWN) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_SPAWN) === OK
+          );
         }
         break;
       }
@@ -123,7 +127,9 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_STORAGE
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_STORAGE) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_STORAGE) === OK
+          );
         }
         break;
       }
@@ -132,7 +138,10 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_TERMINAL
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_TERMINAL) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_TERMINAL) ===
+            OK
+          );
         }
         break;
       }
@@ -141,7 +150,9 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_FACTORY
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_FACTORY) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_FACTORY) === OK
+          );
         }
         break;
       }
@@ -150,7 +161,10 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_OBSERVER
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_OBSERVER) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_OBSERVER) ===
+            OK
+          );
         }
         break;
       }
@@ -159,7 +173,9 @@ export class ConstructionDirector {
           (s) => s.type === STRUCTURE_NUKER
         )[0];
         if (next) {
-          return next.pos.createConstructionSite(STRUCTURE_NUKER) === OK;
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_NUKER) === OK
+          );
         }
         break;
       }
@@ -175,10 +191,12 @@ export class ConstructionDirector {
       const next = template.find(
         (r) =>
           terrain.get(r.x, r.y) !== 1 &&
-          r.lookFor(LOOK_STRUCTURES).filter((l) => l.structureType !== STRUCTURE_RAMPART).length === 0
+          new RoomPosition(r.x, r.y, r.roomName)
+            .lookFor(LOOK_STRUCTURES)
+            .filter((l) => l.structureType !== STRUCTURE_RAMPART).length === 0
       );
       if (next) {
-        return next.createConstructionSite(STRUCTURE_ROAD) === OK;
+        return new RoomPosition(next.x, next.y, next.roomName).createConstructionSite(STRUCTURE_ROAD) === OK;
       } else {
         Memory.roomStore[room.name].constructionDirector.roadsCreated = true;
       }

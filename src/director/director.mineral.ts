@@ -15,10 +15,11 @@ export class MineralDirector {
     );
     const creepNearDeath = mineralHarvester.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const shouldSpawnAnother =
-      mineralHarvester.length + mineralHarvester.length < Constants.maxMineralHarvester ||
-      (mineralHarvester.length + mineralHarvesterQueue.length === Constants.maxMineralHarvester && creepNearDeath);
+      (mineralHarvester.length < Constants.maxMineralHarvester ||
+        (mineralHarvester.length === Constants.maxMineralHarvester && creepNearDeath)) &&
+      mineral.mineralAmount > 250;
     if (shouldSpawnAnother) {
-      Memory.roomStore[room.name].spawnQueue.push({
+      const template = {
         template: CreepBuilder.buildMineralHarvester(room.energyCapacityAvailable),
         memory: {
           ...CreepBase.baseMemory,
@@ -30,11 +31,26 @@ export class MineralDirector {
           homeRoom: room.name,
           targetRoom: room.name
         }
-      });
+      };
+      if (mineralHarvesterQueue.length > 0) {
+        const index = Memory.roomStore[room.name].spawnQueue.findIndex(
+          (c) =>
+            c.memory.role === "mineralHarvester" &&
+            c.memory.targetSource === mineral.id &&
+            c.memory.dropOffTarget === container.id &&
+            c.memory.homeRoom === room.name &&
+            c.memory.targetRoom === room.name
+        );
+        if (index >= 0) {
+          Memory.roomStore[room.name].spawnQueue[index] = template;
+        }
+      } else {
+        Memory.roomStore[room.name].spawnQueue.push(template);
+      }
     }
   }
   private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
-    if (creep.ticksToLive) {
+    if (creep.ticksToLive && mineral.mineralAmount > 0) {
       const full = creep.store.getFreeCapacity() < creep.body.filter((p) => p.type === WORK).length * 1;
       const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1)[0];
       const extractorOffCooldown = extractor.cooldown === 0;
@@ -88,8 +104,8 @@ export class MineralDirector {
     const mineralHaulerQueue = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
     );
-    if (mineralHaulers.length + mineralHaulerQueue.length < 1) {
-      Memory.roomStore[room.name].spawnQueue.push({
+    if (mineralHaulers.length < 1 && container.store.getUsedCapacity() > (room.energyCapacityAvailable / 10) * 50) {
+      const template = {
         template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
         memory: {
           ...CreepBase.baseMemory,
@@ -101,7 +117,22 @@ export class MineralDirector {
           homeRoom: room.name,
           targetRoom: room.name
         }
-      });
+      };
+      if (mineralHaulerQueue.length > 0) {
+        const index = Memory.roomStore[room.name].spawnQueue.findIndex(
+          (c) =>
+            c.memory.role === "mineralHarvester" &&
+            c.memory.targetSource === mineral.id &&
+            c.memory.dropOffTarget === container.id &&
+            c.memory.homeRoom === room.name &&
+            c.memory.targetRoom === room.name
+        );
+        if (index >= 0) {
+          Memory.roomStore[room.name].spawnQueue[index] = template;
+        }
+      } else {
+        Memory.roomStore[room.name].spawnQueue.push(template);
+      }
     }
   }
   private static operate(

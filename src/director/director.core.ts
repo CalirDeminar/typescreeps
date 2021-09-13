@@ -49,13 +49,6 @@ export class CoreDirector {
     },
     helpOtherRoom: false
   };
-  private static createAnchor(room: Room): void {
-    const spawn = room.find(FIND_MY_SPAWNS)[0];
-    if (spawn) {
-      const pos = spawn.pos;
-      room.createFlag(pos.x, pos.y + 1, `${room.name}-Anchor`);
-    }
-  }
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
   }
@@ -128,7 +121,7 @@ export class CoreDirector {
       _.filter(
         room.find(FIND_MY_STRUCTURES, {
           filter: (s) => {
-            return s.structureType === STRUCTURE_TOWER && s.store[RESOURCE_ENERGY] <= 500;
+            return s.structureType === STRUCTURE_TOWER && s.store[RESOURCE_ENERGY] < 500;
           }
         })
       ).length > 0;
@@ -217,10 +210,6 @@ export class CoreDirector {
 
   private static runCore(room: Room): void {
     let anchor = this.getAnchor(room);
-    if (!anchor) {
-      this.createAnchor(room);
-      anchor = this.getAnchor(room);
-    }
     if (anchor) {
       const container = anchor.pos
         .findInRange<StructureContainer>(FIND_STRUCTURES, 1)

@@ -18,7 +18,10 @@ export class QueenDirector {
           activeQueens[0].ticksToLive &&
           activeQueens[0].ticksToLive < 100)
       ) {
-        const optimalEnergy = activeQueens.length === 1 ? 1000 : Math.max(room.energyAvailable, 300);
+        const optimalEnergy =
+          activeQueens.length === 1
+            ? Math.min(room.energyCapacityAvailable, 1250)
+            : Math.max(room.energyAvailable, 300);
         const template = {
           template: CreepBuilder.buildHaulingCreep(optimalEnergy),
           memory: {
