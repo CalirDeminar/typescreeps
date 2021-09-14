@@ -37,13 +37,15 @@ export class RemoteHarvestingDirector {
                     ignoreCreeps: true,
                     swampCost: 1,
                     costCallback: (roomName, costMatrix) => {
-                      const store = Memory.roomStore[roomName].constructionDirector;
-                      const obsticals = store.extensionTemplate
-                        .concat(store.towerTemplate)
-                        .concat(Memory.roomStore[roomName].defenseDirector.wallMap)
-                        .concat(store.labTemplate)
-                        .concat(store.singleStructures.map((s) => s.pos));
-                      obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));
+                      const store = Memory.roomStore[roomName]?.constructionDirector;
+                      if (store) {
+                        const obsticals = store.extensionTemplate
+                          .concat(store.towerTemplate)
+                          .concat(Memory.roomStore[roomName].defenseDirector.wallMap)
+                          .concat(store.labTemplate)
+                          .concat(store.singleStructures.map((s) => s.pos));
+                        obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));
+                      }
                     }
                   })
                   .map((s) => new RoomPosition(s.x, s.y, anchor.pos.roomName));
@@ -167,7 +169,7 @@ export class RemoteHarvestingDirector {
           .reduce((acc: string[], roomStore) => acc.concat(roomStore.remoteDirector.map((rd) => rd.roomName)), [])
           .includes(intelRoom.name);
         if (!alreadyRemoteHarvesting) {
-          const route = Game.map.findRoute(roomName, intelRoom.name);
+          const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
           const homeRoom = Game.rooms[roomName];
           const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
             filter: (f) => f.name === `${roomName}-Anchor`
@@ -175,8 +177,8 @@ export class RemoteHarvestingDirector {
           const isFirstOwnedRoom =
             _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
           if (
-            route !== -2 &&
-            route.length < 2 &&
+            roomRoute !== -2 &&
+            roomRoute.length < 2 &&
             intelRoom.sources.length > 0 &&
             homeRoom.controller &&
             isFirstOwnedRoom
@@ -253,6 +255,8 @@ export class RemoteHarvestingDirector {
   private static runHarvester(creep: Creep, anchor: Flag, constructionSite: ConstructionSite | null): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       // TODO - periodic huge CPU spike from this function on the % 100 tick mark
+      let cpu = Game.cpu.getUsed();
+      let lastCpu = cpu;
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
       const remRoom = Memory.roomStore[creep.memory.homeRoom].remoteDirector.find(
         (r) => r.roomName === creep.memory.targetRoom
@@ -261,34 +265,45 @@ export class RemoteHarvestingDirector {
       this.setWorkingState(creep);
       CreepBase.maintainRoad(creep);
       const working = creep.memory.working;
+      cpu = Game.cpu.getUsed();
+      const setupCpu = cpu - lastCpu;
+      lastCpu = cpu;
+      let lastAction = "";
       switch (true) {
         case working && source && creep.pos.isNearTo(source.pos):
           if (source && source.energy > 0) {
             creep.harvest(source);
           }
+          lastAction = "harvest";
           break;
         case working && source && !creep.pos.isNearTo(source.pos):
           if (source) {
-            CreepBase.travelTo(creep, source.pos, "orange");
+            CreepBase.travelTo(creep, source.pos, "orange", 1);
+            lastAction = "travelToSource";
           }
           break;
         case targetRoomHostile &&
           creep.pos.roomName !== creep.memory.targetRoom &&
           UtilPosition.isBoundary(creep.pos.x, creep.pos.y):
-          CreepBase.travelTo(creep, anchor, "orange");
+          CreepBase.travelTo(creep, anchor, "orange", 3);
+          lastAction = "travelOverBoundary";
           break;
         case working && !targetRoomHostile && creep.pos.roomName !== creep.memory.targetRoom:
           CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
+          lastAction = "travelToTargetRoom";
           break;
         case !working && creep.pos.roomName !== creep.memory.homeRoom:
           if (constructionSite) {
             if (creep.pos.inRangeTo(constructionSite, 3)) {
               creep.build(constructionSite);
+              lastAction = "build";
             } else {
-              CreepBase.travelTo(creep, constructionSite, "orange");
+              CreepBase.travelTo(creep, constructionSite, "orange", 2);
+              lastAction = "travelToConSite";
             }
           } else {
-            CreepBase.travelTo(creep, anchor, "orange");
+            CreepBase.travelTo(creep, anchor, "orange", 5);
+            lastAction = "travelToHomeRoom";
           }
           break;
         case !working && creep.pos.roomName === creep.memory.homeRoom:
@@ -300,18 +315,23 @@ export class RemoteHarvestingDirector {
           if (storeTarget) {
             if (creep.pos.isNearTo(storeTarget)) {
               creep.transfer(storeTarget, RESOURCE_ENERGY);
-              if (source && creep.pos.isNearTo(source)) {
-                if (source.energy > 0) {
-                  creep.harvest(source);
-                }
-                creep.memory.working = true;
-              }
+              lastAction = "transferCargo";
             } else {
-              CreepBase.travelTo(creep, storeTarget, "orange");
+              CreepBase.travelTo(creep, storeTarget, "orange", 1);
+              lastAction = "travelToStore";
             }
           }
           break;
       }
+      cpu = Game.cpu.getUsed();
+      const actionCpu = cpu - lastCpu;
+      // if (actionCpu > 1) {
+      //   console.log(
+      //     `Remote harvester: ${creep.name} - setup: ${setupCpu.toPrecision(2)} - action: ${actionCpu.toPrecision(
+      //       2
+      //     )} - ${lastAction}`
+      //   );
+      // }
     }
   }
   private static runHarvesters(room: RemoteDirectorStore): void {

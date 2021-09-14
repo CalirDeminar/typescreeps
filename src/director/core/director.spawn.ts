@@ -99,7 +99,7 @@ export class SpawnDirector {
           Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
         }
       }
-      if (this.costCreep(toSpawn) > room.energyAvailable) {
+      if (this.costCreep(toSpawn) > room.energyAvailable || toSpawn.template.length === 0) {
         Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
       }
     }

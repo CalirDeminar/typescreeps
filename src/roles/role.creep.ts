@@ -1,3 +1,5 @@
+import { UtilPosition } from "utils/util.position";
+
 export class CreepBase {
   private static filterStructures(
     type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION | STRUCTURE_CONTAINER,
@@ -30,19 +32,9 @@ export class CreepBase {
         visualizePathStyle: { stroke: pathColour },
         ignoreCreeps: !creepNearby,
         range: range,
-        reusePath: creepNearby ? 5 : 15
+        reusePath: creepNearby ? 5 : 20,
+        maxOps: 1000
       });
-      // if (creep.room.name === targetPos.roomName) {
-      //   const rangeToTarget = creep.pos.getRangeTo(target);
-      //   if (rangeToTarget > 1) {
-      //     creep.moveTo(targetPos, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
-      //   }
-      // } else {
-      //   const dir = creep.room.findExitTo(targetPos.roomName);
-      //   if (dir !== -2 && dir !== -10) {
-      //     const exit = creep.room.find(dir).sort((i, j) => creep.pos.getRangeTo(i) - creep.pos.getRangeTo(j))[0];
-      //     creep.moveTo(exit, { visualizePathStyle: { stroke: pathColour }, ignoreCreeps: !creepNearby });
-      //   }
       // }
     }
   }
