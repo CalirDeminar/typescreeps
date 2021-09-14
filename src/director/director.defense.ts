@@ -231,7 +231,7 @@ export class DefenseDirector {
     // check rampart map periodically
     //  more often if there are hostiles in room
     const store = Memory.roomStore[room.name].defenseDirector;
-    if (store.rampartMap === []) {
+    if (store.rampartMap.length === 0) {
       // initial init
       const towers = room
         .find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER })
