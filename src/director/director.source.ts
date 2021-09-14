@@ -35,6 +35,13 @@ export class SourceDirector {
     const controller = room.controller;
     const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0 || Memory.roomStore[room.name].buildingThisTick;
     if (controller && !activeSite) {
+      const structStore = Memory.roomStore[room.name].constructionDirector;
+      const defStore = Memory.roomStore[room.name].defenseDirector;
+      const avoids = structStore.extensionTemplate
+        .concat(structStore.towerTemplate)
+        .concat(structStore.labTemplate)
+        .concat(structStore.singleStructures.map((s) => s.pos))
+        .concat(defStore.wallMap);
       const level = controller.level;
       const shouldHaveContainers = Constants.maxContainers[level] > 0 && !link;
       const shouldHaveLinks =
@@ -46,7 +53,11 @@ export class SourceDirector {
           this.doPlaceStructure(
             new RoomPosition(anchor.pos.x, anchor.pos.y, anchor.pos.roomName),
             STRUCTURE_CONTAINER
-          ) || this.doPlaceStructure(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), STRUCTURE_CONTAINER);
+          ) ||
+          this.doPlaceStructure(
+            UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, avoids),
+            STRUCTURE_CONTAINER
+          );
         if (built) {
           console.log("built container");
           Memory.roomStore[room.name].buildingThisTick = true;
@@ -63,9 +74,9 @@ export class SourceDirector {
               STRUCTURE_LINK
             ) ||
             UtilPosition.getClosestSurroundingTo(
-              UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos),
+              UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, avoids),
               anchor.pos,
-              container ? [container.pos] : []
+              (container ? [container.pos] : []).concat(avoids)
             ).createConstructionSite(STRUCTURE_LINK) === OK;
           if (built) {
             console.log("built link");

@@ -169,17 +169,22 @@ export class RemoteHarvestingDirector {
           .reduce((acc: string[], roomStore) => acc.concat(roomStore.remoteDirector.map((rd) => rd.roomName)), [])
           .includes(intelRoom.name);
         if (!alreadyRemoteHarvesting) {
-          const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
-          const homeRoom = Game.rooms[roomName];
           const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
             filter: (f) => f.name === `${roomName}-Anchor`
           })[0];
+          const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
+          const allReachable =
+            intelRoom.sources.filter((s) => !PathFinder.search(anchor.pos, s.pos, { maxOps: 1000 }).incomplete)
+              .length === intelRoom.sources.length;
+          const homeRoom = Game.rooms[roomName];
+
           const isFirstOwnedRoom =
             _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
           if (
             Memory.roomStore[roomName].remoteDirector.length < 2 &&
             roomRoute !== -2 &&
             roomRoute.length < 2 &&
+            allReachable &&
             intelRoom.sources.length > 0 &&
             homeRoom.controller &&
             isFirstOwnedRoom

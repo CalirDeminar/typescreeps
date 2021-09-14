@@ -26,7 +26,9 @@ export class ScoutingDirector {
       }
       return acc;
     }, []);
-    return rtn.filter((r) => !existingRooms.includes(r.roomName));
+    return rtn.filter(
+      (r) => !existingRooms.includes(r.roomName) && !PathFinder.search(creep.pos, r, { maxOps: 1000 }).incomplete
+    );
   }
   private static recordRoom(creep: Creep): void {
     const room = creep.room;

@@ -204,7 +204,7 @@ export class CoreDirector {
         buildingThisTick: room.find(FIND_CONSTRUCTION_SITES).length > 0
       };
     }
-    if (!Object.keys(Memory.roomStore[room.name]).includes("defenderDirector")) {
+    if (!Object.keys(Memory.roomStore[room.name]).includes("defenseDirector")) {
       Memory.roomStore[room.name].defenseDirector = this.baseMemory.defenseDirector;
     }
   }

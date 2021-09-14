@@ -14,6 +14,7 @@ export class DefenseDirector {
   // 4 - Unkillable hostiles - spawn rampart defender
   public static maintainRoom(room: Room): void {
     const towers = room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER });
+    const damagedCreep = _.filter(Game.creeps, (c) => c.pos.roomName === room.name && c.hits < c.hitsMax)[0];
     const target = room
       .find(FIND_STRUCTURES, {
         filter: (s) =>
@@ -23,7 +24,9 @@ export class DefenseDirector {
       .sort((a, b) => a.hits - b.hits)[0];
     towers.map((t) => {
       if (t.structureType === STRUCTURE_TOWER && t.store[RESOURCE_ENERGY] / 1000 > 0.5) {
-        if (target) {
+        if (damagedCreep) {
+          t.heal(damagedCreep);
+        } else if (target) {
           t.repair(target);
         }
       }
@@ -232,14 +235,19 @@ export class DefenseDirector {
     //  more often if there are hostiles in room
     const store = Memory.roomStore[room.name].defenseDirector;
     if (store.rampartMap.length === 0) {
-      // initial init
       const towers = room
         .find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER })
         .map((s) => s.id);
       Memory.roomStore[room.name].defenseDirector.towers = towers;
-      const rampartMap = ConstructionBunker2Director.ramparts(room).concat(this.makeSourceRamparts(room));
-      Memory.roomStore[room.name].defenseDirector.rampartMap = rampartMap;
-      Memory.roomStore[room.name].defenseDirector.wallMap = ConstructionBunker2Director.walls(room);
+      const rampartMap = ConstructionBunker2Director.ramparts(room)
+        .concat(this.makeSourceRamparts(room))
+        .filter((p) => p.roomName === room.name);
+      const wallMap = ConstructionBunker2Director.walls(room).filter((p) => p.roomName === room.name);
+      Memory.roomStore[room.name].defenseDirector = {
+        ...Memory.roomStore[room.name].defenseDirector,
+        rampartMap: rampartMap,
+        wallMap: wallMap
+      };
     }
     if (!Object.keys(store).includes("alertStartTimestamp")) {
       Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = -1;
@@ -255,14 +263,12 @@ export class DefenseDirector {
     const sheetsToAdd = targets
       .filter((c) => namesToAdd.includes(c.name))
       .map((c) => {
-        console.log(JSON.stringify(c.body));
         return { ...CreepCombat.getCreepCombatFigures(c.body), name: c.name };
       });
     Memory.roomStore[room.name].defenseDirector.hostileCreeps = baselineSheets.concat(sheetsToAdd);
   }
   private static getMinHostileTank(room: Room): number {
     const store = Memory.roomStore[room.name].defenseDirector;
-    console.log(JSON.stringify(store.hostileCreeps));
     const maxMultiplier = Math.min(...store.hostileCreeps.map((c) => c.toughHealMultiplier));
     const totalHealing = store.hostileCreeps.reduce((acc, c) => acc + c.maxRawHealing, 0);
     return maxMultiplier * totalHealing;
