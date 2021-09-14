@@ -50,7 +50,7 @@ export class MineralDirector {
     }
   }
   private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
-    if (creep.ticksToLive && container.store.getUsedCapacity() > creep.store.getCapacity()) {
+    if (creep.ticksToLive && container.store.getFreeCapacity() > creep.store.getUsedCapacity()) {
       const full = creep.store.getFreeCapacity() < creep.body.filter((p) => p.type === WORK).length * 1;
       const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1)[0];
       const extractorOffCooldown = extractor.cooldown === 0;
@@ -104,7 +104,7 @@ export class MineralDirector {
     const mineralHaulerQueue = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
     );
-    if (mineralHaulers.length < 1 && mineral.mineralAmount > 0) {
+    if (mineralHaulers.length + mineralHaulerQueue.length < 1 && mineral.mineralAmount > 0) {
       const template = {
         template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
         memory: {

@@ -75,7 +75,8 @@ export class CoreDirector {
       Game.creeps,
       (c) => c.memory.role === "upgrader" && c.memory.homeRoom === room.name
     );
-    const shouldSpawnUpgrader = activeUpgraders.length < 1;
+    const level = room.controller?.level || 0;
+    const shouldSpawnUpgrader = activeUpgraders.length < 1 && (Object.keys(Memory.roomStore).length === 1 || level > 2);
     if (room.controller && room.controller.my && shouldSpawnUpgrader) {
       const template = {
         template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 400)),

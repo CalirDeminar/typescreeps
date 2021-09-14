@@ -177,6 +177,7 @@ export class RemoteHarvestingDirector {
           const isFirstOwnedRoom =
             _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
           if (
+            Memory.roomStore[roomName].remoteDirector.length < 2 &&
             roomRoute !== -2 &&
             roomRoute.length < 2 &&
             intelRoom.sources.length > 0 &&

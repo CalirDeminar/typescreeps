@@ -36,9 +36,7 @@ export class RoomHelperDirector {
       case inTarget && creep.memory.working && !empty:
       case inTarget && !creep.memory.working && full:
         creep.memory.working = true;
-        const site = creep.room.find(FIND_CONSTRUCTION_SITES, {
-          filter: (s) => s.structureType === STRUCTURE_SPAWN
-        })[0];
+        const site = creep.room.find(FIND_CONSTRUCTION_SITES)[0];
         const controller = creep.room.controller;
         if (!(creep.pos.getRangeTo(site || controller) <= 3)) {
           CreepBase.travelTo(creep, site || controller, "black");

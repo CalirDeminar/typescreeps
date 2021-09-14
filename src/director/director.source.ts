@@ -101,6 +101,9 @@ export class SourceDirector {
   public static run(room: Room): void {
     const sources = room.find(FIND_SOURCES);
     const anchor = this.getAnchor(room);
-    sources.map((s) => this.runSource(room, s, anchor));
+    const level = room.controller?.level || 0;
+    if (Object.keys(Memory.roomStore).length === 1 || level > 2) {
+      sources.map((s) => this.runSource(room, s, anchor));
+    }
   }
 }

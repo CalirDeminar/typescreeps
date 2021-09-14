@@ -6,6 +6,13 @@ export class UtilPosition {
   ): RoomPosition {
     const room = Game.rooms[anchor.roomName];
     const terrain = room.getTerrain();
+    const structStore = Memory.roomStore[anchor.roomName].constructionDirector;
+    const defStore = Memory.roomStore[anchor.roomName].defenseDirector;
+    const avoids = structStore.extensionTemplate
+      .concat(structStore.towerTemplate)
+      .concat(structStore.labTemplate)
+      .concat(structStore.singleStructures.map((s) => s.pos))
+      .concat(defStore.wallMap);
     const surroundings = _.range(-1, 2)
       .map((x) => {
         return _.range(-1, 2).map((y) => {
@@ -15,7 +22,10 @@ export class UtilPosition {
       .reduce((acc, arr) => acc.concat(arr), []);
     const rangeList = surroundings
       .filter((tile: { x: number; y: number }) => {
-        return terrain.get(anchor.x + tile.x, anchor.y + tile.y) === 0;
+        return (
+          terrain.get(anchor.x + tile.x, anchor.y + tile.y) === 0 &&
+          !avoids.some((p: RoomPosition) => p.x === tile.x && p.y === tile.y)
+        );
       })
       .map(
         (tile: { x: number; y: number }): RoomPosition => {
