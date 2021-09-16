@@ -63,17 +63,24 @@ export class SourceContainerDirector {
     return false;
   }
   private static spawnHaulers(room: Room, container: StructureContainer, anchor: Flag): boolean {
+    const range = anchor.pos.findPathTo(container.pos, { ignoreCreeps: true }).length;
     const allHaulers = _.filter(
       Game.creeps,
       (c: Creep) => c.memory.role === "hauler" && c.memory.homeRoom === room.name
     );
     const activeHaulers = this.getCreepRoleAt("hauler", container.id, room.name);
+    const currentCarry = _.reduce(activeHaulers, (acc, c) => acc + c.store.getCapacity(), 0);
+    const currentThroughput = ((currentCarry / (range + range * 2)) * (1500 - range)) / 1500;
+    // console.log("----------------------");
+    // console.log(`Range: ${range}  Capacity: ${currentCarry}   Throughput: ${currentThroughput}`);
     const queuedHaulers = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "hauler" && c.memory.targetSource === container.id && c.memory.homeRoom === room.name
     );
     const maxHaulers = room.energyCapacityAvailable > 1000 ? 1 : Constants.maxHaulers;
     const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === room.name).length < 4;
-    const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, [], maxHaulers);
+    const shouldReplaceHauler =
+      this.shouldReplaceCreeps(activeHaulers, [], maxHaulers) ||
+      (activeHaulers.length < maxHaulers + 1 && currentThroughput < 10);
     if (shouldReplaceHauler) {
       const toSpend = deadRoom
         ? room.energyAvailable
@@ -184,8 +191,7 @@ export class SourceContainerDirector {
   private static getStoreTarget(creep: Creep): Structure | null {
     return (
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s: AnyStructure) =>
-          s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+        filter: (s: AnyStructure) => s.structureType === STRUCTURE_STORAGE
       }) ||
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) =>
@@ -224,7 +230,10 @@ export class SourceContainerDirector {
       const setupCpu = Game.cpu.getUsed() - startCpu;
       switch (true) {
         case withdrawing && creep.pos.isNearTo(container):
-          if (container.store.getUsedCapacity() > Math.min(creep.store.getFreeCapacity(), 2000)) {
+          const resource = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1)[0];
+          if (resource) {
+            creep.pickup(resource);
+          } else if (container.store.getUsedCapacity() > Math.min(creep.store.getFreeCapacity(), 2000)) {
             // only withdraw energy if going to fill in 1 go
             //  reduces intents
             //  stops 2 haulers fighting over energy store in container
