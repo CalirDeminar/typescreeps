@@ -97,9 +97,14 @@ export class SpawnDirector {
         if (resp === OK) {
           Memory.roomStore[room.name].nextSpawn = null;
           Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
+        } else {
         }
       }
-      if (this.costCreep(toSpawn) > room.energyAvailable || toSpawn.template.length === 0) {
+      if (this.costCreep(toSpawn) > room.energyAvailable) {
+        Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
+      }
+      if (this.costCreep(toSpawn) > room.energyCapacityAvailable || toSpawn.template.length === 0) {
+        console.log(`bad creep cost - ${toSpawn.memory.role}`);
         Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
       }
     }
