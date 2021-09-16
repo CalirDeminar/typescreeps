@@ -1,6 +1,6 @@
 export class CreepBuilder {
   public static buildShuttleCreep(energy: number): (WORK | CARRY | MOVE)[] {
-    const noParts = Math.floor(energy / 250);
+    const noParts = Math.min(12, Math.floor(energy / 250));
     if (noParts > 0) {
       return [
         ...new Array(noParts).fill(WORK),
@@ -26,7 +26,7 @@ export class CreepBuilder {
     }
   }
   public static buildScaledBalanced(energy: number): (WORK | CARRY | MOVE)[] {
-    const noParts = Math.floor(energy / 200);
+    const noParts = Math.min(Math.floor(energy / 200), 16);
     if (noParts > 0) {
       return [...new Array(noParts).fill(WORK), ...new Array(noParts).fill(CARRY), ...new Array(noParts).fill(MOVE)];
     }
@@ -34,7 +34,7 @@ export class CreepBuilder {
   }
   public static buildMineralHarvester(energy: number): (WORK | CARRY | MOVE)[] {
     const moveParts = Math.ceil((energy - 50) / 1000);
-    const workParts = Math.floor((energy - 50 - moveParts * 50) / 100);
+    const workParts = Math.min(Math.floor((energy - 50 - moveParts * 50) / 100), 43);
 
     return [CARRY, ...new Array(moveParts).fill(MOVE), ...new Array(workParts).fill(WORK)];
   }
