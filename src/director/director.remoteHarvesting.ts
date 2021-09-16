@@ -490,6 +490,20 @@ export class RemoteHarvestingDirector {
       }
     });
   }
+  private static spawnCreeps(room: RemoteDirectorStore, index: number): void {
+    const homeRoom = Game.rooms[room.homeRoomName];
+    const energyBudget = homeRoom.energyCapacityAvailable;
+    const workerN = 150;
+    const workerOverhead = 50;
+    const haulerN = 100;
+    const scaleBudget = energyBudget - workerOverhead;
+    const makeHauler = energyBudget >= workerN + workerOverhead + haulerN;
+
+    // non-overhead = ener
+    // harvester design - N*[WORK, MOVE] + [CARRY]
+    // hauler design - 6N*[MOVE, CARRY]
+    // ONLY spawn hauler if container has been made
+  }
   private static runRoom(room: RemoteDirectorStore, index: number) {
     let cpu = Game.cpu.getUsed();
     let lastCpu = cpu;
