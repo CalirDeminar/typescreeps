@@ -138,7 +138,8 @@ export class CoreDirector {
       Memory.roomStore[room.name].spawnQueue.length === 0 &&
       !towersNeedEnergy &&
       !buildersNeedEnergy &&
-      builders.length < Constants.builders
+      builders.length < Constants.builders &&
+      Memory.roomStore[room.name].defenseDirector.alertLevel === 0
     ) {
       Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
