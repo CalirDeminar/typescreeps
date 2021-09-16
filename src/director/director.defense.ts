@@ -89,12 +89,23 @@ export class DefenseDirector {
   }
   private static makeSourceRamparts(room: Room): RoomPosition[] {
     const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+    const structStore = Memory.roomStore[room.name].constructionDirector;
+    const defStore = Memory.roomStore[room.name].defenseDirector;
+    const avoids = structStore.extensionTemplate
+      .concat(structStore.towerTemplate)
+      .concat(structStore.labTemplate)
+      .concat(structStore.singleStructures.map((s) => s.pos))
+      .concat(defStore.wallMap);
     return room
       .find(FIND_SOURCES)
       .map((source) => {
         return [
-          UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos),
-          UtilPosition.getClosestSurroundingTo(UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos), anchor.pos)
+          UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, avoids),
+          UtilPosition.getClosestSurroundingTo(
+            UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, avoids),
+            anchor.pos,
+            avoids
+          )
         ];
       })
       .reduce((acc, p) => acc.concat(p), []);
@@ -203,7 +214,7 @@ export class DefenseDirector {
       room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART }).length > 0;
     if (needsTech) {
       Memory.roomStore[room.name].spawnQueue.push({
-        template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
+        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1500)),
         memory: {
           ...CreepBase.baseMemory,
           role: "mason",
@@ -275,13 +286,13 @@ export class DefenseDirector {
   }
   private static towerDamage(range: number): number {
     if (range <= TOWER_OPTIMAL_RANGE) {
-      return 1;
+      return 1 * 600;
     }
     if (range >= TOWER_FALLOFF_RANGE) {
-      return 1 - TOWER_FALLOFF;
+      return (1 - TOWER_FALLOFF) * 600;
     }
     var towerFalloffPerTile = TOWER_FALLOFF / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE);
-    return 1 - (range - TOWER_OPTIMAL_RANGE) * towerFalloffPerTile;
+    return (1 - (range - TOWER_OPTIMAL_RANGE) * towerFalloffPerTile) * 600;
   }
   private static setAlert(room: Room, targets: Creep[]): void {
     let store = Memory.roomStore[room.name].defenseDirector;
@@ -307,7 +318,8 @@ export class DefenseDirector {
       const hostileTank = this.getMinHostileTank(room);
       const currentRange = Math.min(...targets.map((c) => anchor.pos.getRangeTo(c.pos)));
       const maxTowerDamage = towerCount * 400;
-      const currentTowerDamage = towerCount * (this.towerDamage(currentRange) * 600);
+      const currentTowerDamage = towerCount * this.towerDamage(currentRange);
+      console.log(`Current Tower Damage: ${currentTowerDamage}`);
       switch (true) {
         case hostileTank < maxTowerDamage && hostileTank > currentTowerDamage:
           console.log("Hold Fire");
