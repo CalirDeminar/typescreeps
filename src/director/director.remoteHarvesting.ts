@@ -162,7 +162,13 @@ export class RemoteHarvestingDirector {
     }
   }
   private static addRoomsToRemote(roomName: string): void {
-    if ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0) {
+    const isFirstOwnedRoom = _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
+    if (
+      isFirstOwnedRoom &&
+      Memory.roomStore[roomName].remoteDirector.length < 2 &&
+      ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0 ||
+        Memory.roomStore[roomName].remoteDirector.length === 0)
+    ) {
       const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
       _.map(intel, (intelRoom) => {
         const alreadyRemoteHarvesting = Object.values(Memory.roomStore)
@@ -174,20 +180,18 @@ export class RemoteHarvestingDirector {
           })[0];
           const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
           const allReachable =
-            intelRoom.sources.filter((s) => !PathFinder.search(anchor.pos, s.pos, { maxOps: 1000 }).incomplete)
-              .length === intelRoom.sources.length;
+            intelRoom.sources.filter((s) => {
+              const path = PathFinder.search(anchor.pos, { pos: s.pos, range: 1 }, { maxOps: 1000 });
+              return !path.incomplete;
+            }).length === intelRoom.sources.length;
           const homeRoom = Game.rooms[roomName];
 
-          const isFirstOwnedRoom =
-            _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
           if (
-            Memory.roomStore[roomName].remoteDirector.length < 2 &&
             roomRoute !== -2 &&
             roomRoute.length < 2 &&
             allReachable &&
             intelRoom.sources.length > 0 &&
-            homeRoom.controller &&
-            isFirstOwnedRoom
+            homeRoom.controller
           ) {
             const sources = intelRoom.sources.map((s) => {
               return { sourceId: s.id, targetContainerId: null };
@@ -282,7 +286,7 @@ export class RemoteHarvestingDirector {
           }
           lastAction = "harvest";
           break;
-        case working && source && !creep.pos.isNearTo(source.pos):
+        case working && source && !creep.pos.isNearTo(source.pos) && !targetRoomHostile:
           if (source) {
             CreepBase.travelTo(creep, source.pos, "orange", 1);
             lastAction = "travelToSource";
@@ -409,10 +413,11 @@ export class RemoteHarvestingDirector {
             creep.room.find<StructureInvaderCore>(FIND_STRUCTURES, {
               filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
             })[0];
-          if (target && creep.pos.isNearTo(target)) {
+          if (target && creep.pos.getRangeTo(target) <= 2) {
             creep.attack(target);
-          } else if (target) {
-            CreepBase.travelTo(creep, target, "red");
+          }
+          if (target) {
+            CreepBase.travelTo(creep, target, "red", 0);
           }
         }
       }
