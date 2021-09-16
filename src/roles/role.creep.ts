@@ -45,8 +45,8 @@ export class CreepBase {
     }
   }
   public static fleeHostiles(creep: Creep): boolean {
-    const hostile = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
-    if (hostile === null) {
+    const hostile = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 10).sort((a) => creep.pos.getRangeTo(a))[0];
+    if (!hostile) {
       return false;
     } else if (creep.fatigue <= 0) {
       this.flee(creep, hostile);
