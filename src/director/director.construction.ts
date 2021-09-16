@@ -53,10 +53,11 @@ export class ConstructionDirector {
     const currentExtensions = structures.filter((s) => s.structureType === STRUCTURE_EXTENSION);
     const currentCount = currentExtensions.length;
     const currentMax = Constants.maxExtensions[level];
+    const terrain = room.getTerrain();
     if (currentCount < currentMax) {
-      const template = Memory.roomStore[room.name].constructionDirector.extensionTemplate.map(
-        (p) => new RoomPosition(p.x, p.y, p.roomName)
-      );
+      const template = Memory.roomStore[room.name].constructionDirector.extensionTemplate
+        .map((p) => new RoomPosition(p.x, p.y, p.roomName))
+        .filter((p) => terrain.get(p.x, p.y) !== 1);
       const unbuilt = template.filter((t) => !currentExtensions.some((e) => e.pos.isEqualTo(t)));
       const next = unbuilt[0];
       if (next) {
@@ -222,14 +223,36 @@ export class ConstructionDirector {
   private static buildSites(room: Room): void {
     // TODO - change this from being responsibility of the builder, to the responsibility of the remote harvester
     //  for structures in remote rooms
-    const target = room
-      .find(FIND_CONSTRUCTION_SITES)
-      .sort((a, b) => a.progressTotal - a.progress - (b.progressTotal - b.progress))[0];
+    const sites = room.find(FIND_CONSTRUCTION_SITES);
+    const siteIds = sites.map<string>((s) => s.id);
     const creeps = _.filter(
       Game.creeps,
       (c) => c.memory.role === "builder" && c.memory.homeRoom === room.name && c.memory.targetRoom === room.name
     );
-    creeps.map((c) => (c.memory.workTarget = target ? target.id : ""));
+    // clear workTarget of creeps who's target is complete
+    creeps.filter((c) => !siteIds.includes(c.memory.workTarget)).map((c) => (c.memory.workTarget = ""));
+    const targets = sites
+      .filter(
+        (s) =>
+          // filter out structures with though builders to finish them
+          creeps
+            .filter((c) => c.memory.workTarget === s.id)
+            .reduce((acc: number, c: Creep) => acc + c.store.getUsedCapacity(RESOURCE_ENERGY), 0) <
+          s.progressTotal - s.progress
+      )
+      .sort((a, b) => a.progressTotal - a.progress - (b.progressTotal - b.progress));
+    let index = 0;
+    creeps.map((c) => {
+      if (c.memory.workTarget === "") {
+        const target = targets[index];
+        if (target) {
+          c.memory.workTarget = target.id;
+          if (c.store.getUsedCapacity(RESOURCE_ENERGY) > target.progressTotal - target.progress) {
+            index += 1;
+          }
+        }
+      }
+    });
   }
   public static run(room: Room): void {
     this.setAnchor(room);
