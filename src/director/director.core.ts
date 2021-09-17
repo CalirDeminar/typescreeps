@@ -131,7 +131,9 @@ export class CoreDirector {
       builders.reduce((acc, creep) => {
         return acc + (creep.memory.working ? 0 : creep.store.getCapacity());
       }, 0) > 250;
+    const spawners = room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN });
     if (
+      spawners.length > 0 &&
       room.controller &&
       room.controller.level < 8 &&
       energyFull &&
@@ -142,7 +144,7 @@ export class CoreDirector {
       Memory.roomStore[room.name].defenseDirector.alertLevel === 0
     ) {
       Memory.roomStore[room.name].spawnQueue.push({
-        template: CreepBuilder.buildScaledBalanced(room.energyCapacityAvailable),
+        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 2500)),
         memory: {
           ...CreepBase.baseMemory,
           role: "builder",
