@@ -22,7 +22,7 @@ export class RemoteHauler {
       })
     );
   }
-  public static runRemote(creep: Creep) {
+  public static runRemote(creep: Creep, anchor: Flag) {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       let withdrawing = creep.memory.working;
       const container = Game.getObjectById<StructureContainer>(creep.memory.targetSource);
@@ -38,7 +38,14 @@ export class RemoteHauler {
           creep.memory.dropOffTarget = "";
       }
       withdrawing = creep.memory.working;
+      const remRoom = Memory.roomStore[creep.memory.homeRoom].remoteDirector.find(
+        (r) => r.roomName === creep.memory.targetRoom
+      );
+      const targetRoomHostile = remRoom ? remRoom.hostileCreepCount > 0 : false;
       switch (true) {
+        case targetRoomHostile:
+          CreepBase.travelTo(creep, anchor, "orange", 5);
+          break;
         case withdrawing && creep.room.name !== creep.memory.targetRoom:
           // move to target room
           CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.targetRoom), "black", 20);

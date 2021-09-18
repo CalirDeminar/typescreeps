@@ -122,7 +122,7 @@ export class RemoteHarvestingDirector {
     harvesters.map((creep) => {
       RemoteHarvester.runHarvester(creep, anchor, constructionSite);
     });
-    haulers.map((creep) => RemoteHauler.runRemote(creep));
+    haulers.map((creep) => RemoteHauler.runRemote(creep, anchor));
   }
 
   private static runRoom(room: RemoteDirectorStore, index: number) {

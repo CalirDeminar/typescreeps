@@ -25,7 +25,7 @@ export class RemoteReserver {
       room.sources.length > 1 &&
       lowTicks &&
       (reservers.length + spawningReservers.length < 1 || (reservers.length === 1 && reserverNearDeath)) &&
-      homeRoom.energyCapacityAvailable > 1300 &&
+      homeRoom.energyCapacityAvailable >= 2000 &&
       !hostile;
     if (needsReserver) {
       const template = {

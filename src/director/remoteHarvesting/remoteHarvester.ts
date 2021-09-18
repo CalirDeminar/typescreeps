@@ -37,6 +37,10 @@ export class RemoteHarvester {
       lastCpu = cpu;
       let lastAction = "";
       switch (true) {
+        case targetRoomHostile:
+          CreepBase.travelTo(creep, anchor, "orange", 5);
+          lastAction = "fleeHome";
+          break;
         case working && source && creep.pos.isNearTo(source.pos):
           if (source && source.energy > 0) {
             creep.harvest(source);
@@ -48,12 +52,6 @@ export class RemoteHarvester {
             CreepBase.travelTo(creep, source.pos, "orange", 1);
             lastAction = "travelToSource";
           }
-          break;
-        case targetRoomHostile &&
-          creep.pos.roomName !== creep.memory.targetRoom &&
-          UtilPosition.isBoundary(creep.pos.x, creep.pos.y):
-          CreepBase.travelTo(creep, anchor, "orange", 3);
-          lastAction = "travelOverBoundary";
           break;
         case working && !targetRoomHostile && creep.pos.roomName !== creep.memory.targetRoom:
           CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);

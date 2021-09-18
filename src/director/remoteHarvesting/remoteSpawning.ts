@@ -5,7 +5,7 @@ export class RemoteSpawning {
     const workerN = 150;
     const workerOverhead = 50;
     const haulerN = 500;
-    const scaleBudget = energy - 200;
+    const scaleBudget = energy;
     const sectionCount = Math.floor(scaleBudget / haulerN);
     return {
       hauler: [...new Array(sectionCount * 5).fill("carry"), ...new Array(sectionCount * 5).fill("move")],
@@ -88,8 +88,8 @@ export class RemoteSpawning {
     const homeRoom = Game.rooms[room.homeRoomName];
     const energyBudget =
       room.sources.length > 1
-        ? Math.min(homeRoom.energyCapacityAvailable, 2650)
-        : Math.min(homeRoom.energyCapacityAvailable, 1000);
+        ? Math.min(homeRoom.energyCapacityAvailable, 2500)
+        : Math.min(homeRoom.energyCapacityAvailable, 1500);
     const sources = room.sources;
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0 || room.hasInvaderCore;
     if (!hostile) {
