@@ -214,7 +214,7 @@ export class DefenseDirector {
       room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART }).length > 0;
     if (needsTech) {
       Memory.roomStore[room.name].spawnQueue.push({
-        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1500)),
+        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1250)),
         memory: {
           ...CreepBase.baseMemory,
           role: "mason",
