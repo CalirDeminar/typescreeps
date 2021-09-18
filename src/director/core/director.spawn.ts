@@ -17,6 +17,8 @@ export class SpawnDirector {
       case "harvesterShuttle":
         return 40;
       case "remoteHarvester":
+        return 31;
+      case "remoteHauler":
         return 30;
       case "reserver":
         return 29;
@@ -49,23 +51,23 @@ export class SpawnDirector {
       })
       .reverse();
   }
-  private static costCreep(creep: CreepRecipie): number {
+  public static costCreep(creep: { template: BodyPartConstant[]; memory: any }): number {
     return creep.template.reduce((acc: number, part: BodyPartConstant) => {
       switch (part) {
-        case CARRY:
-        case MOVE:
+        case "carry":
+        case "move":
           return acc + 50;
-        case WORK:
+        case "work":
           return acc + 100;
-        case ATTACK:
+        case "attack":
           return acc + 80;
-        case RANGED_ATTACK:
+        case "ranged_attack":
           return acc + 150;
-        case HEAL:
+        case "heal":
           return acc + 250;
-        case CLAIM:
+        case "claim":
           return acc + 600;
-        case TOUGH:
+        case "tough":
           return acc + 10;
         default:
           return acc;
@@ -104,7 +106,7 @@ export class SpawnDirector {
         Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
       }
       if (this.costCreep(toSpawn) > room.energyCapacityAvailable || toSpawn.template.length === 0) {
-        console.log(`bad creep cost - ${toSpawn.memory.role}`);
+        console.log(`bad creep cost - ${toSpawn.memory.role} - ${this.costCreep(toSpawn)} - ${room.name}`);
         Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
       }
     }

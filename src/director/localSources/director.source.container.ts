@@ -196,7 +196,7 @@ export class SourceContainerDirector {
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s: AnyStructure) =>
           s.structureType === STRUCTURE_CONTAINER &&
-          s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 &&
+          s.store.getFreeCapacity() > 0 &&
           s.pos.findInRange(FIND_FLAGS, 1).length > 0
       }) ||
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
