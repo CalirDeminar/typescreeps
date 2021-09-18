@@ -20,15 +20,24 @@ export class ScoutingDirector {
       .map((r) => r.name)
       .concat(creep.memory.homeRoom);
     const exitMap = Game.map.describeExits(room.name);
-    const rtn = Object.entries(exitMap).reduce((acc: RoomPosition[], r) => {
-      if (r[1]) {
-        return acc.concat(this.getRoomCenter(r[1]));
-      }
-      return acc;
-    }, []);
-    return rtn.filter(
-      (r) => !existingRooms.includes(r.roomName) && !PathFinder.search(creep.pos, r, { maxOps: 1000 }).incomplete
-    );
+    const rtn = Object.entries(exitMap)
+      .reduce((acc: RoomPosition[], r) => {
+        if (r[1]) {
+          return acc.concat(this.getRoomCenter(r[1]));
+        }
+        return acc;
+      }, [])
+      .filter((r) => !creep.memory.scoutPositions.some((p) => r.roomName === p.roomName));
+    return rtn.filter((r) => {
+      const path = PathFinder.search(creep.pos, r, { maxOps: 1000 });
+      const blockedByStructures = path.path
+        .filter((p) => p.roomName === creep.pos.roomName)
+        .some((r) => r.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_WALL).length > 0);
+      // console.log(
+      //   `Path to: ${r.roomName} - Incomplete: ${path.incomplete} - Blocked By Structure: ${blockedByStructures}`
+      // );
+      return !path.incomplete && !blockedByStructures;
+    });
   }
   private static recordRoom(creep: Creep): void {
     const room = creep.room;
