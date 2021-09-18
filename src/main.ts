@@ -15,9 +15,9 @@ export const loop = ErrorMapper.wrapLoop(() => {
   for (const room in Game.rooms) {
     CoreDirector.run(Game.rooms[room]);
   }
-  if (Game.cpu.bucket >= 10000) {
+  if (Game.cpu.bucket >= 10000 && ["shard0", "shard1", "shard2", "shard3"].includes(Game.shard.name)) {
     const cpu: any = Game.cpu;
-    //cpu.generatePixel();
+    cpu.generatePixel();
   }
   Logger.log(Game);
 });
