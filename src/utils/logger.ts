@@ -28,13 +28,17 @@ export class Logger {
       room.visual.text(`Room: ${room.name}`, 2, 2, { align: "left" });
       room.visual.text(`Bucket: ${Game.cpu.bucket}`, 2, 3, { align: "left" });
       room.visual.text(`Execution Time: ${Game.cpu.getUsed().toPrecision(5)}`, 2, 4, { align: "left" });
+      const scoutedRooms = Memory.roomStore[room.name]
+        ? Memory.roomStore[room.name].scoutingDirector.scoutedRooms.map((r) => `${r.name} ${r.settleable ? "*" : ""}`)
+        : [];
+      room.visual.text(`Scouted Rooms: ${JSON.stringify(scoutedRooms)}`, 2, 5, { align: "left" });
       _.reduce(
         creepTotals,
         (acc: number, total: number, key: string) => {
           room.visual.text(`${key}: ${total}`, 2, acc, { align: "left" });
           return acc + 1;
         },
-        6
+        7
       );
     });
     if (Game.time % 5 === 0) {
