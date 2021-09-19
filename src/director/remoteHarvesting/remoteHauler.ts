@@ -28,6 +28,7 @@ export class RemoteHauler {
       const container = Game.getObjectById<StructureContainer>(creep.memory.targetSource);
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getFreeCapacity() === 0;
+      const nearDeath = creep.ticksToLive < 100;
       switch (true) {
         case withdrawing && container && container.store.getUsedCapacity() === 0:
         case !withdrawing && empty && creep.ticksToLive > 100:
@@ -54,6 +55,7 @@ export class RemoteHauler {
           if (
             container &&
             creep.pos.isNearTo(container) &&
+            !nearDeath &&
             container.store.getUsedCapacity() >= creep.store.getFreeCapacity()
           ) {
             creep.withdraw(container, RESOURCE_ENERGY);
