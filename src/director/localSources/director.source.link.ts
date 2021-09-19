@@ -70,18 +70,31 @@ export class SourceLinkDirector {
       creep.memory.working = false;
     }
   }
+  private static getHarvestSpot(room: Room, link: Structure | null, source: Source): RoomPosition | undefined {
+    if (link) {
+      const terrain = room.getTerrain();
+      const linkEdges = _.range(-1, 2)
+        .map((x) => {
+          return _.range(-1, 2).map((y) => new RoomPosition(link.pos.x + x, link.pos.y + y, link.pos.roomName));
+        })
+        .reduce((acc, l) => acc.concat(l), []);
+      return linkEdges.find((p) => p.isNearTo(source.pos) && terrain.get(p.x, p.y) !== 1);
+    }
+    return undefined;
+  }
   private static runHarvester(creep: Creep, source: Source): void {
     if (creep.ticksToLive) {
       this.setWorkingState(creep);
       const working = creep.memory.working;
       const link = CreepBase.findLink(creep);
-      const spot = link ? UtilPosition.getClosestSurroundingTo(source.pos, link.pos) : null;
+      const spot = this.getHarvestSpot(creep.room, link, source);
+      // console.log(`Harvester: ${creep.name} - Spot: ${JSON.stringify(spot)}`);
       switch (true) {
         case working && creep.pos.isNearTo(source) && link && creep.pos.isNearTo(link):
           creep.harvest(source);
           break;
         case working && spot !== null:
-          if (spot !== null) {
+          if (spot) {
             CreepBase.travelTo(creep, spot, "orange");
           }
           break;
