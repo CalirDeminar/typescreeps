@@ -1,5 +1,4 @@
 import { Constants } from "utils/constants";
-import { RemoteDefense } from "./remoteHarvesting/remoteDefense";
 import { RemoteHarvester } from "./remoteHarvesting/remoteHarvester";
 import { RemoteHauler } from "./remoteHarvesting/remoteHauler";
 import { RemoteReserver } from "./remoteHarvesting/remoteReserver";
@@ -139,10 +138,6 @@ export class RemoteHarvestingDirector {
     this.runHarvesters(room);
     cpu = Game.cpu.getUsed();
     const runHarvesterCpu = cpu - lastCpu;
-    lastCpu = cpu;
-    RemoteDefense.run(room);
-    cpu = Game.cpu.getUsed();
-    const runDefenseCpu = cpu - lastCpu;
     lastCpu = cpu;
     RemoteReserver.runReserver(room);
     cpu = Game.cpu.getUsed();

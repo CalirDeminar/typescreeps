@@ -1,3 +1,4 @@
+import { spawn } from "child_process";
 import { ConstructionTemplates } from "director/templates/constructionTemplates";
 import { CreepBase } from "roles/role.creep";
 import { Constants } from "utils/constants";
@@ -5,6 +6,8 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { CreepCombat } from "utils/creepCombat";
 import { UtilPosition } from "utils/util.position";
 import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
+import { DefenseMason } from "./defense/mason";
+import { DefenseTowers } from "./defense/towers";
 export class DefenseDirector {
   // Alert Levels
   // 0 - No Hostiles
@@ -12,81 +15,6 @@ export class DefenseDirector {
   // 2 - Killable hostiles in range
   // 3 - Killable hostiles in range - with energy rationing
   // 4 - Unkillable hostiles - spawn rampart defender
-  public static maintainRoom(room: Room): void {
-    const towers = room.find(FIND_MY_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER });
-    const damagedCreep = _.filter(Game.creeps, (c) => c.pos.roomName === room.name && c.hits < c.hitsMax)[0];
-    const target = room
-      .find(FIND_STRUCTURES, {
-        filter: (s) =>
-          s.hits < s.hitsMax - 500 &&
-          s.hits < (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL ? 2_500 : 200_000)
-      })
-      .sort((a, b) => a.hits - b.hits)[0];
-    towers.map((t) => {
-      if (t.structureType === STRUCTURE_TOWER && t.store[RESOURCE_ENERGY] / 1000 > 0.5) {
-        if (damagedCreep) {
-          t.heal(damagedCreep);
-        } else if (target) {
-          t.repair(target);
-        }
-      }
-    });
-  }
-  private static getTarget(room: Room, targets: Creep[], towers: StructureTower[]): Creep | null {
-    // check for volleyable targets
-    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
-    const store = Memory.roomStore[room.name].defenseDirector;
-    const stats = store.hostileCreeps;
-    const totalHealing = stats.reduce((acc, s) => acc + s.maxRawHealing, 0);
-    const damagesTaken = targets.map((creep) => {
-      const stat = stats.find((stat) => stat.name === creep.name);
-      if (stat) {
-        const range = anchor.pos.getRangeTo(creep.pos);
-        const towerDamage = this.towerDamage(range);
-        if (towerDamage >= stat.safeBuffer) {
-          return { creep: creep, damage: Infinity };
-        }
-        return { creep: creep, damage: towerDamage / stat.toughHealMultiplier };
-      }
-      return { creep: creep, damage: 0 };
-    });
-    const bestTarget = damagesTaken.sort((a, b) => a.damage - b.damage)[0];
-    if (bestTarget.damage > totalHealing) {
-      return bestTarget.creep;
-    }
-    return null;
-  }
-  public static defendRoom(room: Room, targets: Creep[]): void {
-    let store = Memory.roomStore[room.name].defenseDirector;
-    if (store.alertLevel >= 2) {
-      const towers = room.find<StructureTower>(FIND_MY_STRUCTURES, {
-        filter: (s) => s.structureType === STRUCTURE_TOWER
-      });
-      const currentTargetAlive = !!targets.find((t) => t.name === store.activeTarget);
-      if (!currentTargetAlive) {
-        const newTarget = this.getTarget(room, targets, towers);
-        if (newTarget) {
-          Memory.roomStore[room.name].defenseDirector.activeTarget = newTarget.name;
-          store = Memory.roomStore[room.name].defenseDirector;
-        }
-      }
-      const target = targets.find((t) => t.name === store.activeTarget);
-      if (target) {
-        towers.map((t) => {
-          if (t.structureType === STRUCTURE_TOWER) {
-            t.attack(target);
-          }
-        });
-      }
-    }
-  }
-  private static runTowers(room: Room, targets: Creep[]): void {
-    if (targets.length > 0) {
-      this.defendRoom(room, targets);
-    } else {
-      this.maintainRoom(room);
-    }
-  }
   private static makeSourceRamparts(room: Room): RoomPosition[] {
     const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     const structStore = Memory.roomStore[room.name].constructionDirector;
@@ -117,7 +45,15 @@ export class DefenseDirector {
     const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
     })[0];
-    const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+    const strategicStructures = room
+      .find(FIND_MY_STRUCTURES, {
+        filter: (s) => {
+          const type = s.structureType;
+          return type === STRUCTURE_SPAWN || type === STRUCTURE_STORAGE || type === STRUCTURE_TERMINAL;
+        }
+      })
+      .map((s) => s.pos);
+    const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName)).concat(strategicStructures);
     const wallMap = store.wallMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
     const refreshFrequency = store.alertLevel === 0 ? 500 : 50;
     const runThisTick = Game.time % refreshFrequency === 0;
@@ -151,76 +87,6 @@ export class DefenseDirector {
             .filter((s) => s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL).length === 0
         ) {
           new RoomPosition(p.x, p.y, p.roomName).createConstructionSite(STRUCTURE_WALL);
-        }
-      });
-    }
-  }
-  private static runMason(creep: Creep): void {
-    if (creep.ticksToLive) {
-      const repairLimit = 2_000_000;
-      const storage = Game.getObjectById<StructureStorage>(creep.memory.refuelTarget);
-      const allRamparts = creep.room.find(FIND_STRUCTURES, {
-        filter: (s) =>
-          (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) && s.hits < repairLimit
-      });
-      const currentAvg = allRamparts.reduce((acc, r) => acc + r.hits, 0) / allRamparts.length;
-      if (Game.time % 5 === 0) {
-        console.log(`Avg Fortification HP: ${currentAvg.toPrecision(8)}`);
-      }
-      const currentTarget = creep.memory.workTarget
-        ? Game.getObjectById<StructureRampart | StructureWall>(creep.memory.workTarget)
-        : allRamparts.sort((a, b) => a.hits - b.hits)[0];
-      if (currentTarget && storage) {
-        creep.memory.workTarget = currentTarget.id;
-        switch (true) {
-          case currentTarget.hits > currentAvg + 10_000:
-            creep.memory.workTarget = "";
-            break;
-          case creep.store.getUsedCapacity() === 0 && !creep.pos.isNearTo(storage):
-            CreepBase.travelTo(creep, storage, "white");
-            break;
-          case creep.store.getUsedCapacity() === 0 &&
-            creep.pos.isNearTo(storage) &&
-            storage.store[RESOURCE_ENERGY] > creep.room.energyCapacityAvailable + creep.store.getCapacity():
-            creep.withdraw(storage, RESOURCE_ENERGY);
-            creep.memory.workTarget = "";
-            break;
-          case creep.store.getUsedCapacity() > 0 && !creep.pos.inRangeTo(currentTarget, 3):
-            CreepBase.travelTo(creep, currentTarget, "white");
-            break;
-          case creep.store.getUsedCapacity() > 0 && creep.pos.inRangeTo(currentTarget, 3):
-            creep.repair(currentTarget);
-            break;
-        }
-      }
-    }
-  }
-  private static runMasons(room: Room): void {
-    _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name).map((c) =>
-      this.runMason(c)
-    );
-  }
-  private static spawnMasons(room: Room): void {
-    const activeMasons = _.filter(Game.creeps, (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name);
-    const queuedMasons = Memory.roomStore[room.name].spawnQueue.filter(
-      (c) => c.memory.role === "mason" && c.memory.homeRoom === room.name
-    );
-    const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
-      filter: (s) => s.structureType === STRUCTURE_STORAGE
-    })[0];
-    const needsTech =
-      activeMasons.length + queuedMasons.length < 1 &&
-      storage &&
-      room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART }).length > 0;
-    if (needsTech) {
-      Memory.roomStore[room.name].spawnQueue.push({
-        template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 1250)),
-        memory: {
-          ...CreepBase.baseMemory,
-          role: "mason",
-          homeRoom: room.name,
-          targetRoom: room.name,
-          refuelTarget: storage.id
         }
       });
     }
@@ -359,6 +225,76 @@ export class DefenseDirector {
       //    Possible on other alert levels as well, check existing priorities
     }
   }
+  private static spawnRemoteDefense(room: Room, spawningDefenders: CreepRecipie[]): void {
+    const template = {
+      template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK, ATTACK, MOVE],
+      memory: {
+        ...CreepBase.baseMemory,
+        role: "remoteDefender",
+        working: false,
+        born: Game.time,
+        homeRoom: room.name
+      }
+    };
+    if (spawningDefenders.length === 0) {
+      Memory.roomStore[room.name].spawnQueue.push(template);
+    } else {
+      const index = Memory.roomStore[room.name].spawnQueue.findIndex(
+        (c) => c.memory.role === "remoteDefender" && c.memory.homeRoom === room.name
+      );
+      if (index >= 0) {
+        Memory.roomStore[room.name].spawnQueue[index] = template;
+      }
+    }
+  }
+  private static runDefender(creep: Creep, anchor: Flag, targetRoom: RemoteDirectorStore | undefined): void {
+    if (creep.ticksToLive) {
+      switch (true) {
+        case !targetRoom:
+          CreepBase.travelTo(creep, anchor, "red", 5);
+          break;
+        case targetRoom && creep.pos.roomName !== targetRoom.roomName:
+          if (targetRoom) {
+            const roomCenter = new RoomPosition(25, 25, targetRoom.roomName);
+            CreepBase.travelTo(creep, roomCenter, "red", 23);
+          }
+          break;
+        case targetRoom && creep.pos.roomName === targetRoom.roomName:
+          const target =
+            creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS) ||
+            creep.room.find<StructureInvaderCore>(FIND_STRUCTURES, {
+              filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+            })[0];
+          if (target && creep.pos.getRangeTo(target) <= 2) {
+            creep.attack(target);
+          }
+          if (target) {
+            CreepBase.travelTo(creep, target, "red", 0);
+          }
+          break;
+      }
+    }
+  }
+  private static remoteDefense(room: Room): void {
+    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+    const defenderCost = 430;
+    const currentDefenders = _.filter(
+      Game.creeps,
+      (c) => c.memory.role === "remoteDefender" && c.memory.homeRoom === room.name
+    );
+    const spawningDefenders = Memory.roomStore[room.name].spawnQueue.filter(
+      (c) => c.memory.role === "remoteDefender" && c.memory.homeRoom === room.name
+    );
+    const remotes = Memory.roomStore[room.name].remoteDirector;
+    const remotesToDefend = remotes.filter(
+      (r) => (r.hostileCreepCount === 1 || r.hasInvaderCore) && r.hostileTowerCount === 0
+    );
+    if (currentDefenders.length < 1 && remotesToDefend.length > 0) {
+      this.spawnRemoteDefense(room, spawningDefenders);
+    }
+    const targetRoom: RemoteDirectorStore | undefined = remotesToDefend.sort((r) => r.sources.length).reverse()[0];
+    currentDefenders.map((c) => this.runDefender(c, anchor, targetRoom));
+  }
   public static run(room: Room): void {
     const targets = room.find(FIND_HOSTILE_CREEPS, {
       filter: (s) =>
@@ -368,10 +304,11 @@ export class DefenseDirector {
     });
     this.populateMemory(room);
     this.setAlert(room, targets);
-    this.runTowers(room, targets);
+    DefenseTowers.runTowers(room, targets);
     this.makeFortification(room);
     this.checkToSafeMode(room);
-    this.spawnMasons(room);
-    this.runMasons(room);
+    DefenseMason.spawnMasons(room);
+    DefenseMason.runMasons(room);
+    this.remoteDefense(room);
   }
 }

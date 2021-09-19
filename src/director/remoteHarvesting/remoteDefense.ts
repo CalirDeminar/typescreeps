@@ -27,7 +27,7 @@ export class RemoteDefense {
       const roomReachable = roomRoute !== -2 && roomRoute.length <= Constants.maxRemoteRoomDistance;
       if (roomReachable) {
         Memory.roomStore[homeRoom.name].spawnQueue.push({
-          template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK],
+          template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK, ATTACK, MOVE],
           memory: {
             ...CreepBase.baseMemory,
             role: "remoteDefender",
