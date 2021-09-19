@@ -135,7 +135,7 @@ export class MineralDirector {
       }
     }
   }
-  private static operate(
+  private static operateCreeps(
     room: Room,
     terminal: StructureTerminal,
     mineral: Mineral,
@@ -252,8 +252,8 @@ export class MineralDirector {
       console.log("Running Terminal Sales");
       this.runTerminalOrders(terminal);
     }
-    if (terminal && extractor && mineral && container) {
-      this.operate(room, terminal, mineral, container);
+    if (terminal && extractor && mineral && container && terminal.store.getFreeCapacity() > 25_000) {
+      this.operateCreeps(room, terminal, mineral, container);
     }
   }
 }
