@@ -6,6 +6,8 @@ import { Game, Memory } from "./mock";
 import { UtilPosition } from "utils/util.position";
 import { CreepBase } from "roles/role.creep";
 import { CoreDirector } from "director/director.core";
+import { SpawnDirector } from "director/core/director.spawn";
+import { RemoteSpawning } from "director/remoteHarvesting/remoteSpawning";
 
 describe("main", () => {
   before(() => {
@@ -114,9 +116,7 @@ describe("main", () => {
       { type: "move", hits: 100 }
     ];
     const attacker = CreepCombat.getCreepCombatFigures(attackerBody);
-    console.log(attacker);
     const healer = CreepCombat.getCreepCombatFigures(healerBody);
-    console.log(healer);
   });
   it("Test Room Coordinate Navigration", () => {
     assert.equal(UtilPosition.navigateRoomName("N3E4", -1, -1), "N4E5");
@@ -130,8 +130,7 @@ describe("main", () => {
     const preQueue = preRoleOrder.map((r) => {
       return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
     });
-    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, true, true, true).map((cr) => cr.memory.role);
-    console.log(postRoleOrder);
+    const postRoleOrder = SpawnDirector.sortSpawnQueue(preQueue, true, true, true).map((cr) => cr.memory.role);
     assert.deepEqual(postRoleOrder, ["queen", "hauler", "harvesterStatic", "linkHauler", "remoteHarvester"]);
   });
   it("spawnQueue sorting with no energy in link, containers or storage", () => {
@@ -150,8 +149,7 @@ describe("main", () => {
     const preQueue = preRoleOrder.map((r) => {
       return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
     });
-    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
-    console.log(postRoleOrder);
+    const postRoleOrder = SpawnDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
     assert.deepEqual(postRoleOrder, [
       "harvesterStatic",
       "linkHauler",
@@ -178,8 +176,7 @@ describe("main", () => {
     const preQueue = preRoleOrder.map((r) => {
       return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
     });
-    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
-    console.log(postRoleOrder);
+    const postRoleOrder = SpawnDirector.sortSpawnQueue(preQueue, false, false, false).map((cr) => cr.memory.role);
     assert.deepEqual(postRoleOrder, [
       "harvesterStatic",
       "linkHauler",
@@ -205,8 +202,7 @@ describe("main", () => {
     const preQueue = preRoleOrder.map((r) => {
       return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
     });
-    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
-    console.log(postRoleOrder);
+    const postRoleOrder = SpawnDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
     assert.deepEqual(postRoleOrder, [
       "hauler",
       "harvesterStatic",
@@ -238,7 +234,16 @@ describe("main", () => {
     const preQueue = preRoleOrder.map((r) => {
       return { ...emptyCreepRec, memory: { ...emptyCreepRec.memory, role: r } };
     });
-    const postRoleOrder = CoreDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
-    console.log(postRoleOrder);
+    const postRoleOrder = SpawnDirector.sortSpawnQueue(preQueue, false, false, true).map((cr) => cr.memory.role);
+  });
+  it("Test Remote Harvester part generation", () => {
+    const lowEnergySpawns = RemoteSpawning.createTemplates(500);
+    assert.isTrue(lowEnergySpawns.hauler.length === 0);
+    const highEnergySpawns = RemoteSpawning.createTemplates(1000);
+    assert.isTrue(
+      SpawnDirector.costCreep({ template: highEnergySpawns.worker, memory: {} }) +
+        SpawnDirector.costCreep({ template: highEnergySpawns.hauler, memory: {} }) <
+        1000
+    );
   });
 });
