@@ -12,10 +12,11 @@ export class UtilPosition {
           return { x: x, y: y };
         });
       })
-      .reduce((acc, arr) => acc.concat(arr), []);
+      .reduce((acc, arr) => acc.concat(arr), [])
+      .filter((p) => p.x !== 0 && p.y !== 0);
     const rangeList = surroundings
       .filter((tile: { x: number; y: number }) => {
-        return terrain.get(anchor.x + tile.x, anchor.y + tile.y) === 0;
+        return terrain.get(anchor.x + tile.x, anchor.y + tile.y) !== 1;
       })
       .map(
         (tile: { x: number; y: number }): RoomPosition => {
@@ -30,8 +31,8 @@ export class UtilPosition {
       )
       .sort((p1, p2) => {
         const len =
-          p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1 }).length -
-          p2.findPathTo(target, { ignoreCreeps: true, swampCost: 1 }).length;
+          p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length -
+          p2.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length;
         return len;
       });
     const rtn = rangeList[0];
@@ -40,6 +41,9 @@ export class UtilPosition {
     } else {
       return anchor;
     }
+  }
+  public static findByPosition(pos: RoomPosition, type: BuildableStructureConstant): Structure | null {
+    return pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type)[0];
   }
   public static isBoundary(x: number, y: number): boolean {
     const boundaries = [0, 49];

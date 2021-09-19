@@ -14,6 +14,8 @@ import { RoomHelperDirector } from "./director.roomHelper";
 import { SpawnDirector } from "./core/director.spawn";
 import { LinkHaulerDirector } from "./core/director.linkHauler";
 import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
+import { UtilPosition } from "utils/util.position";
+import { ControllerHaulerDirector } from "./core/director.controllerHauler";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -51,12 +53,6 @@ export class CoreDirector {
   };
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
-  }
-  private static findStructuresByAnchor(anchor: Flag, type: BuildableStructureConstant): Structure[] {
-    return anchor.pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type);
-  }
-  private static findStructureByAnchor(anchor: Flag, type: BuildableStructureConstant): Structure | null {
-    return anchor.pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type)[0];
   }
   private static runUpgrader(creep: Creep): void {
     Upgrader.run(creep);
@@ -111,12 +107,17 @@ export class CoreDirector {
     Builder.run(creep);
   }
   private static runBuilders(room: Room): void {
+    const hasSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
     _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.homeRoom === room.name).map((c) =>
-      this.runBuilder(c)
+      hasSites ? this.runBuilder(c) : this.runUpgrader(c)
     );
   }
   private static spawnBuilder(room: Room): void {
+    const storage = room.storage;
     const energyFull = room.energyCapacityAvailable - room.energyAvailable === 0 || room.energyAvailable > 1000;
+    const storageHasBuffer = storage
+      ? storage.store.getUsedCapacity(RESOURCE_ENERGY) > room.energyCapacityAvailable * 3
+      : true;
     const towersNeedEnergy =
       _.filter(Game.creeps, (c) => c.memory.role === "queen").length > 0 &&
       _.filter(
@@ -137,6 +138,7 @@ export class CoreDirector {
       room.controller &&
       room.controller.level < 8 &&
       energyFull &&
+      storageHasBuffer &&
       Memory.roomStore[room.name].spawnQueue.length === 0 &&
       !towersNeedEnergy &&
       !buildersNeedEnergy &&
@@ -165,13 +167,28 @@ export class CoreDirector {
       const anchor = this.getAnchor(room);
       const alreadyBuilding = Memory.roomStore[room.name].buildingThisTick;
       switch (true) {
-        case controller.level >= 3 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_CONTAINER):
+        case controller.level >= 3 && !alreadyBuilding && !UtilPosition.findByPosition(anchor.pos, STRUCTURE_CONTAINER):
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
-        case controller.level >= 5 && !alreadyBuilding && !this.findStructureByAnchor(anchor, STRUCTURE_LINK):
+        case controller.level >= 5 && !alreadyBuilding && !UtilPosition.findByPosition(anchor.pos, STRUCTURE_LINK):
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y + 1, STRUCTURE_LINK) === OK) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+        case controller.level >= 3 &&
+          !alreadyBuilding &&
+          !UtilPosition.findByPosition(controller.pos, STRUCTURE_CONTAINER):
+          const structStore = Memory.roomStore[room.name].constructionDirector;
+          const defStore = Memory.roomStore[room.name].defenseDirector;
+          const avoids = structStore.extensionTemplate
+            .concat(structStore.towerTemplate)
+            .concat(structStore.labTemplate)
+            .concat(structStore.singleStructures.map((s) => s.pos))
+            .concat(defStore.wallMap);
+          const containerPos = UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, avoids);
+          if (containerPos && room.createConstructionSite(containerPos.x, containerPos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
@@ -232,6 +249,7 @@ export class CoreDirector {
       this.runUpgraders(room);
       this.spawnBuilder(room);
       this.runBuilders(room);
+      ControllerHaulerDirector.run(room);
       QueenDirector.spawnQueen(room, storage || container);
     }
   }

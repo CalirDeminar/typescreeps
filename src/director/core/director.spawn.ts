@@ -24,6 +24,8 @@ export class SpawnDirector {
         return 29;
       case "mason":
         return 28;
+      case "controllerHauler":
+        return 27;
       case "remoteDefender":
         return 25;
       case "upgrader":
