@@ -15,6 +15,12 @@ export class Upgrader extends CreepBase {
     })[0];
     return target;
   }
+  private static getControllerLink(creep: Creep, controller: StructureController): Structure | null {
+    const target = controller.pos.findInRange(FIND_MY_STRUCTURES, 2, {
+      filter: (s) => s.structureType === STRUCTURE_LINK
+    })[0];
+    return target;
+  }
   public static run(creep: Creep): void {
     if (creep.ticksToLive) {
       const controller = Game.getObjectById<StructureController>(creep.memory.upgradeTarget);
@@ -35,7 +41,9 @@ export class Upgrader extends CreepBase {
           creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
         }
       } else {
-        const controllerContainer = controller ? this.getControllerContainer(creep, controller) : null;
+        const controllerContainer = controller
+          ? this.getControllerContainer(creep, controller) || this.getControllerLink(creep, controller)
+          : null;
         const sourceTarget: Structure | Tombstone | null =
           creep.memory.targetStore !== ""
             ? Game.getObjectById(creep.memory.targetSource)

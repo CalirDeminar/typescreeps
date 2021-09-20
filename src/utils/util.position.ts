@@ -42,8 +42,8 @@ export class UtilPosition {
       return anchor;
     }
   }
-  public static findByPosition(pos: RoomPosition, type: BuildableStructureConstant): Structure | null {
-    return pos.findInRange(FIND_STRUCTURES, 1).filter((s) => s.structureType === type)[0];
+  public static findByPosition(pos: RoomPosition, type: BuildableStructureConstant, range?: number): Structure | null {
+    return pos.findInRange(FIND_STRUCTURES, range || 1).filter((s) => s.structureType === type)[0];
   }
   public static isBoundary(x: number, y: number): boolean {
     const boundaries = [0, 49];

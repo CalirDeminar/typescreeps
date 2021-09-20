@@ -1,28 +1,57 @@
 import { CreepBase } from "roles/role.creep";
 export class LinkHaulerDirector {
-  private static runLinkHauler(creep: Creep, link: StructureLink, storage: StructureStorage, anchor: Flag): void {
+  private static runLinkHauler(
+    creep: Creep,
+    link: StructureLink,
+    controllerLink: StructureLink | undefined,
+    storage: StructureStorage,
+    anchor: Flag
+  ): void {
     if (creep.ticksToLive) {
       const onStation = creep.pos.isNearTo(storage.pos) && creep.pos.isNearTo(link.pos);
       if (!onStation) {
         CreepBase.travelTo(creep, new RoomPosition(storage.pos.x + 1, storage.pos.y, storage.pos.roomName), "black");
       } else {
         const hasCargo = creep.store.getUsedCapacity() > 0;
+        const minStorageEnergy =
+          storage.store.getUsedCapacity(RESOURCE_ENERGY) > storage.room.energyCapacityAvailable + 2000;
+        const controllerLinkNeedsEnergy =
+          minStorageEnergy && controllerLink && controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) > 400;
         const canWithdraw =
           link.store.getUsedCapacity(RESOURCE_ENERGY) > Math.min(400, creep.store.getCapacity()) &&
           creep.store.getFreeCapacity() > 100;
-        const spawn = creep.pos.findInRange<StructureSpawn>(FIND_STRUCTURES, 1, {
-          filter: (s) => s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
-        })[0];
-
-        if (hasCargo) {
-          if (spawn) {
-            creep.transfer(spawn, RESOURCE_ENERGY);
-          } else {
+        // if (link.room.name === "W6N1") {
+        //   console.log(
+        //     `CanWithdraw: ${canWithdraw} - hasCargo: ${hasCargo} - ControllerLinkNeedsEnergy: ${controllerLinkNeedsEnergy} - MinStorageEnergy: ${minStorageEnergy} - ControllerLinkEnergyCheck: ${
+        //       controllerLink && controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) > 40
+        //     }`
+        //   );
+        // }
+        switch (true) {
+          case !controllerLinkNeedsEnergy && canWithdraw:
+            creep.withdraw(link, RESOURCE_ENERGY);
+            break;
+          case !controllerLinkNeedsEnergy && hasCargo:
             creep.transfer(storage, RESOURCE_ENERGY);
-          }
+            break;
+          case controllerLinkNeedsEnergy && minStorageEnergy && !hasCargo:
+            creep.withdraw(storage, RESOURCE_ENERGY);
+            break;
+          case controllerLinkNeedsEnergy && hasCargo:
+            if (controllerLink) {
+              creep.transfer(link, RESOURCE_ENERGY);
+            }
+            break;
+          case controllerLinkNeedsEnergy:
+            if (controllerLink) {
+              link.transferEnergy(controllerLink);
+            }
+            break;
+          default:
+            "";
         }
-        if (canWithdraw) {
-          creep.withdraw(link, RESOURCE_ENERGY);
+        if (controllerLinkNeedsEnergy && controllerLink) {
+          link.transferEnergy(controllerLink);
         }
       }
     }
@@ -30,12 +59,13 @@ export class LinkHaulerDirector {
   public static runLinkHaulers(
     room: Room,
     link: StructureLink | null,
+    controllerLink: StructureLink | undefined,
     storage: StructureStorage | null,
     anchor: Flag
   ): void {
     if (link && storage) {
       _.filter(Game.creeps, (c) => c.memory.role === "linkHauler" && c.memory.homeRoom === room.name).map((c) =>
-        this.runLinkHauler(c, link, storage, anchor)
+        this.runLinkHauler(c, link, controllerLink, storage, anchor)
       );
     }
   }

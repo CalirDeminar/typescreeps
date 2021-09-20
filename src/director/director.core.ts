@@ -166,20 +166,30 @@ export class CoreDirector {
       // outer roads at lvl 6
       const anchor = this.getAnchor(room);
       const alreadyBuilding = Memory.roomStore[room.name].buildingThisTick;
+      const anchorContainer = UtilPosition.findByPosition(anchor.pos, STRUCTURE_CONTAINER);
+      const controllerContainer = UtilPosition.findByPosition(controller.pos, STRUCTURE_CONTAINER, 2);
+      const controllerLink = UtilPosition.findByPosition(controller.pos, STRUCTURE_LINK, 2);
+      const anchorLink = UtilPosition.findByPosition(anchor.pos, STRUCTURE_LINK, 2);
       switch (true) {
-        case controller.level >= 3 && !alreadyBuilding && !UtilPosition.findByPosition(anchor.pos, STRUCTURE_CONTAINER):
+        case controller.level >= 3 && controller.level <= 5 && !alreadyBuilding && !anchorContainer:
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
-        case controller.level >= 5 && !alreadyBuilding && !UtilPosition.findByPosition(anchor.pos, STRUCTURE_LINK):
+        case controller.level >= 5 && !alreadyBuilding && !anchorLink:
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y + 1, STRUCTURE_LINK) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
+        case !!anchorLink && !!anchorContainer:
+          if (anchorContainer) {
+            anchorContainer.destroy();
+          }
+          break;
         case controller.level >= 3 &&
           !alreadyBuilding &&
-          !UtilPosition.findByPosition(controller.pos, STRUCTURE_CONTAINER):
+          !controllerContainer &&
+          Constants.maxLinks[controller.level] < 4: {
           const structStore = Memory.roomStore[room.name].constructionDirector;
           const defStore = Memory.roomStore[room.name].defenseDirector;
           const avoids = structStore.extensionTemplate
@@ -191,6 +201,25 @@ export class CoreDirector {
           if (containerPos && room.createConstructionSite(containerPos.x, containerPos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
+          break;
+        }
+        case Constants.maxLinks[controller.level] >= 4 && !controllerLink: {
+          const structStore = Memory.roomStore[room.name].constructionDirector;
+          const defStore = Memory.roomStore[room.name].defenseDirector;
+          const avoids = structStore.extensionTemplate
+            .concat(structStore.towerTemplate)
+            .concat(structStore.labTemplate)
+            .concat(structStore.singleStructures.map((s) => s.pos))
+            .concat(defStore.wallMap);
+          const containerPos = UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, avoids);
+          const linkPos = UtilPosition.getClosestSurroundingTo(containerPos, anchor.pos, avoids);
+          if (linkPos && room.createConstructionSite(linkPos.y, linkPos.y, STRUCTURE_LINK) === OK) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+        }
+        case !!controllerLink && !!controllerContainer:
+          controllerContainer?.destroy();
           break;
         default:
           undefined;
@@ -241,9 +270,14 @@ export class CoreDirector {
       const link = anchor.pos
         .findInRange<StructureLink>(FIND_STRUCTURES, 2)
         .filter((s) => s.structureType === STRUCTURE_LINK)[0];
+      const controllerLink = room.controller
+        ? room.controller.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
+            filter: (s) => s.structureType === STRUCTURE_LINK
+          })[0]
+        : undefined;
       this.createConstructionSites(room);
       LinkHaulerDirector.spawnLinkHauler(room, link);
-      LinkHaulerDirector.runLinkHaulers(room, link, storage, anchor);
+      LinkHaulerDirector.runLinkHaulers(room, link, controllerLink, storage, anchor);
       QueenDirector.runQueens(room, storage || container);
       this.spawnUpgrader(room);
       this.runUpgraders(room);

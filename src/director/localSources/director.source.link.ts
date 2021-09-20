@@ -132,11 +132,28 @@ export class SourceLinkDirector {
   }
   private static runLink(link: StructureLink, anchor: Flag): void {
     const anchorLink = this.getAnchorLink(link.room, anchor);
+    const controllerLink = this.getControllerLink(link.room);
     if (link && anchorLink && link.cooldown === 0) {
-      const toTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
-      const transferBoundary = 200;
-      if (toTransfer > transferBoundary) {
-        link.transferEnergy(anchorLink, toTransfer);
+      const anchorToTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
+      const controllerToTransfer = controllerLink
+        ? Math.min(800 - controllerLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY])
+        : 0;
+      const anchorTransferBoundary = anchorToTransfer > 200;
+      const controllerTransferBoundary = controllerToTransfer > 200;
+      const transferToController =
+        link.room.storage &&
+        controllerLink &&
+        controllerTransferBoundary &&
+        link.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) > link.room.energyCapacityAvailable + 2000;
+      switch (true) {
+        case anchorTransferBoundary && !transferToController:
+          link.transferEnergy(anchorLink, anchorToTransfer);
+          break;
+        case controllerTransferBoundary && controllerLink && transferToController:
+          if (controllerLink) {
+            link.transferEnergy(controllerLink, controllerToTransfer);
+          }
+          break;
       }
     }
   }
@@ -144,6 +161,16 @@ export class SourceLinkDirector {
     return anchor.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
+  }
+  private static getControllerLink(room: Room): StructureLink | null {
+    const controller = room.controller;
+    if (controller) {
+      const link = controller.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
+        filter: (s) => s.structureType === STRUCTURE_LINK
+      })[0];
+      return link;
+    }
+    return null;
   }
   public static run(room: Room, source: Source, link: StructureLink, anchor: Flag): void {
     this.runHarvesters(source);
