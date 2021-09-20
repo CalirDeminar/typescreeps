@@ -113,6 +113,10 @@ export class CreepBase {
       this.travelToRoom(creep, "", homeRoom.name);
       return null;
     } else {
+      const tombStone = this.findFilledTombstone(creep);
+      if (tombStone) {
+        return tombStone;
+      }
       const containerExists =
         homeRoom.find(FIND_STRUCTURES, {
           filter: (s: AnyStructure) => {
@@ -122,10 +126,14 @@ export class CreepBase {
             );
           }
         }).length > 0;
-      const harvestableStorage = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: this.filterStructures(STRUCTURE_STORAGE, homeRoom.energyCapacityAvailable + creep.store.getCapacity())
-      });
-      if (harvestableStorage) {
+      const storageExists = !!homeRoom.storage;
+      const harvestableStorage =
+        homeRoom.storage &&
+        homeRoom.storage.store.getUsedCapacity(RESOURCE_ENERGY) >
+          homeRoom.energyCapacityAvailable + creep.store.getCapacity()
+          ? homeRoom.storage
+          : null;
+      if (storageExists) {
         return harvestableStorage;
       }
       const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -154,10 +162,6 @@ export class CreepBase {
           return harvestableExtension;
         }
         return null;
-      }
-      const tombStone = this.findFilledTombstone(creep);
-      if (tombStone) {
-        return tombStone;
       }
       return null;
     }
