@@ -132,28 +132,11 @@ export class SourceLinkDirector {
   }
   private static runLink(link: StructureLink, anchor: Flag): void {
     const anchorLink = this.getAnchorLink(link.room, anchor);
-    const controllerLink = this.getControllerLink(link.room);
     if (link && anchorLink && link.cooldown === 0) {
-      const anchorToTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
-      const controllerToTransfer = controllerLink
-        ? Math.min(800 - controllerLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY])
-        : 0;
-      const anchorTransferBoundary = anchorToTransfer > 200;
-      const controllerTransferBoundary = controllerToTransfer > 200;
-      const transferToController =
-        link.room.storage &&
-        controllerLink &&
-        controllerTransferBoundary &&
-        link.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) > link.room.energyCapacityAvailable + 2000;
-      switch (true) {
-        case anchorTransferBoundary && !transferToController:
-          link.transferEnergy(anchorLink, anchorToTransfer);
-          break;
-        case controllerTransferBoundary && controllerLink && transferToController:
-          if (controllerLink) {
-            link.transferEnergy(controllerLink, controllerToTransfer);
-          }
-          break;
+      const toTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
+      const transferBoundary = 200;
+      if (toTransfer > transferBoundary) {
+        link.transferEnergy(anchorLink, toTransfer);
       }
     }
   }

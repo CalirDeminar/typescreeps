@@ -16,10 +16,11 @@ export class LinkHaulerDirector {
         const minStorageEnergy =
           storage.store.getUsedCapacity(RESOURCE_ENERGY) > storage.room.energyCapacityAvailable + 2000;
         const controllerLinkNeedsEnergy =
-          minStorageEnergy && controllerLink && controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) > 400;
+          minStorageEnergy && controllerLink && controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) > 200;
         const canWithdraw =
           link.store.getUsedCapacity(RESOURCE_ENERGY) > Math.min(400, creep.store.getCapacity()) &&
           creep.store.getFreeCapacity() > 100;
+        const linkFull = link.store.getFreeCapacity(RESOURCE_ENERGY) < 10;
         // if (link.room.name === "W6N1") {
         //   console.log(
         //     `CanWithdraw: ${canWithdraw} - hasCargo: ${hasCargo} - ControllerLinkNeedsEnergy: ${controllerLinkNeedsEnergy} - MinStorageEnergy: ${minStorageEnergy} - ControllerLinkEnergyCheck: ${
@@ -34,10 +35,10 @@ export class LinkHaulerDirector {
           case !controllerLinkNeedsEnergy && hasCargo:
             creep.transfer(storage, RESOURCE_ENERGY);
             break;
-          case controllerLinkNeedsEnergy && minStorageEnergy && !hasCargo:
+          case controllerLinkNeedsEnergy && minStorageEnergy && !hasCargo && !linkFull:
             creep.withdraw(storage, RESOURCE_ENERGY);
             break;
-          case controllerLinkNeedsEnergy && hasCargo:
+          case controllerLinkNeedsEnergy && hasCargo && !linkFull:
             if (controllerLink) {
               creep.transfer(link, RESOURCE_ENERGY);
             }
