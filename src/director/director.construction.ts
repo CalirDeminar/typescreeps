@@ -87,7 +87,9 @@ export class ConstructionDirector {
     const currentCount = currentLabs.length;
     const currentMax = Constants.maxLabs[level];
     if (currentCount < currentMax) {
-      const template = Memory.roomStore[room.name].constructionDirector.labTemplate;
+      const template = Memory.roomStore[room.name].constructionDirector.labTemplate.map(
+        (p) => new RoomPosition(p.x, p.y, p.roomName)
+      );
       const unbuilt = template.filter((t) => !currentLabs.some((l) => l.pos.isEqualTo(t)));
       const next = unbuilt[0];
       if (next) {
@@ -213,8 +215,8 @@ export class ConstructionDirector {
         this.nextExtension(room, structures, level) ||
           this.singleStructures(room, structures, level) ||
           this.nextTower(room, structures, level) ||
-          this.buildRoads(room, level);
-        // this.nextLab(room, structures, level) ||
+          this.buildRoads(room, level) ||
+          this.nextLab(room, structures, level);
         // search single buildings
         // search roads
       }

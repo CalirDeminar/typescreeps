@@ -104,13 +104,13 @@ export class ConstructionBunker2Director {
     return [
       // Right side
       new RoomPosition(anchor.pos.x + 5, anchor.pos.y + 2, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 5, anchor.pos.y - 1, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 2, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 3, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 1, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 2, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 3, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 4, anchor.pos.roomName),
+      new RoomPosition(anchor.pos.x + 5, anchor.pos.y - 1, anchor.pos.roomName),
+      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 1, anchor.pos.roomName),
+      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 2, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 2, anchor.pos.roomName),
       new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 3, anchor.pos.roomName)
     ];
