@@ -5,7 +5,13 @@ export class Upgrader extends CreepBase {
   }
   private static getControllerContainer(creep: Creep, controller: StructureController): Structure | null {
     const target = controller.pos.findInRange(FIND_STRUCTURES, 2, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER
+      filter: (s) =>
+        s.structureType === STRUCTURE_CONTAINER &&
+        (_.filter(
+          Game.creeps,
+          (c) => c.memory.role === "controllerHauler" && c.memory.homeRoom === creep.memory.homeRoom
+        ).length > 0 ||
+          s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity())
     })[0];
     return target;
   }
