@@ -21,13 +21,6 @@ export class LinkHaulerDirector {
           link.store.getUsedCapacity(RESOURCE_ENERGY) > Math.min(400, creep.store.getCapacity()) &&
           creep.store.getFreeCapacity() > 100;
         const linkFull = link.store.getFreeCapacity(RESOURCE_ENERGY) < 10;
-        // if (link.room.name === "W6N1") {
-        //   console.log(
-        //     `CanWithdraw: ${canWithdraw} - hasCargo: ${hasCargo} - ControllerLinkNeedsEnergy: ${controllerLinkNeedsEnergy} - MinStorageEnergy: ${minStorageEnergy} - ControllerLinkEnergyCheck: ${
-        //       controllerLink && controllerLink.store.getFreeCapacity(RESOURCE_ENERGY) > 40
-        //     }`
-        //   );
-        // }
         switch (true) {
           case !controllerLinkNeedsEnergy && canWithdraw:
             creep.withdraw(link, RESOURCE_ENERGY);
