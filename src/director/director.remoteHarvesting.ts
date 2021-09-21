@@ -41,58 +41,63 @@ export class RemoteHarvestingDirector {
   }
   private static addRoomsToRemote(roomName: string): void {
     const isFirstOwnedRoom = _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
+    const currentBorders = Object.values(Game.map.describeExits(roomName));
+    const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
+    const scoutedRooms = intel.map((r) => r.name);
     if (
       isFirstOwnedRoom &&
       Memory.roomStore[roomName].remoteDirector.length < 2 &&
       ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0 ||
-        Memory.roomStore[roomName].remoteDirector.length === 0)
+        Memory.roomStore[roomName].remoteDirector.length === 0) &&
+      currentBorders.every((b) => b && scoutedRooms.includes(b))
     ) {
-      const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
-      _.map(intel, (intelRoom) => {
-        const alreadyRemoteHarvesting = Object.values(Memory.roomStore)
-          .reduce((acc: string[], roomStore) => acc.concat(roomStore.remoteDirector.map((rd) => rd.roomName)), [])
-          .includes(intelRoom.name);
-        if (!alreadyRemoteHarvesting) {
-          const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
-            filter: (f) => f.name === `${roomName}-Anchor`
-          })[0];
-          const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
-          const allReachable =
-            intelRoom.sources.filter((s) => {
-              const path = PathFinder.search(anchor.pos, { pos: s.pos, range: 1 }, { maxOps: 1000 });
-              return !path.incomplete;
-            }).length === intelRoom.sources.length;
-          const homeRoom = Game.rooms[roomName];
+      const currentRooms = Object.values(Memory.roomStore).reduce(
+        (acc: string[], s) => acc.concat(s.remoteDirector.map((rd) => rd.roomName)),
+        []
+      );
+      const availableDoubleSourceRooms = intel.filter((r) => r.sources.length === 2 && !currentRooms.includes(r.name));
+      const availableSingleSourceRooms = intel.filter((r) => r.sources.length === 1 && !currentRooms.includes(r.name));
+      const intelRoom = availableDoubleSourceRooms[0] || availableSingleSourceRooms[0] || undefined;
+      if (intelRoom) {
+        const anchor = Game.rooms[roomName].find(FIND_FLAGS, {
+          filter: (f) => f.name === `${roomName}-Anchor`
+        })[0];
+        const roomRoute = Game.map.findRoute(roomName, intelRoom.name);
+        const allReachable =
+          intelRoom.sources.filter((s) => {
+            const path = PathFinder.search(anchor.pos, { pos: s.pos, range: 1 }, { maxOps: 1000 });
+            return !path.incomplete;
+          }).length === intelRoom.sources.length;
+        const homeRoom = Game.rooms[roomName];
 
-          if (
-            roomRoute !== -2 &&
-            roomRoute.length < 2 &&
-            allReachable &&
-            intelRoom.sources.length > 0 &&
-            homeRoom.controller
-          ) {
-            const sources = intelRoom.sources.map((s) => {
-              return { sourceId: s.id, targetContainerId: null };
-            });
-            Memory.roomStore[roomName].remoteDirector = Memory.roomStore[roomName].remoteDirector.concat([
-              {
-                roomName: intelRoom.name,
-                homeRoomName: anchor.pos.roomName,
-                anchorId: anchor ? anchor.name : "",
-                controllerId: intelRoom.controller ? intelRoom.controller.id : "",
-                sources: sources,
-                roadQueue: [],
-                roadsPathed: false,
-                roadsConstructed: false,
-                hasInvaderCore: intelRoom.invaderCore !== null,
-                hasHostileCreeps: false,
-                hostileCreepCount: 0,
-                hostileTowerCount: intelRoom.towers.length
-              }
-            ]);
-          }
+        if (
+          roomRoute !== -2 &&
+          roomRoute.length < 2 &&
+          allReachable &&
+          intelRoom.sources.length > 0 &&
+          homeRoom.controller
+        ) {
+          const sources = intelRoom.sources.map((s) => {
+            return { sourceId: s.id, targetContainerId: null };
+          });
+          Memory.roomStore[roomName].remoteDirector = Memory.roomStore[roomName].remoteDirector.concat([
+            {
+              roomName: intelRoom.name,
+              homeRoomName: anchor.pos.roomName,
+              anchorId: anchor ? anchor.name : "",
+              controllerId: intelRoom.controller ? intelRoom.controller.id : "",
+              sources: sources,
+              roadQueue: [],
+              roadsPathed: false,
+              roadsConstructed: false,
+              hasInvaderCore: intelRoom.invaderCore !== null,
+              hasHostileCreeps: false,
+              hostileCreepCount: 0,
+              hostileTowerCount: intelRoom.towers.length
+            }
+          ]);
         }
-      });
+      }
     }
   }
   private static runHarvesters(room: RemoteDirectorStore): void {
