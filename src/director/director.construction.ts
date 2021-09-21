@@ -116,7 +116,9 @@ export class ConstructionDirector {
     switch (true) {
       case shouldBuildSpawn: {
         const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
-          (s) => s.type === STRUCTURE_SPAWN
+          (s) =>
+            s.type === STRUCTURE_SPAWN &&
+            new RoomPosition(s.pos.x, s.pos.y, s.pos.roomName).lookFor(LOOK_STRUCTURES).length === 0
         )[0];
         if (next) {
           return (
@@ -148,17 +150,17 @@ export class ConstructionDirector {
         }
         break;
       }
-      case shouldBuildFactory: {
-        const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
-          (s) => s.type === STRUCTURE_FACTORY
-        )[0];
-        if (next) {
-          return (
-            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_FACTORY) === OK
-          );
-        }
-        break;
-      }
+      // case shouldBuildFactory: {
+      //   const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
+      //     (s) => s.type === STRUCTURE_FACTORY
+      //   )[0];
+      //   if (next) {
+      //     return (
+      //       new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_FACTORY) === OK
+      //     );
+      //   }
+      //   break;
+      // }
       case shouldBuildObserver: {
         const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
           (s) => s.type === STRUCTURE_OBSERVER
@@ -171,17 +173,17 @@ export class ConstructionDirector {
         }
         break;
       }
-      case shouldBuildObserver: {
-        const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
-          (s) => s.type === STRUCTURE_NUKER
-        )[0];
-        if (next) {
-          return (
-            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_NUKER) === OK
-          );
-        }
-        break;
-      }
+      // case shouldBuildObserver: {
+      //   const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
+      //     (s) => s.type === STRUCTURE_NUKER
+      //   )[0];
+      //   if (next) {
+      //     return (
+      //       new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_NUKER) === OK
+      //     );
+      //   }
+      //   break;
+      // }
       default:
         return false;
     }
