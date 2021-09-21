@@ -82,10 +82,18 @@ export class ControllerHaulerDirector {
       }
     }
   }
+  private static findControllerContainer(controllerPos: RoomPosition): StructureContainer | undefined {
+    return controllerPos.findInRange<StructureContainer>(FIND_STRUCTURES, 3, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.findInRange(FIND_SOURCES, 1).length === 0
+    })[0];
+  }
   public static run(room: Room): void {
     const controller = room.controller;
-    const container = controller ? UtilPosition.findByPosition(controller.pos, STRUCTURE_CONTAINER) : null;
-    if (controller && container) {
+    const container = controller ? this.findControllerContainer(controller.pos) : undefined;
+    const link = controller?.pos.findInRange(FIND_MY_STRUCTURES, 3, {
+      filter: (s) => s.structureType === STRUCTURE_LINK
+    })[0];
+    if (controller && container && !link) {
       this.spawnHauler(room, container);
       this.runHauler(room, container);
     }

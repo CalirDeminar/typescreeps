@@ -158,6 +158,16 @@ export class CoreDirector {
       });
     }
   }
+  private static findControllerContainer(controllerPos: RoomPosition): StructureContainer | undefined {
+    return controllerPos.findInRange<StructureContainer>(FIND_STRUCTURES, 3, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.findInRange(FIND_SOURCES, 1).length === 0
+    })[0];
+  }
+  private static findControllerLink(controllerPos: RoomPosition): StructureLink | undefined {
+    return controllerPos.findInRange<StructureLink>(FIND_STRUCTURES, 4, {
+      filter: (s) => s.structureType === STRUCTURE_LINK && s.pos.findInRange(FIND_SOURCES, 2).length === 0
+    })[0];
+  }
   private static createConstructionSites(room: Room): void {
     const controller = room.controller;
     if (controller) {
@@ -167,11 +177,11 @@ export class CoreDirector {
       const anchor = this.getAnchor(room);
       const alreadyBuilding = Memory.roomStore[room.name].buildingThisTick;
       const anchorContainer = UtilPosition.findByPosition(anchor.pos, STRUCTURE_CONTAINER);
-      const controllerContainer = UtilPosition.findByPosition(controller.pos, STRUCTURE_CONTAINER, 2);
-      const controllerLink = UtilPosition.findByPosition(controller.pos, STRUCTURE_LINK, 2);
+      const controllerContainer = this.findControllerContainer(controller.pos);
+      const controllerLink = this.findControllerLink(controller.pos);
       const anchorLink = UtilPosition.findByPosition(anchor.pos, STRUCTURE_LINK, 2);
       switch (true) {
-        case controller.level >= 3 && controller.level <= 5 && !alreadyBuilding && !anchorContainer:
+        case controller.level >= 3 && controller.level <= 5 && !alreadyBuilding && !anchorContainer && !anchorLink:
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
@@ -190,6 +200,7 @@ export class CoreDirector {
           !alreadyBuilding &&
           !controllerContainer &&
           Constants.maxLinks[controller.level] < 4: {
+          console.log("Building Controller Container");
           const structStore = Memory.roomStore[room.name].constructionDirector;
           const defStore = Memory.roomStore[room.name].defenseDirector;
           const avoids = structStore.extensionTemplate
@@ -197,7 +208,15 @@ export class CoreDirector {
             .concat(structStore.labTemplate)
             .concat(structStore.singleStructures.map((s) => s.pos))
             .concat(defStore.wallMap);
-          const containerPos = UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, avoids);
+          const containerPos = UtilPosition.getClosestSurroundingTo(
+            UtilPosition.getClosestSurroundingTo(
+              UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, avoids),
+              anchor.pos,
+              avoids
+            ),
+            anchor.pos,
+            avoids
+          );
           if (containerPos && room.createConstructionSite(containerPos.x, containerPos.y, STRUCTURE_CONTAINER) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
@@ -270,11 +289,7 @@ export class CoreDirector {
       const link = anchor.pos
         .findInRange<StructureLink>(FIND_STRUCTURES, 2)
         .filter((s) => s.structureType === STRUCTURE_LINK)[0];
-      const controllerLink = room.controller
-        ? room.controller.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 2, {
-            filter: (s) => s.structureType === STRUCTURE_LINK
-          })[0]
-        : undefined;
+      const controllerLink = room.controller ? this.findControllerLink(room.controller.pos) : undefined;
       this.createConstructionSites(room);
       LinkHaulerDirector.spawnLinkHauler(room, link);
       LinkHaulerDirector.runLinkHaulers(room, link, controllerLink, storage, anchor);

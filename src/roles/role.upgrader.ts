@@ -4,9 +4,10 @@ export class Upgrader extends CreepBase {
     return "green";
   }
   private static getControllerContainer(creep: Creep, controller: StructureController): Structure | null {
-    const target = controller.pos.findInRange(FIND_STRUCTURES, 2, {
+    const target = controller.pos.findInRange(FIND_STRUCTURES, 4, {
       filter: (s) =>
         s.structureType === STRUCTURE_CONTAINER &&
+        s.pos.findInRange(FIND_SOURCES, 1).length === 0 &&
         (_.filter(
           Game.creeps,
           (c) => c.memory.role === "controllerHauler" && c.memory.homeRoom === creep.memory.homeRoom
@@ -16,7 +17,7 @@ export class Upgrader extends CreepBase {
     return target;
   }
   private static getControllerLink(creep: Creep, controller: StructureController): Structure | null {
-    const target = controller.pos.findInRange(FIND_MY_STRUCTURES, 2, {
+    const target = controller.pos.findInRange(FIND_MY_STRUCTURES, 3, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
     return target;
