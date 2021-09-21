@@ -172,22 +172,29 @@ export class MineralDirector {
       RESOURCE_CATALYST
     ];
     minerals
-      .filter((k) => k in keys)
+      .filter((k) => keys.includes(k))
       .map((material) => {
-        const volume = store[material];
+        const volume = Math.min(store[material], 1000);
         const energy = store[RESOURCE_ENERGY];
-        if (energy > 1000 && volume > 200) {
-          const order = Game.market
+        if (energy > 1000 && volume >= 1000) {
+          const orders = Game.market
             .getAllOrders(
-              (order) => order.resourceType === material && order.type === ORDER_BUY && order.remainingAmount > volume
+              (order) =>
+                order.resourceType === material &&
+                order.type === ORDER_BUY &&
+                order.remainingAmount > volume &&
+                !!order.roomName &&
+                Game.map.getRoomLinearDistance(terminal.pos.roomName, order.roomName) < 20
             )
-            .sort((a, b) => b.price - a.price)[0];
+            .sort((a, b) => b.price - a.price);
+          const order = orders[0];
           if (
             order &&
             order.roomName &&
             Game.market.calcTransactionCost(volume, terminal.room.name, order.roomName) <= 1000
           ) {
-            Game.market.deal(order.id, volume);
+            console.log(`Order: ${JSON.stringify(order)}`);
+            const rtn = Game.market.deal(order.id, volume, terminal.room.name);
           }
         }
       });
@@ -248,8 +255,7 @@ export class MineralDirector {
     const mineral = extractor ? extractor.pos.lookFor(LOOK_MINERALS)[0] : null;
     const container = this.getContainer(room, mineral);
     this.placeStructures(room, extractor, container);
-    if (terminal && (Game.time + Constants.mineralTimingOffset) % 500 === 0) {
-      console.log("Running Terminal Sales");
+    if (terminal && Game.time % 10 === 0) {
       this.runTerminalOrders(terminal);
     }
     if (terminal && extractor && mineral && container && terminal.store.getFreeCapacity() > 25_000) {
