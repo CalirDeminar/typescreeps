@@ -29,7 +29,7 @@ export class ExpansionDirector {
       const controller = Game.getObjectById<StructureController>(room.controllerId);
       if (controller) {
         const hasConstructionSites = controller?.room.find(FIND_CONSTRUCTION_SITES).length > 0;
-        return controller.level > 5 && !hasConstructionSites;
+        return controller.level > 4 && !hasConstructionSites;
       }
       return false;
     });

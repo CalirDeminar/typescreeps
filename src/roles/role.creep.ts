@@ -28,14 +28,13 @@ export class CreepBase {
     const targetPos = "pos" in target ? target.pos : target;
     const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
-      creep.moveTo(targetPos, {
+      const rtn = creep.moveTo(targetPos, {
         visualizePathStyle: { stroke: pathColour },
         ignoreCreeps: !creepNearby,
         range: range,
         reusePath: creepNearby ? 5 : 20,
         maxOps: 1000
       });
-      // }
     }
   }
   public static flee(creep: Creep, hostile: Creep) {

@@ -13,11 +13,13 @@ export class MineralDirector {
       (c) =>
         c.memory.role === "mineralHarvester" && c.memory.targetSource === mineral.id && c.memory.homeRoom === room.name
     );
+    const hasConstructionSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
     const creepNearDeath = mineralHarvester.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
     const shouldSpawnAnother =
       (mineralHarvester.length < Constants.maxMineralHarvester ||
         (mineralHarvester.length === Constants.maxMineralHarvester && creepNearDeath)) &&
-      mineral.mineralAmount > 250;
+      mineral.mineralAmount > 250 &&
+      !hasConstructionSites;
     if (shouldSpawnAnother) {
       const template = {
         template: CreepBuilder.buildMineralHarvester(room.energyCapacityAvailable),
@@ -104,7 +106,8 @@ export class MineralDirector {
     const mineralHaulerQueue = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
     );
-    if (mineralHaulers.length + mineralHaulerQueue.length < 1 && mineral.mineralAmount > 0) {
+    const hasConstructionSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
+    if (mineralHaulers.length + mineralHaulerQueue.length < 1 && mineral.mineralAmount > 0 && !hasConstructionSites) {
       const template = {
         template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
         memory: {
@@ -183,6 +186,7 @@ export class MineralDirector {
                 order.resourceType === material &&
                 order.type === ORDER_BUY &&
                 order.remainingAmount > volume &&
+                order.price > 0.15 &&
                 !!order.roomName &&
                 Game.map.getRoomLinearDistance(terminal.pos.roomName, order.roomName) < 20
             )

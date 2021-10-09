@@ -1,20 +1,17 @@
 Immediate-
 
+- Add controller energy supply for upgraders
+  - container and then link when available
+  - add ramparts & walls around controller to handle attack
 - Have remote harvesting manager handle walls blocking path to sources
-- Handle source buildings colliding with bunker buildings - Urgent \*
-- Figure out what's killing 2nd bases after expansion. Queen Spawning? Builders not getting Spawned?
 - attempt at lower level to speed up debugging
+- improved scout pathfinding
 
-Remote Harvesting Director
-
-- Container Harvesting?
-- Mineral Director - Long Term
-- Add support to other Directors for spawning boosted creeps
-- Have code for Labs to handle making boosts available for fresh creeps
+Mineral Director - Long Term
+_ Add support to other Directors for spawning boosted creeps
+_ Have code for Labs to handle making boosts available for fresh creeps
 
 Defense Director - Long Term
-_ Towers heal creeps
-_ Heal worker creeps once hostiles leave room
 _ Heal Masons + Defender creeps on / near Ramparts
 Add combat mason creep
 Find primaried ramparts, sit away from the rampart / wall to repair
@@ -24,22 +21,24 @@ Periodically assess the tank of all enemy targets
 Only attack with towers if the tank can be broken
 _ Handle damage resistance, healing, volley damage and Creep body part placement in tanking calculations
 Add Nuke marker detection
-Move buildings that are economical to move, out of the splash zone
-Reinforce ramparts on important buildings that cannot be moved
-Stop spawning new creeps into the room in a short period before the Nuke lands
-Spawn Defender melee creeps to push back attackers
-Spawn Repair Creeps to repair damage if attackers are attacking at range
-Handle response creep boosting
-Automatic Expansion to New rooms - Long Term (ISH)
-Add room flags to enable:
-Pushing controller levels (default on)
-Stockpiling energy
-Sending energy to other rooms (Terminal or Hauler)
-Sending workers to new rooms
-Claim target room with claimer
-Auto place spawn construction site
-Stop Ramparts appearing in wrong room
-Multi-Room Defense
+
+- Move buildings that are economical to move, out of the splash zone
+  - Shield Expensive Buildings with ramparts - Storage, Terminal, Labs, Nuker, Factory, Power Spawn
+- Reinforce ramparts on important buildings that cannot be moved
+- Stop spawning new creeps into the room in a short period before the Nuke lands
+  Spawn Defender melee creeps to push back attackers
+  Spawn Repair Creeps to repair damage if attackers are attacking at range
+  Handle response creep boosting
+  Automatic Expansion to New rooms - Long Term (ISH)
+  Add room flags to enable:
+  Pushing controller levels (default on)
+  Stockpiling energy
+  Sending energy to other rooms (Terminal or Hauler)
+  Sending workers to new rooms
+  Claim target room with claimer
+  Auto place spawn construction site
+  Stop Ramparts appearing in wrong room
+  Multi-Room Defense
 
 CPU assesments per room
 Check if CPU spare to expand to a new room
@@ -62,3 +61,6 @@ Run Harv: 3.15
 Run Def: 0.56
 Run Res: 0.92
 Total: 4.82
+
+storage.db['rooms.objects'].insert({type: 'constructedWall', room: 'E3N3', x: 11, y: 49})
+To add NPC walls

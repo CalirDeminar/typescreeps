@@ -13,23 +13,12 @@ export class RoomHelperDirector {
     }
   }
   private static runHelper(creep: Creep): void {
-    const inHome = creep.pos.roomName === creep.memory.homeRoom;
     const inTarget = creep.pos.roomName === creep.memory.targetRoom;
     const workParts = creep.body.filter((p) => p.type === WORK).length;
     const full = creep.store.getFreeCapacity() < workParts * 2;
     const empty = creep.store.getUsedCapacity() === 0;
     switch (true) {
-      case inHome && empty:
-        const sourceTarget = CreepBase.getSourceTarget(creep);
-        if (sourceTarget && !creep.pos.isNearTo(sourceTarget)) {
-          CreepBase.travelTo(creep, sourceTarget, "black");
-        } else if (sourceTarget) {
-          creep.withdraw(sourceTarget, RESOURCE_ENERGY);
-        }
-        // refill from storage
-        break;
-      case inHome && full:
-      case !inTarget && full:
+      case !inTarget:
         CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.targetRoom), "black", 25);
         // move to target room
         break;

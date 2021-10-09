@@ -84,8 +84,9 @@ export class ExpansionScouting {
   public static expandable(room: ScoutedRoom): boolean {
     const enoughSources = room.sources.length > 1;
     const claimed = room.controller && room.controller.owner !== null;
+    const reserved = room.controller && room.controller.reservation;
     const hasTowers = room.towers.length > 0;
     const isSourceKeeperRoom = room.keeperLair.length > 0;
-    return enoughSources && !claimed && !hasTowers && !isSourceKeeperRoom;
+    return enoughSources && !claimed && !reserved && !hasTowers && !isSourceKeeperRoom;
   }
 }

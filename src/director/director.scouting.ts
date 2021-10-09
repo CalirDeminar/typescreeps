@@ -5,20 +5,28 @@ export class ScoutingDirector {
   private static getRoomCenter(roomName: string): RoomPosition {
     return new RoomPosition(25, 25, roomName);
   }
-  private static getSurroundingRoomNames(room: Room): RoomPosition[] {
-    const exitMap = Game.map.describeExits(room.name);
-    return Object.entries(exitMap).reduce((acc: RoomPosition[], r) => {
-      if (r[1]) {
-        return acc.concat(this.getRoomCenter(r[1]));
-      }
-      return acc;
-    }, []);
+  private static getSurroundingRoomNames(room: string): RoomPosition[] {
+    const exitMap = Game.map.describeExits(room);
+    return Object.entries(exitMap)
+      .filter((n) => {
+        if (n[1]) {
+          const exitDir = Game.rooms[room].findExitTo(n[1]);
+          if (exitDir !== -2 && exitDir !== -10) {
+            const exit = Game.rooms[room].find(exitDir, { filter: (p) => p.lookFor(LOOK_STRUCTURES).length === 0 });
+            return exit.length > 0;
+          }
+        }
+        return false;
+      })
+      .reduce((acc: RoomPosition[], r) => {
+        if (r[1]) {
+          return acc.concat(this.getRoomCenter(r[1]));
+        }
+        return acc;
+      }, []);
   }
   private static getExits(creep: Creep): RoomPosition[] {
     const room = creep.room;
-    const existingRooms = Memory.roomStore[creep.memory.homeRoom].scoutingDirector.scoutedRooms
-      .map((r) => r.name)
-      .concat(creep.memory.homeRoom);
     const exitMap = Game.map.describeExits(room.name);
     const rtn = Object.entries(exitMap)
       .reduce((acc: RoomPosition[], r) => {
@@ -114,11 +122,33 @@ export class ScoutingDirector {
             break;
           default:
             const target = new RoomPosition(nextPosition.x, nextPosition.y, nextPosition.roomName);
+            const avoids = creep.room
+              .find(FIND_STRUCTURES, {
+                filter: (s) => s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
+              })
+              .map((s) => s.pos);
             CreepBase.travelTo(creep, target, "green", 20);
+            if (Game.time % 50 === 0) {
+              const route = PathFinder.search(creep.pos, target, {
+                maxOps: 1000,
+                roomCallback: (roomName: string) => {
+                  const costMatrix = new PathFinder.CostMatrix();
+                  const terrain = Game.map.getRoomTerrain(roomName);
+                  const localAvoids = avoids.filter((p) => p.roomName === roomName);
+                  _.range(0, 49).map((x) =>
+                    _.range(0, 49).map((y) => {
+                      const t = terrain.get(x, y);
+                      const tCost = t === 0 ? 0 : t === 1 ? 10 : t === 2 ? 1 : 255;
+                      const wCost = localAvoids.filter((p) => p.x === x && p.y === y).length > 0 ? 10 : 0;
+                      costMatrix.set(x, y, Math.max(tCost, wCost));
+                    })
+                  );
+                  return costMatrix;
+                }
+              });
+            }
         }
       }
-      // move to target square
-      // check
     });
   }
   private static spawnScout(room: Room): void {
@@ -126,6 +156,7 @@ export class ScoutingDirector {
     const spawningScouts = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "scout" && c.memory.homeRoom === room.name
     );
+    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     const shouldSpawnScout =
       room.controller &&
       room.controller.level > 1 &&
@@ -135,7 +166,7 @@ export class ScoutingDirector {
         Memory.roomStore[room.name].scoutingDirector.scoutedRooms === []) &&
       scouts.length + spawningScouts.length === 0;
     if (shouldSpawnScout) {
-      const initialTargets = this.getSurroundingRoomNames(room);
+      const initialTargets = this.getSurroundingRoomNames(room.name);
       Memory.roomStore[room.name].spawnQueue.push({
         template: [MOVE],
         memory: {
@@ -145,6 +176,27 @@ export class ScoutingDirector {
           scoutPositions: initialTargets
         }
       });
+      const knownRooms = Memory.roomStore[room.name].scoutingDirector.scoutedRooms
+        .map((r) => r.name)
+        .concat(Object.keys(Memory.roomStore))
+        .concat(Memory.roomStore[room.name].remoteDirector.map((r) => r.roomName));
+      const unexploredTargets = [
+        ...new Set(
+          knownRooms.reduce((acc: RoomPosition[], r: string) => acc.concat(this.getSurroundingRoomNames(r)), [])
+        )
+      ];
+      console.log(`Unexplored Targets: ${JSON.stringify(unexploredTargets.map((r) => r.roomName))}`);
+      if (unexploredTargets.length > 0) {
+        Memory.roomStore[room.name].spawnQueue.push({
+          template: [MOVE],
+          memory: {
+            ...CreepBase.baseMemory,
+            role: "scout",
+            homeRoom: room.name,
+            scoutPositions: unexploredTargets
+          }
+        });
+      }
     }
   }
   public static updateSettlementIntel(room: Room): void {

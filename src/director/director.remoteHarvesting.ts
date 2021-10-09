@@ -40,13 +40,20 @@ export class RemoteHarvestingDirector {
     }
   }
   private static addRoomsToRemote(roomName: string): void {
-    const isFirstOwnedRoom = _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
-    const currentBorders = Object.values(Game.map.describeExits(roomName));
+    // const isFirstOwnedRoom = _.filter(Game.rooms, (room, key) => room.controller && room.controller.my).length <= 1;
+    const currentBorders = Object.values(Game.map.describeExits(roomName)).filter((n) => {
+      if (n) {
+        const exitDir = Game.rooms[roomName].findExitTo(n);
+        if (exitDir !== -2 && exitDir !== -10) {
+          const exit = Game.rooms[roomName].find(exitDir, { filter: (p) => p.lookFor(LOOK_STRUCTURES).length === 0 });
+          return exit.length > 0;
+        }
+      }
+      return false;
+    });
     const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
     const scoutedRooms = intel.map((r) => r.name);
     if (
-      isFirstOwnedRoom &&
-      Memory.roomStore[roomName].remoteDirector.length < 2 &&
       ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0 ||
         Memory.roomStore[roomName].remoteDirector.length === 0) &&
       currentBorders.every((b) => b && scoutedRooms.includes(b))
