@@ -150,12 +150,19 @@ declare global {
     defenseDirector: DefenseDirectorStore;
     scoutingDirector: ScoutingDirectorStore;
     helpOtherRoom: boolean;
+    roomPlanner: RoomPlannerStore;
   }
   interface ExpansionDirectorStore {
     targetRoom: string | null;
     controllerId: string | null;
     newSpawnPosition: RoomPosition | null;
     helperRooms: string[];
+  }
+
+  interface RoomPlannerStore {
+    walkableTiles: RoomPosition[];
+    buildableTiles: RoomPosition[];
+    featureDistanceStore: { pos: RoomPosition; distance: number }[];
   }
   interface Memory {
     uuid: number;
