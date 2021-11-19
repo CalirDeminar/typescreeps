@@ -3,8 +3,8 @@ export class Upgrader extends CreepBase {
   private static pathColour(): string {
     return "green";
   }
-  private static getControllerContainer(creep: Creep, controller: StructureController): Structure | null {
-    const target = controller.pos.findInRange(FIND_STRUCTURES, 4, {
+  private static getControllerContainer(creep: Creep, controller: StructureController): StructureContainer | null {
+    const target = controller.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 4, {
       filter: (s) =>
         s.structureType === STRUCTURE_CONTAINER &&
         s.pos.findInRange(FIND_SOURCES, 1).length === 0 &&
@@ -16,8 +16,8 @@ export class Upgrader extends CreepBase {
     })[0];
     return target;
   }
-  private static getControllerLink(creep: Creep, controller: StructureController): Structure | null {
-    const target = controller.pos.findInRange(FIND_MY_STRUCTURES, 3, {
+  private static getControllerLink(creep: Creep, controller: StructureController): StructureLink | null {
+    const target = controller.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 3, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
     return target;
@@ -45,11 +45,22 @@ export class Upgrader extends CreepBase {
         const controllerContainer = controller
           ? this.getControllerContainer(creep, controller) || this.getControllerLink(creep, controller)
           : null;
-        const sourceTarget: Structure | Tombstone | null =
+        const sourceTarget:
+          | StructureContainer
+          | StructureLink
+          | StructureExtension
+          | StructureSpawn
+          | StructureStorage
+          | Tombstone
+          | null =
           creep.memory.targetStore !== ""
-            ? Game.getObjectById(creep.memory.targetSource)
+            ? Game.getObjectById<StructureContainer | StructureLink | null>(creep.memory.targetSource)
             : controllerContainer || this.getSourceTarget(creep);
-        if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
+        const sourceEmpty = sourceTarget?.store.energy === 0;
+        if (sourceTarget && sourceEmpty) {
+          const path = PathFinder.search(creep.pos, { pos: sourceTarget.pos, range: 2 }, { flee: true }).path;
+          creep.moveByPath(path);
+        } else if (sourceTarget && creep.withdraw(sourceTarget, RESOURCE_ENERGY) !== 0) {
           creep.moveTo(sourceTarget, {
             visualizePathStyle: { stroke: this.pathColour() }
           });
