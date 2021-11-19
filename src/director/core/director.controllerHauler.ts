@@ -54,8 +54,9 @@ export class ControllerHaulerDirector {
         c.memory.role === "controllerHauler" && c.memory.homeRoom === room.name && c.memory.targetStore === container.id
     );
     const sites = room.find(FIND_CONSTRUCTION_SITES);
+    const energyBudget = Math.min(room.energyCapacityAvailable, 2000);
     const spawnHauler =
-      haulers.length < 1 &&
+      (haulers.length < 1 || (haulers.length < 2 && energyBudget < 2000)) &&
       (!sites || sites.length === 0) &&
       Memory.roomStore[room.name].defenseDirector.alertLevel === 0;
     if (spawnHauler) {
