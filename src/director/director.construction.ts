@@ -7,7 +7,7 @@ export class ConstructionDirector {
       const spawn = room.find(FIND_MY_SPAWNS)[0];
       if (spawn) {
         const pos = spawn.pos;
-        room.createFlag(pos.x + 1, pos.y + 1, `${room.name}-Anchor`);
+        room.createFlag(pos.x, pos.y - 1, `${room.name}-Anchor`);
       }
     }
   }

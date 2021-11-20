@@ -16,6 +16,7 @@ import { LinkHaulerDirector } from "./core/director.linkHauler";
 import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
 import { UtilPosition } from "utils/util.position";
 import { ControllerHaulerDirector } from "./core/director.controllerHauler";
+import { CoreRoomPlanner } from "./core/director.roomPlanner";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -49,7 +50,14 @@ export class CoreDirector {
       scoutedRooms: [],
       scoutQueue: []
     },
-    helpOtherRoom: false
+    helpOtherRoom: false,
+    roomPlanner: {
+      walkableTiles: [],
+      buildableTiles: [],
+      validExtensionLocations: undefined,
+      validExtensionScratchPad: [],
+      validExtensionDistances: []
+    }
   };
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
@@ -350,11 +358,13 @@ export class CoreDirector {
     }
   }
   public static run(room: Room): void {
+    CoreRoomPlanner.run(room);
     if (room.controller && room.controller.my && room.controller.level >= 1) {
       this.initMemory(room);
       this.runDirectors(room);
       SpawnDirector.runSpawn(room);
       ConstructionBunker2Director.run(room);
+
       // memory init
       //      handle initialising non-existent keys
       // handle primary structure construction away from the main construction manager

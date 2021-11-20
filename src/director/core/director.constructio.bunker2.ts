@@ -1,3 +1,4 @@
+import { CoreRoomPlanner } from "./director.roomPlanner";
 export class ConstructionBunker2Director {
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
@@ -36,121 +37,130 @@ export class ConstructionBunker2Director {
   }
   public static extensions(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
-    return [
-      ...this.extensionSector(new RoomPosition(anchor.pos.x, anchor.pos.y, anchor.pos.roomName), -1, -1),
-      ...this.extensionSector(new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName), -1, +1),
-      ...this.extensionSector(new RoomPosition(anchor.pos.x + 1, anchor.pos.y, anchor.pos.roomName), +1, -1),
-      ...this.extensionSector(new RoomPosition(anchor.pos.x + 1, anchor.pos.y + 1, anchor.pos.roomName), +1, +1)
-    ];
+    // return [
+    //   ...this.extensionSector(new RoomPosition(anchor.pos.x, anchor.pos.y, anchor.pos.roomName), -1, -1),
+    //   ...this.extensionSector(new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName), -1, +1),
+    //   ...this.extensionSector(new RoomPosition(anchor.pos.x + 1, anchor.pos.y, anchor.pos.roomName), +1, -1),
+    //   ...this.extensionSector(new RoomPosition(anchor.pos.x + 1, anchor.pos.y + 1, anchor.pos.roomName), +1, +1)
+    // ];
+    const structures = CoreRoomPlanner.generateStructures(anchor.pos);
+    return structures.extensions;
   }
   public static towers(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
-    return [
-      new RoomPosition(anchor.pos.x - 5, anchor.pos.y, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x - 5, anchor.pos.y + 1, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 4, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 2, anchor.pos.y - 4, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x - 1, anchor.pos.y + 5, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 2, anchor.pos.y + 5, anchor.pos.roomName)
-    ];
+    // return [
+    //   new RoomPosition(anchor.pos.x - 5, anchor.pos.y, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x - 5, anchor.pos.y + 1, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 4, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 2, anchor.pos.y - 4, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x - 1, anchor.pos.y + 5, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 2, anchor.pos.y + 5, anchor.pos.roomName)
+    // ];
+    const structures = CoreRoomPlanner.generateStructures(anchor.pos);
+    return structures.towers;
   }
   public static coreBuildings(room: Room): { pos: RoomPosition; type: BuildableStructureConstant }[] {
     const anchor = this.getAnchor(room);
+    const structures = CoreRoomPlanner.generateStructures(anchor.pos);
     return [
       {
-        pos: new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 1, anchor.pos.roomName),
+        pos: structures.spawn1,
         type: STRUCTURE_SPAWN
       },
       {
-        pos: new RoomPosition(anchor.pos.x + 2, anchor.pos.y + 2, anchor.pos.roomName),
+        pos: structures.spawn2,
         type: STRUCTURE_SPAWN
       },
       {
-        pos: new RoomPosition(anchor.pos.x + 1, anchor.pos.y + 7, anchor.pos.roomName),
+        pos: structures.spawn3,
         type: STRUCTURE_SPAWN
       },
       {
-        pos: new RoomPosition(anchor.pos.x - 1, anchor.pos.y + 2, anchor.pos.roomName),
+        pos: structures.storage,
         type: STRUCTURE_STORAGE
       },
       {
-        pos: new RoomPosition(anchor.pos.x + 2, anchor.pos.y - 1, anchor.pos.roomName),
+        pos: structures.terminal,
         type: STRUCTURE_TERMINAL
       },
       {
-        pos: new RoomPosition(anchor.pos.x - 3, anchor.pos.y - 6, anchor.pos.roomName),
+        pos: structures.nuker,
         type: STRUCTURE_NUKER
       },
       {
-        pos: new RoomPosition(anchor.pos.x, anchor.pos.y + 7, anchor.pos.roomName),
+        pos: structures.factory,
         type: STRUCTURE_FACTORY
       },
       {
-        pos: new RoomPosition(anchor.pos.x, anchor.pos.y + 1, anchor.pos.roomName),
+        pos: structures.coreLink,
         type: STRUCTURE_LINK
       },
       {
-        pos: new RoomPosition(anchor.pos.x - 6, anchor.pos.y, anchor.pos.roomName),
+        pos: structures.observer,
         type: STRUCTURE_OBSERVER
       },
       {
-        pos: new RoomPosition(anchor.pos.x - 6, anchor.pos.y + 1, anchor.pos.roomName),
+        pos: structures.powerSpawn,
         type: STRUCTURE_POWER_SPAWN
       }
     ];
   }
   public static labs(room: Room): RoomPosition[] {
     const anchor = this.getAnchor(room);
-    return [
-      // Right side
-      new RoomPosition(anchor.pos.x + 5, anchor.pos.y + 2, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 2, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 3, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 3, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 4, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 5, anchor.pos.y - 1, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 1, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 2, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 2, anchor.pos.roomName),
-      new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 3, anchor.pos.roomName)
-    ];
+    // return [
+    //   // Right side
+    //   new RoomPosition(anchor.pos.x + 5, anchor.pos.y + 2, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 2, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 6, anchor.pos.y + 3, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 3, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 7, anchor.pos.y + 4, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 5, anchor.pos.y - 1, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 1, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 6, anchor.pos.y - 2, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 2, anchor.pos.roomName),
+    //   new RoomPosition(anchor.pos.x + 7, anchor.pos.y - 3, anchor.pos.roomName)
+    // ];
+    const structures = CoreRoomPlanner.generateStructures(anchor.pos);
+    return structures.labs;
   }
 
   public static ramparts(room: Room): RoomPosition[] {
-    const anchor = this.getAnchor(room).pos;
-    const terrain = room.getTerrain();
-    const rampartIndex = [0, 3, 6, 9, 10, 13, 16, 19];
-    const topLine = _.range(anchor.x - 9, anchor.x + 11)
-      .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
-      .map((x) => new RoomPosition(x, anchor.y - 9, room.name));
-    const bottomLine = _.range(anchor.x - 9, anchor.x + 11)
-      .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
-      .map((x) => new RoomPosition(x, anchor.y + 10, room.name));
-    const lLine = _.range(anchor.y - 9, anchor.y + 11)
-      .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
-      .map((y) => new RoomPosition(anchor.x - 9, y, room.name));
-    const rLine = _.range(anchor.y - 9, anchor.y + 11)
-      .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
-      .map((y) => new RoomPosition(anchor.x + 10, y, room.name));
-    return [...new Set([...topLine, ...bottomLine, ...lLine, ...rLine])].filter((p) => terrain.get(p.x, p.y) !== 1);
+    // const anchor = this.getAnchor(room).pos;
+    // const terrain = room.getTerrain();
+    // const rampartIndex = [0, 3, 6, 9, 10, 13, 16, 19];
+    // const topLine = _.range(anchor.x - 9, anchor.x + 11)
+    //   .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
+    //   .map((x) => new RoomPosition(x, anchor.y - 9, room.name));
+    // const bottomLine = _.range(anchor.x - 9, anchor.x + 11)
+    //   .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
+    //   .map((x) => new RoomPosition(x, anchor.y + 10, room.name));
+    // const lLine = _.range(anchor.y - 9, anchor.y + 11)
+    //   .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
+    //   .map((y) => new RoomPosition(anchor.x - 9, y, room.name));
+    // const rLine = _.range(anchor.y - 9, anchor.y + 11)
+    //   .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
+    //   .map((y) => new RoomPosition(anchor.x + 10, y, room.name));
+    // return [...new Set([...topLine, ...bottomLine, ...lLine, ...rLine])].filter((p) => terrain.get(p.x, p.y) !== 1);
+    return new Array<RoomPosition>();
   }
   public static walls(room: Room): RoomPosition[] {
-    const anchor = this.getAnchor(room).pos;
-    const terrain = room.getTerrain();
-    const rampartIndex = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15, 17, 18];
-    const topLine = _.range(anchor.x - 9, anchor.x + 11)
-      .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
-      .map((x) => new RoomPosition(x, anchor.y - 9, room.name));
-    const bottomLine = _.range(anchor.x - 9, anchor.x + 11)
-      .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
-      .map((x) => new RoomPosition(x, anchor.y + 10, room.name));
-    const lLine = _.range(anchor.y - 9, anchor.y + 11)
-      .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
-      .map((y) => new RoomPosition(anchor.x - 9, y, room.name));
-    const rLine = _.range(anchor.y - 9, anchor.y + 11)
-      .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
-      .map((y) => new RoomPosition(anchor.x + 10, y, room.name));
-    return [...new Set([...topLine, ...bottomLine, ...lLine, ...rLine])].filter((p) => terrain.get(p.x, p.y) !== 1);
+    // const anchor = this.getAnchor(room).pos;
+    // const terrain = room.getTerrain();
+    // const rampartIndex = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15, 17, 18];
+    // const topLine = _.range(anchor.x - 9, anchor.x + 11)
+    //   .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
+    //   .map((x) => new RoomPosition(x, anchor.y - 9, room.name));
+    // const bottomLine = _.range(anchor.x - 9, anchor.x + 11)
+    //   .filter((x) => rampartIndex.includes(x - (anchor.x - 9)))
+    //   .map((x) => new RoomPosition(x, anchor.y + 10, room.name));
+    // const lLine = _.range(anchor.y - 9, anchor.y + 11)
+    //   .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
+    //   .map((y) => new RoomPosition(anchor.x - 9, y, room.name));
+    // const rLine = _.range(anchor.y - 9, anchor.y + 11)
+    //   .filter((y) => rampartIndex.includes(y - (anchor.y - 9)))
+    //   .map((y) => new RoomPosition(anchor.x + 10, y, room.name));
+    // return [...new Set([...topLine, ...bottomLine, ...lLine, ...rLine])].filter((p) => terrain.get(p.x, p.y) !== 1);
+    return new Array<RoomPosition>();
   }
   private static getCoreBuildingPreviewLetter(type: BuildableStructureConstant): string {
     return type === STRUCTURE_SPAWN
@@ -172,71 +182,72 @@ export class ConstructionBunker2Director {
       : "Cb";
   }
   public static staticRoads(room: Room): RoomPosition[] {
-    const anchor = this.getAnchor(room).pos;
-    return [
-      // TL
-      new RoomPosition(anchor.x - 1, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x - 2, anchor.y - 1, anchor.roomName),
-      new RoomPosition(anchor.x - 0, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x - 2, anchor.y - 0, anchor.roomName),
-      // base
-      new RoomPosition(anchor.x - 2, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x - 1, anchor.y - 3, anchor.roomName),
-      new RoomPosition(anchor.x - 3, anchor.y - 1, anchor.roomName),
-      // stem
-      new RoomPosition(anchor.x - 3, anchor.y - 3, anchor.roomName),
-      new RoomPosition(anchor.x - 4, anchor.y - 4, anchor.roomName),
-      new RoomPosition(anchor.x - 5, anchor.y - 5, anchor.roomName),
-      // TR
-      new RoomPosition(anchor.x + 2, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x + 1, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x + 3, anchor.y - 1, anchor.roomName),
-      new RoomPosition(anchor.x + 3, anchor.y - 0, anchor.roomName),
-      // base
-      new RoomPosition(anchor.x + 3, anchor.y - 2, anchor.roomName),
-      new RoomPosition(anchor.x + 2, anchor.y - 3, anchor.roomName),
-      new RoomPosition(anchor.x + 4, anchor.y - 1, anchor.roomName),
-      // stem
-      new RoomPosition(anchor.x + 4, anchor.y - 3, anchor.roomName),
-      new RoomPosition(anchor.x + 5, anchor.y - 4, anchor.roomName),
-      new RoomPosition(anchor.x + 6, anchor.y - 5, anchor.roomName),
-      // BL
-      new RoomPosition(anchor.x - 1, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x - 0, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x - 2, anchor.y + 2, anchor.roomName),
-      new RoomPosition(anchor.x - 2, anchor.y + 1, anchor.roomName),
-      // base
-      new RoomPosition(anchor.x - 2, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x - 1, anchor.y + 4, anchor.roomName),
-      new RoomPosition(anchor.x - 3, anchor.y + 2, anchor.roomName),
-      // stem
-      new RoomPosition(anchor.x - 3, anchor.y + 4, anchor.roomName),
-      new RoomPosition(anchor.x - 4, anchor.y + 5, anchor.roomName),
-      new RoomPosition(anchor.x - 5, anchor.y + 6, anchor.roomName),
-      // BR
-      new RoomPosition(anchor.x + 2, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x + 1, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x + 3, anchor.y + 2, anchor.roomName),
-      new RoomPosition(anchor.x + 3, anchor.y + 1, anchor.roomName),
-      // base
-      new RoomPosition(anchor.x + 3, anchor.y + 3, anchor.roomName),
-      new RoomPosition(anchor.x + 2, anchor.y + 4, anchor.roomName),
-      new RoomPosition(anchor.x + 4, anchor.y + 2, anchor.roomName),
-      //stem
-      new RoomPosition(anchor.x + 4, anchor.y + 4, anchor.roomName),
-      new RoomPosition(anchor.x + 5, anchor.y + 5, anchor.roomName),
-      new RoomPosition(anchor.x + 6, anchor.y + 6, anchor.roomName)
-    ];
+    // const anchor = this.getAnchor(room).pos;
+    // return [
+    //   // TL
+    //   new RoomPosition(anchor.x - 1, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x - 2, anchor.y - 1, anchor.roomName),
+    //   new RoomPosition(anchor.x - 0, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x - 2, anchor.y - 0, anchor.roomName),
+    //   // base
+    //   new RoomPosition(anchor.x - 2, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x - 1, anchor.y - 3, anchor.roomName),
+    //   new RoomPosition(anchor.x - 3, anchor.y - 1, anchor.roomName),
+    //   // stem
+    //   new RoomPosition(anchor.x - 3, anchor.y - 3, anchor.roomName),
+    //   new RoomPosition(anchor.x - 4, anchor.y - 4, anchor.roomName),
+    //   new RoomPosition(anchor.x - 5, anchor.y - 5, anchor.roomName),
+    //   // TR
+    //   new RoomPosition(anchor.x + 2, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x + 1, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x + 3, anchor.y - 1, anchor.roomName),
+    //   new RoomPosition(anchor.x + 3, anchor.y - 0, anchor.roomName),
+    //   // base
+    //   new RoomPosition(anchor.x + 3, anchor.y - 2, anchor.roomName),
+    //   new RoomPosition(anchor.x + 2, anchor.y - 3, anchor.roomName),
+    //   new RoomPosition(anchor.x + 4, anchor.y - 1, anchor.roomName),
+    //   // stem
+    //   new RoomPosition(anchor.x + 4, anchor.y - 3, anchor.roomName),
+    //   new RoomPosition(anchor.x + 5, anchor.y - 4, anchor.roomName),
+    //   new RoomPosition(anchor.x + 6, anchor.y - 5, anchor.roomName),
+    //   // BL
+    //   new RoomPosition(anchor.x - 1, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x - 0, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x - 2, anchor.y + 2, anchor.roomName),
+    //   new RoomPosition(anchor.x - 2, anchor.y + 1, anchor.roomName),
+    //   // base
+    //   new RoomPosition(anchor.x - 2, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x - 1, anchor.y + 4, anchor.roomName),
+    //   new RoomPosition(anchor.x - 3, anchor.y + 2, anchor.roomName),
+    //   // stem
+    //   new RoomPosition(anchor.x - 3, anchor.y + 4, anchor.roomName),
+    //   new RoomPosition(anchor.x - 4, anchor.y + 5, anchor.roomName),
+    //   new RoomPosition(anchor.x - 5, anchor.y + 6, anchor.roomName),
+    //   // BR
+    //   new RoomPosition(anchor.x + 2, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x + 1, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x + 3, anchor.y + 2, anchor.roomName),
+    //   new RoomPosition(anchor.x + 3, anchor.y + 1, anchor.roomName),
+    //   // base
+    //   new RoomPosition(anchor.x + 3, anchor.y + 3, anchor.roomName),
+    //   new RoomPosition(anchor.x + 2, anchor.y + 4, anchor.roomName),
+    //   new RoomPosition(anchor.x + 4, anchor.y + 2, anchor.roomName),
+    //   //stem
+    //   new RoomPosition(anchor.x + 4, anchor.y + 4, anchor.roomName),
+    //   new RoomPosition(anchor.x + 5, anchor.y + 5, anchor.roomName),
+    //   new RoomPosition(anchor.x + 6, anchor.y + 6, anchor.roomName)
+    // ];
+    return new Array<RoomPosition>();
   }
   public static run(room: Room): void {
     // MOVE to BL of initial spawn
-    const anchor = this.getAnchor(room);
-    const extensions = this.extensions(room);
-    const towers = this.towers(room);
-    const coreBuildings = this.coreBuildings(room);
+    const memory = Memory.roomStore[room.name].constructionDirector;
+    const extensions = memory.extensionTemplate;
+    const towers = memory.towerTemplate;
+    const coreBuildings = memory.singleStructures;
     const ramparts = this.ramparts(room);
     const walls = this.walls(room);
-    const labs = this.labs(room);
+    const labs = memory.labTemplate;
     const roads = this.staticRoads(room);
     roads.map((p) => room.visual.text("R", p, { stroke: "Black", opacity: 0.2 }));
     labs.map((l) => room.visual.text("Lb", l, { stroke: "Blue" }));
