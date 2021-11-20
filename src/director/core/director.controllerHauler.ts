@@ -55,8 +55,9 @@ export class ControllerHaulerDirector {
     );
     const sites = room.find(FIND_CONSTRUCTION_SITES);
     const energyBudget = Math.min(room.energyCapacityAvailable, 2000);
+    const neededHaulers = Math.round(2000 / room.energyCapacityAvailable);
     const spawnHauler =
-      (haulers.length < 1 || (haulers.length < 2 && energyBudget < 2000)) &&
+      (haulers.length < 1 || (haulers.length < neededHaulers && energyBudget < 2000)) &&
       (!sites || sites.length === 0) &&
       Memory.roomStore[room.name].defenseDirector.alertLevel === 0;
     if (spawnHauler) {
@@ -90,13 +91,17 @@ export class ControllerHaulerDirector {
   }
   public static run(room: Room): void {
     const controller = room.controller;
-    const container = controller ? this.findControllerContainer(controller.pos) : undefined;
-    const link = controller?.pos.findInRange(FIND_MY_STRUCTURES, 3, {
-      filter: (s) => s.structureType === STRUCTURE_LINK
-    })[0];
-    if (controller && container && !link) {
-      this.spawnHauler(room, container);
-      this.runHauler(room, container);
+    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+    const distance = anchor && controller ? anchor.pos.getRangeTo(controller.pos) : 0;
+    if (distance > 10) {
+      const container = controller ? this.findControllerContainer(controller.pos) : undefined;
+      const link = controller?.pos.findInRange(FIND_MY_STRUCTURES, 3, {
+        filter: (s) => s.structureType === STRUCTURE_LINK
+      })[0];
+      if (controller && container && !link) {
+        this.spawnHauler(room, container);
+        this.runHauler(room, container);
+      }
     }
   }
 }
