@@ -17,6 +17,8 @@ declare global {
     refuelTarget: string;
     dropOffTarget: string;
     scoutPositions: RoomPosition[];
+    lastPosition: RoomPosition | null;
+    stuckCounter: number;
   }
   interface CreepRecipie {
     template: BodyPartConstant[];
@@ -162,7 +164,9 @@ declare global {
   interface RoomPlannerStore {
     walkableTiles: RoomPosition[];
     buildableTiles: RoomPosition[];
-    featureDistanceStore: { pos: RoomPosition; distance: number }[];
+    validExtensionLocations: RoomPosition[] | undefined;
+    validExtensionDistances: { pos: RoomPosition; distance: number }[] | undefined;
+    validExtensionScratchPad: { pos: RoomPosition; valid: boolean }[];
   }
   interface Memory {
     uuid: number;

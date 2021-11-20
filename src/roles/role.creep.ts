@@ -22,7 +22,9 @@ export class CreepBase {
     refuelTarget: "",
     dropOffTarget: "",
     scoutPositions: [],
-    targetSourcePos: null
+    targetSourcePos: null,
+    lastPosition: null,
+    stuckCounter: 0
   };
   public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string, range?: number | 1) {
     const targetPos = "pos" in target ? target.pos : target;
@@ -35,7 +37,9 @@ export class CreepBase {
         reusePath: creepNearby ? 5 : 20,
         maxOps: 1000
       });
+      return rtn;
     }
+    return 0;
   }
   public static flee(creep: Creep, hostile: Creep) {
     if (creep.fatigue <= 0) {
@@ -105,7 +109,9 @@ export class CreepBase {
       return null;
     }
   }
-  static getSourceTarget(creep: Creep): Structure | Tombstone | null {
+  static getSourceTarget(
+    creep: Creep
+  ): StructureContainer | StructureStorage | StructureLink | StructureSpawn | StructureExtension | Tombstone | null {
     const homeRoom = Game.rooms[creep.memory.homeRoom];
     const isSpawning = Memory.roomStore[homeRoom.name].spawnQueue.length > 0;
     if (creep.room.name !== creep.memory.homeRoom) {
@@ -135,7 +141,7 @@ export class CreepBase {
       if (storageExists) {
         return harvestableStorage;
       }
-      const harvestableContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      const harvestableContainer = creep.pos.findClosestByPath<StructureContainer>(FIND_STRUCTURES, {
         filter: (s: AnyStructure) => {
           return (
             s.structureType === STRUCTURE_CONTAINER &&
@@ -148,13 +154,13 @@ export class CreepBase {
         return harvestableContainer;
       }
       if (!isSpawning && !containerExists) {
-        const harvestableSpawn = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        const harvestableSpawn = creep.pos.findClosestByPath<StructureSpawn>(FIND_STRUCTURES, {
           filter: this.filterStructures(STRUCTURE_SPAWN, 100)
         });
         if (harvestableSpawn) {
           return harvestableSpawn;
         }
-        const harvestableExtension = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        const harvestableExtension = creep.pos.findClosestByPath<StructureExtension>(FIND_STRUCTURES, {
           filter: this.filterStructures(STRUCTURE_EXTENSION, 10)
         });
         if (harvestableExtension) {

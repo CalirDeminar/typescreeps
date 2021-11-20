@@ -127,26 +127,46 @@ export class ScoutingDirector {
                 filter: (s) => s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
               })
               .map((s) => s.pos);
-            CreepBase.travelTo(creep, target, "green", 20);
-            if (Game.time % 50 === 0) {
-              const route = PathFinder.search(creep.pos, target, {
-                maxOps: 1000,
-                roomCallback: (roomName: string) => {
-                  const costMatrix = new PathFinder.CostMatrix();
-                  const terrain = Game.map.getRoomTerrain(roomName);
-                  const localAvoids = avoids.filter((p) => p.roomName === roomName);
-                  _.range(0, 49).map((x) =>
-                    _.range(0, 49).map((y) => {
-                      const t = terrain.get(x, y);
-                      const tCost = t === 0 ? 0 : t === 1 ? 10 : t === 2 ? 1 : 255;
-                      const wCost = localAvoids.filter((p) => p.x === x && p.y === y).length > 0 ? 10 : 0;
-                      costMatrix.set(x, y, Math.max(tCost, wCost));
-                    })
-                  );
-                  return costMatrix;
-                }
-              });
+            const rtn = CreepBase.travelTo(creep, target, "green", 20);
+            if (rtn === -2) {
+              const sliced = creep.memory.scoutPositions.slice(1);
+              creep.memory.scoutPositions = sliced;
             }
+            // detect stuck
+            let lastPos = creep.memory.lastPosition;
+            if (lastPos) {
+              lastPos = new RoomPosition(lastPos.x, lastPos.y, lastPos.roomName);
+              if (lastPos.isEqualTo(creep.pos)) {
+                creep.memory.lastPosition = creep.pos;
+                creep.memory.stuckCounter += 1;
+              } else {
+                creep.memory.stuckCounter = 0;
+              }
+              if (creep.memory.stuckCounter > 10) {
+                const sliced = creep.memory.scoutPositions.slice(1);
+                const adjacentRooms = this.getExits(creep);
+                creep.memory.scoutPositions = sliced.concat(adjacentRooms);
+              }
+            }
+          // if (Game.time % 50 === 0) {
+          //   const route = PathFinder.search(creep.pos, target, {
+          //     maxOps: 1000,
+          //     roomCallback: (roomName: string) => {
+          //       const costMatrix = new PathFinder.CostMatrix();
+          //       const terrain = Game.map.getRoomTerrain(roomName);
+          //       const localAvoids = avoids.filter((p) => p.roomName === roomName);
+          //       _.range(0, 49).map((x) =>
+          //         _.range(0, 49).map((y) => {
+          //           const t = terrain.get(x, y);
+          //           const tCost = t === 0 ? 0 : t === 1 ? 10 : t === 2 ? 1 : 255;
+          //           const wCost = localAvoids.filter((p) => p.x === x && p.y === y).length > 0 ? 10 : 0;
+          //           costMatrix.set(x, y, Math.max(tCost, wCost));
+          //         })
+          //       );
+          //       return costMatrix;
+          //     }
+          //   });
+          // }
         }
       }
     });
