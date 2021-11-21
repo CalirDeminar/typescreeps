@@ -141,7 +141,7 @@ export class CoreRoomPlanner {
   }
   private static populateExtensionMemory(room: Room): void {
     const requiredTiles = 12;
-    const memory = Memory.roomStore[room.name].roomPlanner;
+    const memory = Memory.expansionDirector;
     const controller = room.controller;
     if (!memory.validExtensionScratchPad) {
       memory.validExtensionScratchPad = [];
@@ -158,14 +158,14 @@ export class CoreRoomPlanner {
         const nextTile = roomTiles[calculatedTiles.length];
         if (nextTile) {
           const valid = this.runWithRetries(nextTile, requiredTiles).length === requiredTiles;
-          Memory.roomStore[room.name].roomPlanner.validExtensionScratchPad.push({
+          Memory.expansionDirector.validExtensionScratchPad.push({
             pos: nextTile,
             valid: valid
           });
         }
       } else {
-        Memory.roomStore[room.name].roomPlanner.validExtensionLocations = base.filter((b) => b.valid).map((b) => b.pos);
-        Memory.roomStore[room.name].roomPlanner.validExtensionScratchPad = [];
+        Memory.expansionDirector.validExtensionLocations = base.filter((b) => b.valid).map((b) => b.pos);
+        Memory.expansionDirector.validExtensionScratchPad = [];
       }
       base.forEach((t) =>
         room.visual.circle(t.pos.x, t.pos.y, { fill: t.valid ? "green" : "red", radius: 0.5, opacity: 0.25 })

@@ -224,7 +224,8 @@ export class ScoutingDirector {
       const updatedRooms = Memory.roomStore[room.name].scoutingDirector.scoutedRooms.map((scoutedRoom) => {
         return {
           ...scoutedRoom,
-          settleable: ExpansionScouting.expandable(scoutedRoom) && ExpansionScouting.isExpandableByTerrain(scoutedRoom)
+          settleable:
+            (ExpansionScouting.expandable(scoutedRoom) && ExpansionScouting.isExpandableByTerrain(scoutedRoom)) || false
         };
       });
       Memory.roomStore[room.name].scoutingDirector.scoutedRooms = updatedRooms;

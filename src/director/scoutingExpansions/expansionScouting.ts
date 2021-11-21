@@ -1,6 +1,6 @@
 const bunkerRadius = 11;
 export class ExpansionScouting {
-  public static isExpandableByTerrain(room: ScoutedRoom): boolean {
+  public static isExpandableByTerrain(room: ScoutedRoom): boolean | undefined {
     const terrain = new Room.Terrain(room.name);
     if (terrain) {
       const bounds = _.range(bunkerRadius + 2, 48 - bunkerRadius);

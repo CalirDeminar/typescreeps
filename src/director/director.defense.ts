@@ -8,6 +8,7 @@ import { UtilPosition } from "utils/util.position";
 import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
 import { DefenseMason } from "./defense/mason";
 import { DefenseTowers } from "./defense/towers";
+import { WallPlanner } from "./defense/wallPlanner";
 export class DefenseDirector {
   // Alert Levels
   // 0 - No Hostiles
@@ -41,6 +42,7 @@ export class DefenseDirector {
   private static makeFortification(room: Room): void {
     const controller = room.controller;
     const terrain = room.getTerrain();
+    const memory = Memory.roomStore[room.name].defenseDirector;
     const store = Memory.roomStore[room.name].defenseDirector;
     const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
@@ -53,8 +55,8 @@ export class DefenseDirector {
         }
       })
       .map((s) => s.pos);
-    const rampartMap = strategicStructures;
-    const wallMap = new Array<RoomPosition>();
+    const rampartMap = strategicStructures.concat(memory.rampartMap);
+    const wallMap = memory.wallMap;
     const refreshFrequency = store.alertLevel === 0 ? 500 : 50;
     const runThisTick = Game.time % refreshFrequency === 0;
     // rampartMap.map((r) => {
@@ -112,19 +114,21 @@ export class DefenseDirector {
     //  more often if there are hostiles in room
     const store = Memory.roomStore[room.name].defenseDirector;
     if (store.rampartMap.length === 0) {
+      const defences = WallPlanner.getPerimeter(room);
       const towers = room
         .find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_TOWER })
         .map((s) => s.id);
       Memory.roomStore[room.name].defenseDirector.towers = towers;
-      const rampartMap = ConstructionBunker2Director.ramparts(room)
-        .concat(this.makeSourceRamparts(room))
-        .filter((p) => p.roomName === room.name);
-      const wallMap = ConstructionBunker2Director.walls(room).filter((p) => p.roomName === room.name);
+      const rampartMap = defences.ramparts;
+      const wallMap = defences.walls;
       Memory.roomStore[room.name].defenseDirector = {
         ...Memory.roomStore[room.name].defenseDirector,
         rampartMap: rampartMap,
         wallMap: wallMap
       };
+    } else {
+      store.rampartMap.forEach((r) => room.visual.text("R", r.x, r.y, { stroke: "green", opacity: 0.3 }));
+      store.wallMap.forEach((r) => room.visual.text("W", r.x, r.y, { stroke: "green", opacity: 0.3 }));
     }
     if (!Object.keys(store).includes("alertStartTimestamp")) {
       Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = -1;
@@ -226,24 +230,26 @@ export class DefenseDirector {
     }
   }
   private static spawnRemoteDefense(room: Room, spawningDefenders: CreepRecipie[]): void {
-    const template = {
-      template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK, ATTACK, MOVE],
-      memory: {
-        ...CreepBase.baseMemory,
-        role: "remoteDefender",
-        working: false,
-        born: Game.time,
-        homeRoom: room.name
-      }
-    };
-    if (spawningDefenders.length === 0) {
-      Memory.roomStore[room.name].spawnQueue.push(template);
-    } else {
-      const index = Memory.roomStore[room.name].spawnQueue.findIndex(
-        (c) => c.memory.role === "remoteDefender" && c.memory.homeRoom === room.name
-      );
-      if (index >= 0) {
-        Memory.roomStore[room.name].spawnQueue[index] = template;
+    if (room.energyCapacityAvailable >= 430) {
+      const template = {
+        template: [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK, ATTACK, MOVE],
+        memory: {
+          ...CreepBase.baseMemory,
+          role: "remoteDefender",
+          working: false,
+          born: Game.time,
+          homeRoom: room.name
+        }
+      };
+      if (spawningDefenders.length === 0) {
+        Memory.roomStore[room.name].spawnQueue.push(template);
+      } else {
+        const index = Memory.roomStore[room.name].spawnQueue.findIndex(
+          (c) => c.memory.role === "remoteDefender" && c.memory.homeRoom === room.name
+        );
+        if (index >= 0) {
+          Memory.roomStore[room.name].spawnQueue[index] = template;
+        }
       }
     }
   }

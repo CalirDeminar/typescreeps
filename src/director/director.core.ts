@@ -368,7 +368,7 @@ export class CoreDirector {
       this.runDirectors(room);
       SpawnDirector.runSpawn(room);
       ConstructionBunker2Director.run(room);
-      WallPlanner.getPerimeter(room);
+      // WallPlanner.getPerimeter(room);
 
       // memory init
       //      handle initialising non-existent keys

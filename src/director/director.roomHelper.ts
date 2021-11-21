@@ -84,10 +84,15 @@ export class RoomHelperDirector {
       const targetController = Game.getObjectById<StructureController>(Memory.expansionDirector.controllerId);
       if (targetController && targetController.level >= 4) {
         Memory.expansionDirector = {
+          discardedRooms: [],
           targetRoom: null,
           controllerId: null,
+          newSpawnPosition: null,
           helperRooms: [],
-          newSpawnPosition: null
+          activeCalcingRoom: undefined,
+          validExtensionLocations: undefined,
+          validExtensionDistances: undefined,
+          validExtensionScratchPad: []
         };
         Memory.roomStore[room.name].helpOtherRoom = false;
       }

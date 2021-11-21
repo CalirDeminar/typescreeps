@@ -6,10 +6,15 @@ export class ExpansionDirector {
   private static memoryInit(): void {
     if (Memory.expansionDirector === undefined) {
       Memory.expansionDirector = {
+        discardedRooms: [],
         targetRoom: null,
         controllerId: null,
         newSpawnPosition: null,
-        helperRooms: []
+        helperRooms: [],
+        activeCalcingRoom: undefined,
+        validExtensionLocations: undefined,
+        validExtensionDistances: undefined,
+        validExtensionScratchPad: []
       };
     }
   }
@@ -146,6 +151,7 @@ export class ExpansionDirector {
         const controllerId = expansionRoom.controller?.id;
         if (spawnPos && controllerId) {
           Memory.expansionDirector = {
+            ...Memory.expansionDirector,
             targetRoom: expansionRoom.name,
             controllerId: expansionRoom.controller?.id || "",
             newSpawnPosition: spawnPos,
