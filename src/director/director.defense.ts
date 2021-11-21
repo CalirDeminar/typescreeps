@@ -53,8 +53,8 @@ export class DefenseDirector {
         }
       })
       .map((s) => s.pos);
-    const rampartMap = store.rampartMap.map((p) => new RoomPosition(p.x, p.y, p.roomName)).concat(strategicStructures);
-    const wallMap = store.wallMap.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+    const rampartMap = strategicStructures;
+    const wallMap = new Array<RoomPosition>();
     const refreshFrequency = store.alertLevel === 0 ? 500 : 50;
     const runThisTick = Game.time % refreshFrequency === 0;
     // rampartMap.map((r) => {
