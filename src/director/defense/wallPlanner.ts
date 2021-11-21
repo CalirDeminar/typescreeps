@@ -98,34 +98,48 @@ export class WallPlanner {
       y2: Math.max(roomEdges.y2, ...ys)
     });
   }
+  private static getRoomExits(room: Room): RoomPosition[] {
+    const topExits = room.find(FIND_EXIT_TOP);
+    const topExit = topExits[Math.floor(topExits.length / 2)];
+    const bottomExits = room.find(FIND_EXIT_BOTTOM);
+    const bottomExit = bottomExits[Math.floor(bottomExits.length / 2)];
+    const leftExits = room.find(FIND_EXIT_LEFT);
+    const leftExit = leftExits[Math.floor(leftExits.length / 2)];
+    const rightExits = room.find(FIND_EXIT_RIGHT);
+    const rightExit = rightExits[Math.floor(rightExits.length / 2)];
+    return [topExit, bottomExit, leftExit, rightExit].filter((t) => !!t);
+  }
   public static getPerimeter(room: Room) {
     const memory = Memory.roomStore[room.name].constructionDirector;
-    const sources = room.find(FIND_SOURCES).map((s) => s.pos);
-    const minerals = room.find(FIND_MINERALS).map((s) => s.pos);
-    const structures = room.controller
-      ? memory.singleStructures.map((s) => s.pos).concat(room.controller.pos)
-      : memory.singleStructures.map((s) => s.pos);
-    const rects = [
-      this.getBoundingRect(memory.extensionTemplate),
-      this.getBoundingRect(memory.towerTemplate),
-      this.getBoundingRect(memory.labTemplate),
-      this.getBoundingRect([...structures, ...minerals]),
-      this.getBoundingRect(memory.internalRoadTemplate),
-      this.getBoundingRect(sources)
-    ];
-    // TODO - write own minCut alg
-    const chokes = util_mincut.GetCutTiles(room.name, rects);
-    const walls = chokes.reduce(
-      (acc: RoomPosition[], c: Tile, i: number) => (i % 3 ? acc.concat([new RoomPosition(c.x, c.y, room.name)]) : acc),
-      []
-    );
-    const ramparts = chokes.reduce(
-      (acc: RoomPosition[], c: Tile, i: number) =>
-        !(i % 3) ? acc.concat([new RoomPosition(c.x, c.y, room.name)]) : acc,
-      []
-    );
-    walls.forEach((c, i) => room.visual.text(`W`, c.x, c.y, { stroke: "green", opacity: 0.3 }));
-    ramparts.forEach((c, i) => room.visual.text(`R`, c.x, c.y, { stroke: "green", opacity: 0.3 }));
-    return { walls, ramparts };
+    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
+    if (anchor) {
+      const sources = room.find(FIND_SOURCES).map((s) => s.pos);
+      const minerals = room.find(FIND_MINERALS).map((s) => s.pos);
+      const structures = room.controller
+        ? memory.singleStructures.map((s) => s.pos).concat(room.controller.pos)
+        : memory.singleStructures.map((s) => s.pos);
+      const rects = [
+        this.getBoundingRect(memory.extensionTemplate),
+        this.getBoundingRect(memory.towerTemplate),
+        this.getBoundingRect(memory.labTemplate),
+        this.getBoundingRect([...structures, ...minerals]),
+        this.getBoundingRect(memory.internalRoadTemplate),
+        this.getBoundingRect(sources)
+      ];
+      // TODO - write own minCut alg
+      const chokes = util_mincut.GetCutTiles(room.name, rects).map((t) => new RoomPosition(t.x, t.y, room.name));
+      const exits = this.getRoomExits(room);
+      const exitPaths = exits.reduce((acc: RoomPosition[], e: RoomPosition) => {
+        return acc.concat(e.findPathTo(anchor.pos).map((p) => new RoomPosition(p.x, p.y, room.name)));
+      }, []);
+      const ramparts = chokes.filter((c) => exitPaths.some((e) => e.isEqualTo(c)));
+      console.log(exits);
+      console.log(ramparts);
+      const walls = chokes.filter((c) => !exitPaths.some((e) => e.isEqualTo(c)));
+      walls.forEach((c, i) => room.visual.text(`W`, c.x, c.y, { stroke: "green", opacity: 0.3 }));
+      ramparts.forEach((c, i) => room.visual.text(`R`, c.x, c.y, { stroke: "green", opacity: 0.3 }));
+      return { walls, ramparts };
+    }
+    return { walls: [], ramparts: [] };
   }
 }
