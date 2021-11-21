@@ -54,7 +54,9 @@ export class MineralDirector {
   private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
     if (creep.ticksToLive && container.store.getFreeCapacity() > creep.store.getUsedCapacity()) {
       const full = creep.store.getFreeCapacity() < creep.body.filter((p) => p.type === WORK).length * 1;
-      const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1)[0];
+      const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1, {
+        filter: (s) => s.structureType === STRUCTURE_EXTRACTOR
+      })[0];
       const extractorOffCooldown = extractor.cooldown === 0;
       const inRangeOfContainer = creep.pos.getRangeTo(container) === 0;
       if (!inRangeOfContainer) {
@@ -229,7 +231,13 @@ export class MineralDirector {
     const mineral = room.find(FIND_MINERALS)[0];
     const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     if (mineral && anchor) {
-      const containerSpot = UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos);
+      const avoids = room
+        .find(FIND_STRUCTURES, {
+          filter: (s) => s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_RAMPART
+        })
+        .map((s) => s.pos)
+        .concat([mineral.pos]);
+      const containerSpot = UtilPosition.getClosestSurroundingTo(mineral.pos, anchor.pos, avoids);
       return containerSpot.createConstructionSite(STRUCTURE_CONTAINER) === OK;
     }
     return false;
