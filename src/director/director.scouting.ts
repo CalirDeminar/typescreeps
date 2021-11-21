@@ -9,7 +9,7 @@ export class ScoutingDirector {
     const exitMap = Game.map.describeExits(room);
     return Object.entries(exitMap)
       .filter((n) => {
-        if (n[1]) {
+        if (n[1] && Game.rooms[room]) {
           const exitDir = Game.rooms[room].findExitTo(n[1]);
           if (exitDir !== -2 && exitDir !== -10) {
             const exit = Game.rooms[room].find(exitDir, { filter: (p) => p.lookFor(LOOK_STRUCTURES).length === 0 });
