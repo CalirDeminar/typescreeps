@@ -1,40 +1,29 @@
 export class UtilPosition {
+  public static getSurroundingFreeTiles(anchor: RoomPosition): RoomPosition[] {
+    const terrain = Game.map.getRoomTerrain(anchor.roomName);
+    return _.range(-1, 2)
+      .reduce((acc: RoomPosition[], x: number) => {
+        return acc.concat(
+          _.range(-1, 2).map((y: number) => {
+            return new RoomPosition(anchor.x + x, anchor.y + y, anchor.roomName);
+          })
+        );
+      }, [])
+      .filter((p: RoomPosition) => !p.isEqualTo(anchor) && terrain.get(p.x, p.y) !== 1);
+  }
   public static getClosestSurroundingTo(
     anchor: RoomPosition,
     target: RoomPosition,
     avoid: RoomPosition[] = []
   ): RoomPosition {
     const room = Game.rooms[anchor.roomName];
-    const terrain = room.getTerrain();
-    const surroundings = _.range(-1, 2)
-      .map((x) => {
-        return _.range(-1, 2).map((y) => {
-          return { x: x, y: y };
-        });
-      })
-      .reduce((acc, arr) => acc.concat(arr), [])
-      .filter((p) => p.x !== 0 && p.y !== 0);
-    const rangeList = surroundings
-      .filter((tile: { x: number; y: number }) => {
-        return terrain.get(anchor.x + tile.x, anchor.y + tile.y) !== 1;
-      })
-      .map(
-        (tile: { x: number; y: number }): RoomPosition => {
-          return new RoomPosition(anchor.x + tile.x, anchor.y + tile.y, room.name);
-        }
-      )
-      .filter(
-        (p1) =>
-          !avoid.some((p2) =>
-            new RoomPosition(p1.x, p1.y, p1.roomName).isEqualTo(new RoomPosition(p2.x, p2.y, p2.roomName))
-          )
-      )
-      .sort((p1, p2) => {
-        const len =
-          p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length -
-          p2.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length;
-        return len;
-      });
+    const surroundings = this.getSurroundingFreeTiles(anchor);
+    const rangeList = surroundings.sort((p1, p2) => {
+      const len =
+        p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length -
+        p2.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length;
+      return len;
+    });
     const rtn = rangeList[0];
     if (rtn) {
       return rtn;
