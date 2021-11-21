@@ -69,10 +69,6 @@ export class SourceDirector {
             Constants.maxLinks[level];
         if (!link && shouldHaveLinks && canHaveNewLink) {
           const built =
-            this.doPlaceStructure(
-              new RoomPosition(anchor.pos.x - 1, anchor.pos.y - 1, anchor.pos.roomName),
-              STRUCTURE_LINK
-            ) ||
             UtilPosition.getClosestSurroundingTo(
               UtilPosition.getClosestSurroundingTo(source.pos, anchor.pos, avoids),
               anchor.pos,

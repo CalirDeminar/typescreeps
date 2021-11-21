@@ -17,6 +17,7 @@ import { ConstructionBunker2Director } from "./core/director.constructio.bunker2
 import { UtilPosition } from "utils/util.position";
 import { ControllerHaulerDirector } from "./core/director.controllerHauler";
 import { CoreRoomPlanner } from "./core/director.roomPlanner";
+import { WallPlanner } from "./defense/wallPlanner";
 export class CoreDirector {
   public static baseMemory: RoomType = {
     sources: [],
@@ -188,6 +189,9 @@ export class CoreDirector {
       const controllerContainer = this.findControllerContainer(controller.pos);
       const controllerLink = this.findControllerLink(controller.pos);
       const anchorLink = UtilPosition.findByPosition(anchor.pos, STRUCTURE_LINK, 2);
+      const anchorLinkPos = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
+        (s) => s.type === STRUCTURE_LINK
+      )[0];
       switch (true) {
         case controller.level >= 3 && controller.level <= 5 && !alreadyBuilding && !anchorContainer && !anchorLink:
           if (room.createConstructionSite(anchor.pos.x, anchor.pos.y, STRUCTURE_CONTAINER) === OK) {
@@ -195,7 +199,7 @@ export class CoreDirector {
           }
           break;
         case controller.level >= 5 && !alreadyBuilding && !anchorLink:
-          if (room.createConstructionSite(anchor.pos.x, anchor.pos.y + 1, STRUCTURE_LINK) === OK) {
+          if (room.createConstructionSite(anchorLinkPos.pos.x, anchorLinkPos.pos.y, STRUCTURE_LINK) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
@@ -364,6 +368,7 @@ export class CoreDirector {
       this.runDirectors(room);
       SpawnDirector.runSpawn(room);
       ConstructionBunker2Director.run(room);
+      WallPlanner.getPerimeter(room);
 
       // memory init
       //      handle initialising non-existent keys
