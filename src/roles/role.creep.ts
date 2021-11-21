@@ -12,7 +12,6 @@ export class CreepBase {
   public static baseMemory: CreepMemory = {
     role: "",
     working: false,
-    born: 0,
     targetSource: "",
     targetStore: "",
     homeRoom: "",
@@ -22,7 +21,6 @@ export class CreepBase {
     refuelTarget: "",
     dropOffTarget: "",
     scoutPositions: [],
-    targetSourcePos: null,
     lastPosition: null,
     stuckCounter: 0
   };

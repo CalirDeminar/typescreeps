@@ -6,9 +6,7 @@ declare global {
   interface CreepMemory {
     role: string;
     working: boolean;
-    born: number;
     targetSource: string;
-    targetSourcePos: RoomPosition | null;
     targetStore: string;
     homeRoom: string;
     targetRoom: string;
@@ -36,16 +34,6 @@ declare global {
     invaderCore: boolean;
     name: string;
     anchor: RoomPosition;
-  }
-  interface SourceDirectorStore {
-    sourceId: string;
-    shuttleHarvesterIds: string[];
-    staticHarvesterIds: string[];
-    containerId: string | null;
-    targetContainerId: string | null;
-    containerDistanceByPath: number;
-    linkId: string | null;
-    targetLinkId: string | null;
   }
   interface CoreDirectorStore {
     anchorPos: RoomPosition;
@@ -140,7 +128,6 @@ declare global {
   }
   interface RoomType {
     sources: string[];
-    sourceDirector: SourceDirectorStore[];
     constructionDirector: ConstructionDirectorStore2;
     remoteDirector: RemoteDirectorStore[];
     controllerId: string;
@@ -152,7 +139,6 @@ declare global {
     defenseDirector: DefenseDirectorStore;
     scoutingDirector: ScoutingDirectorStore;
     helpOtherRoom: boolean;
-    roomPlanner: RoomPlannerStore;
   }
   interface ExpansionDirectorStore {
     discardedRooms: string[];
@@ -161,14 +147,6 @@ declare global {
     newSpawnPosition: RoomPosition | null;
     helperRooms: string[];
     activeCalcingRoom: string | undefined;
-    validExtensionLocations: RoomPosition[] | undefined;
-    validExtensionDistances: { pos: RoomPosition; distance: number }[] | undefined;
-    validExtensionScratchPad: { pos: RoomPosition; valid: boolean }[];
-  }
-
-  interface RoomPlannerStore {
-    walkableTiles: RoomPosition[];
-    buildableTiles: RoomPosition[];
     validExtensionLocations: RoomPosition[] | undefined;
     validExtensionDistances: { pos: RoomPosition; distance: number }[] | undefined;
     validExtensionScratchPad: { pos: RoomPosition; valid: boolean }[];

@@ -87,7 +87,6 @@ export class LinkHaulerDirector {
             ...CreepBase.baseMemory,
             role: "linkHauler",
             working: false,
-            born: Game.time,
             homeRoom: room.name,
             targetRoom: room.name,
             workTarget: link.id

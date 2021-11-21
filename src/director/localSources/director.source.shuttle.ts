@@ -42,7 +42,6 @@ export class SourceShuttleDirector {
           ...CreepBase.baseMemory,
           role: "harvesterShuttle",
           working: true,
-          born: Game.time,
           targetSource: source.id,
           homeRoom: source.room.name,
           targetRoom: source.room.name

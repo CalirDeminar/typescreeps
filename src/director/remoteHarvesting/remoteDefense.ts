@@ -32,7 +32,6 @@ export class RemoteDefense {
             ...CreepBase.baseMemory,
             role: "remoteDefender",
             working: false,
-            born: Game.time,
             targetRoom: room.roomName,
             homeRoom: homeRoom.name
           }

@@ -37,7 +37,6 @@ export class SourceContainerDirector {
           ...CreepBase.baseMemory,
           role: "harvesterStatic",
           working: false,
-          born: Game.time,
           targetSource: source.id,
           homeRoom: source.room.name,
           targetRoom: source.room.name,
@@ -93,7 +92,6 @@ export class SourceContainerDirector {
           ...CreepBase.baseMemory,
           role: "hauler",
           working: false,
-          born: Game.time,
           targetSource: container.id,
           homeRoom: room.name,
           targetRoom: room.name

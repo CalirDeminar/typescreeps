@@ -27,7 +27,6 @@ export class CoreDirector {
     spawnQueue: [],
     buildingThisTick: false,
     remoteRooms: {},
-    sourceDirector: [],
     constructionDirector: {
       internalRoadTemplate: [],
       extensionTemplate: [],
@@ -51,14 +50,7 @@ export class CoreDirector {
       scoutedRooms: [],
       scoutQueue: []
     },
-    helpOtherRoom: false,
-    roomPlanner: {
-      walkableTiles: [],
-      buildableTiles: [],
-      validExtensionLocations: undefined,
-      validExtensionScratchPad: [],
-      validExtensionDistances: []
-    }
+    helpOtherRoom: false
   };
   private static getAnchor(room: Room): Flag {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
@@ -89,7 +81,6 @@ export class CoreDirector {
           ...CreepBase.baseMemory,
           role: "upgrader",
           working: false,
-          born: Game.time,
           homeRoom: room.name,
           targetRoom: room.name,
           upgradeTarget: room.controller.id
@@ -160,7 +151,6 @@ export class CoreDirector {
           ...CreepBase.baseMemory,
           role: "builder",
           working: false,
-          born: Game.time,
           homeRoom: room.name,
           targetRoom: room.name
         }
@@ -273,8 +263,7 @@ export class CoreDirector {
       Memory.roomStore[room.name] = {
         ...this.baseMemory,
         sources: room.find(FIND_SOURCES).map((s: Source): string => s.id),
-        minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id),
-        controllerId: room.controller ? room.controller.id : ""
+        minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id)
       };
     }
     // set BuildingThisTick flag

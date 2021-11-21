@@ -28,7 +28,6 @@ export class QueenDirector {
             ...CreepBase.baseMemory,
             role: "queen",
             working: false,
-            born: Game.time,
             homeRoom: room.name,
             targetRoom: room.name
           }

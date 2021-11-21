@@ -237,7 +237,6 @@ export class DefenseDirector {
           ...CreepBase.baseMemory,
           role: "remoteDefender",
           working: false,
-          born: Game.time,
           homeRoom: room.name
         }
       };
