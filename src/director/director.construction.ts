@@ -38,8 +38,7 @@ export class ConstructionDirector {
       const avoids = store.extensionTemplate
         .concat(store.towerTemplate)
         .concat(store.singleStructures.map((s) => s.pos))
-        .concat(store.labTemplate)
-        .concat(ConstructionBunker2Director.walls(room));
+        .concat(store.labTemplate);
       const roads = room
         .find(FIND_SOURCES)
         .map((s) => s.pos)

@@ -16,7 +16,6 @@ export class UtilPosition {
     target: RoomPosition,
     avoid: RoomPosition[] = []
   ): RoomPosition {
-    const room = Game.rooms[anchor.roomName];
     const surroundings = this.getSurroundingFreeTiles(anchor);
     const rangeList = surroundings.sort((p1, p2) => {
       const len =

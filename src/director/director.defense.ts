@@ -1,11 +1,6 @@
-import { spawn } from "child_process";
-import { ConstructionTemplates } from "director/templates/constructionTemplates";
 import { CreepBase } from "roles/role.creep";
-import { Constants } from "utils/constants";
-import { CreepBuilder } from "utils/creepBuilder";
 import { CreepCombat } from "utils/creepCombat";
 import { UtilPosition } from "utils/util.position";
-import { ConstructionBunker2Director } from "./core/director.constructio.bunker2";
 import { DefenseMason } from "./defense/mason";
 import { DefenseTowers } from "./defense/towers";
 import { WallPlanner } from "./defense/wallPlanner";
