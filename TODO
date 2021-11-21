@@ -1,8 +1,8 @@
 Immediate-
 
-- Add controller energy supply for upgraders
-  - container and then link when available
-  - add ramparts & walls around controller to handle attack
+- Ensure that fleeing Builders / Upgraders do not stand on reserved routes (Source, Controller, Remote)
+- Ensure Perimeter includes the above routes so nothing gets cut off
+- Fix haulers getting stuck when the storage appears
 - Have remote harvesting manager handle walls blocking path to sources
 - attempt at lower level to speed up debugging
 - improved scout pathfinding

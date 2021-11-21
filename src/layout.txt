@@ -11,3 +11,62 @@ RoomManager ->  CreepManagers -> BuildingManager, UpgraderManager
 ConstructionManager ->  BuildExtensions
                         BuildContainers
                         BuildRoads
+
+---------------------------------------------------------------------------
+
+New Features:
+        Specific Creep Role Memory Layouts
+        Creep Recycling
+        RoomBorder Defences
+        Dynamic Shuttle Harvester Count
+Creeps:
+        Harvester:
+                Shuttle
+                Static
+                Mineral
+        Hauler:
+                Source
+                Remote Source
+                Mineral
+                Link
+        Builder
+        Queen
+        Defenders (All)
+        Repairer
+        Scout
+        Helper
+Directors:
+        Rooms:
+                Building
+                        Extensions
+                        Core Buildings
+                        Roads
+                Harvesting
+                        Local
+                                Shuttle
+                                Container
+                        Remote
+        Defense Response
+                Auto Safemode
+                Spawning Defenders
+        Scouting
+        Reaction / Factory / Sales
+Utils:
+        General RoomPosition
+                FindWalkableInRange
+        Room Scanning
+        Building Placement
+                Bunker
+                Extensions
+                Roads
+                Containers
+                Walls
+                Ramparts
+        Creeps
+        Hostile Analysis
+                Tank Calculation
+                Classification
+                        Scout
+                        Ranged
+                        Dismantler
+                        Squad

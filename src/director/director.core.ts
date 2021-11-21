@@ -243,8 +243,8 @@ export class CoreDirector {
             .concat(structStore.singleStructures.map((s) => s.pos))
             .concat(defStore.wallMap);
           const containerPos = UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, avoids);
-          const linkPos = UtilPosition.getClosestSurroundingTo(containerPos, anchor.pos, avoids);
-          if (linkPos && room.createConstructionSite(linkPos.y, linkPos.y, STRUCTURE_LINK) === OK) {
+          const linkPos = UtilPosition.getClosestSurroundingTo(controller.pos, anchor.pos, [...avoids, containerPos]);
+          if (linkPos && room.createConstructionSite(linkPos.x, linkPos.y, STRUCTURE_LINK) === OK) {
             Memory.roomStore[room.name].buildingThisTick = true;
           }
           break;
