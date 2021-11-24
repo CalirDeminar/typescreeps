@@ -48,6 +48,7 @@ declare global {
   interface ScoutingDirectorStore {
     scoutedRooms: ScoutedRoom[];
     scoutQueue: RoomPosition[];
+    scanningIndex: number;
   }
   interface ScoutedRoom {
     sources: { id: string; pos: RoomPosition }[];
@@ -65,7 +66,10 @@ declare global {
     invaderCore: { id: string; pos: RoomPosition } | null;
     towers: { id: string; pos: RoomPosition }[];
     name: string;
-    settleable: boolean;
+    freeTiles: string;
+    settleableTiles: string;
+    settlingScanningIndex: number;
+    doneScanning: boolean;
   }
   interface DefenseDirectorStore {
     towers: string[];
@@ -137,7 +141,6 @@ declare global {
     buildingThisTick: boolean;
     remoteRooms: { [roomid: string]: remoteRoom };
     defenseDirector: DefenseDirectorStore;
-    scoutingDirector: ScoutingDirectorStore;
     helpOtherRoom: boolean;
   }
   interface ExpansionDirectorStore {
@@ -158,6 +161,7 @@ declare global {
       [key: string]: RoomType;
     };
     expansionDirector: ExpansionDirectorStore;
+    scoutingDirector: ScoutingDirectorStore;
   }
 }
 

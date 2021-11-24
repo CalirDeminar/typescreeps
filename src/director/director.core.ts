@@ -46,10 +46,6 @@ export class CoreDirector {
       hostileCreeps: [],
       activeTarget: null
     },
-    scoutingDirector: {
-      scoutedRooms: [],
-      scoutQueue: []
-    },
     helpOtherRoom: false
   };
   private static getAnchor(room: Room): Flag {

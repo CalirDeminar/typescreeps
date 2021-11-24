@@ -51,7 +51,7 @@ export class RemoteHarvestingDirector {
       }
       return false;
     });
-    const intel = Memory.roomStore[roomName].scoutingDirector.scoutedRooms;
+    const intel = Memory.scoutingDirector.scoutedRooms;
     const scoutedRooms = intel.map((r) => r.name);
     if (
       ((Game.time + Constants.remoteHarvestingTimingOffset) % 100 === 0 ||

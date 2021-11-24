@@ -6,7 +6,11 @@ export class RemoteConstruction {
   }
   private static getRoadsToAnchor(remRoom: RemoteDirectorStore): RoomPosition[] {
     const anchor = Game.flags[remRoom.anchorId];
-    if (Object.keys(Game.rooms).includes(remRoom.roomName) && Object.keys(Game.rooms).includes(anchor.pos.roomName)) {
+    if (
+      Object.keys(Game.rooms).includes(remRoom.roomName) &&
+      Object.keys(Game.rooms).includes(anchor.pos.roomName) &&
+      Memory.roomStore[anchor.pos.roomName].defenseDirector.wallMap
+    ) {
       const room = Game.rooms[remRoom.roomName];
       const homeRoom = Game.rooms[anchor.pos.roomName];
       const roads = room
@@ -40,7 +44,7 @@ export class RemoteConstruction {
                           .concat(Memory.roomStore[roomName].defenseDirector.wallMap)
                           .concat(store.labTemplate)
                           .concat(store.singleStructures.map((s) => s.pos));
-                        obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 10));
+                        obsticals.map((ext) => costMatrix.set(ext.x, ext.y, 50));
                       }
                     }
                   })

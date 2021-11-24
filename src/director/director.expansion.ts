@@ -1,6 +1,7 @@
 import { CreepBase } from "roles/role.creep";
 import { helper } from "../../test/integration/helper";
 import { ExpansionScouting } from "./scoutingExpansions/expansionScouting";
+import { unpackPosList } from "utils/packrat";
 
 export class ExpansionDirector {
   private static memoryInit(): void {
@@ -22,9 +23,9 @@ export class ExpansionDirector {
     const controllableRoomCount = Game.gcl.level;
     const existingRooms = Object.values(Memory.roomStore);
     const currentRoomCount = existingRooms.length;
-    const settleableRoomCount = existingRooms.reduce((acc: number, room) => {
-      return acc + room.scoutingDirector.scoutedRooms.filter((scoutedRoom) => scoutedRoom.settleable).length;
-    }, 0);
+    const settleableRoomCount = Memory.scoutingDirector.scoutedRooms.filter(
+      (scoutedRoom) => scoutedRoom.settleableTiles.length > 0
+    ).length;
     // console.log(`Current Room Count: ${currentRoomCount} - controllable Room Count: ${controllableRoomCount}`);
     return controllableRoomCount > currentRoomCount && settleableRoomCount > 0;
   }
@@ -41,19 +42,17 @@ export class ExpansionDirector {
   }
   private static getNextRoom(): ScoutedRoom | null {
     const existingRooms = Object.values(Memory.roomStore);
-    const scoutedRooms = existingRooms.reduce(
-      (acc: ScoutedRoom[], room) => acc.concat(room.scoutingDirector.scoutedRooms),
-      []
-    );
+    const scoutedRooms = Memory.scoutingDirector.scoutedRooms;
+
     const existingMinerals = existingRooms.map((room) => {
       const mineral = Game.getObjectById<Mineral>(room.minerals[0]);
       return mineral?.mineralType;
     });
     const existingRemoteRoomNames = existingRooms.reduce(
-      (acc: string[], room) => acc.concat(room.scoutingDirector.scoutedRooms.map((scoutedRoom) => scoutedRoom.name)),
+      (acc: string[], room) => acc.concat(room.remoteDirector.map((remoteRoom) => remoteRoom.roomName)),
       []
     );
-    const expansionCandidates = scoutedRooms.filter((room) => room.settleable);
+    const expansionCandidates = scoutedRooms.filter((room) => room.settleableTiles.length > 0);
     const sortedCandidates = expansionCandidates.sort((a, b) => {
       const aWeighting =
         (a.mineral && existingMinerals.includes(a.mineral.mineralType) ? 2 : 0) +
@@ -147,7 +146,9 @@ export class ExpansionDirector {
     if (this.shouldExpand() && this.canExpand() && !Memory.expansionDirector.targetRoom) {
       const expansionRoom = this.getNextRoom();
       if (expansionRoom) {
-        const spawnPos = ExpansionScouting.getExpansionRoomSpawnPos(expansionRoom);
+        const possibleTiles = unpackPosList(expansionRoom.settleableTiles);
+        const middleIndex = Math.floor(possibleTiles.length / 2);
+        const spawnPos = possibleTiles[middleIndex];
         const controllerId = expansionRoom.controller?.id;
         if (spawnPos && controllerId) {
           Memory.expansionDirector = {

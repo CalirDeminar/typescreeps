@@ -74,14 +74,17 @@ export class CoreRoomPlanner {
   }
   private static slotFree(pos: RoomPosition, avoids: RoomPosition[]): boolean {
     const plan = this.getCrossPlan(pos);
+    const roomVisible = Object.keys(Game.rooms).includes(pos.roomName);
     const blockingMask = this.getBlockingMask(pos);
     const terrain = Game.map.getRoomTerrain(pos.roomName);
     const taken = avoids.some((a) => plan.some((p) => a.isEqualTo(p)));
     const clipsTerrain = plan.some((p) => terrain.get(p.x, p.y) === 1);
-    const blockingSource = blockingMask.some((p) => p.lookFor(LOOK_SOURCES).length > 0);
-    const blockingController = blockingMask.some(
-      (p) => p.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_CONTROLLER).length > 0
-    );
+    const blockingSource = roomVisible ? blockingMask.some((p) => p.lookFor(LOOK_SOURCES).length > 0) : false;
+    const blockingController = roomVisible
+      ? blockingMask.some(
+          (p) => p.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_CONTROLLER).length > 0
+        )
+      : false;
     const diagonalOneBlocked =
       terrain.get(this.clampToRoomMinimums(pos.x + 1), this.clampToRoomMinimums(pos.y + 1)) === 1 &&
       terrain.get(this.clampToRoomMinimums(pos.x - 1), this.clampToRoomMinimums(pos.y - 1)) === 1;
@@ -98,15 +101,15 @@ export class CoreRoomPlanner {
     return (
       !taken &&
       !clipsTerrain &&
-      !blockingSource &&
-      !blockingController &&
       !diagonalOneBlocked &&
       !diagonalTwoBlocked &&
       !vertBlocked &&
-      !horBlocked
+      !horBlocked &&
+      !blockingSource &&
+      !blockingController
     );
   }
-  private static straightRun(anchor: RoomPosition, maxTiles: number, currentTiles: RoomPosition[]): RoomPosition[] {
+  public static straightRun(anchor: RoomPosition, maxTiles: number, currentTiles: RoomPosition[]): RoomPosition[] {
     return new Array(maxTiles)
       .fill(null)
       .reduce(
@@ -125,9 +128,10 @@ export class CoreRoomPlanner {
       )
       .slice(1, maxTiles + 1);
   }
-  public static runWithRetries(anchor: RoomPosition, maxTiles: number): RoomPosition[] {
+  public static runWithRetries(anchor: RoomPosition, maxTiles: number, slots?: number): RoomPosition[] {
+    // console.log(`Scanning: ${JSON.stringify(anchor)}`);
     let levels = [anchor];
-    for (let _lvl in _.range(0, 2)) {
+    for (let _lvl in _.range(0, slots ? slots : 2)) {
       const lvlSlots = levels.reduce((acc: RoomPosition[], pos) => acc.concat(this.getAdjacentSlots(pos)), []);
       levels = this.removePosDupes(levels.concat(lvlSlots));
     }

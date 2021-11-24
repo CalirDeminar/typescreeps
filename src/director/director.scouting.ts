@@ -1,7 +1,21 @@
 import { Constants } from "utils/constants";
 import { CreepBase } from "roles/role.creep";
 import { ExpansionScouting } from "./scoutingExpansions/expansionScouting";
+import { CoreRoomPlanner } from "./core/director.roomPlanner";
+import { packPosList, unpackPosList } from "utils/packrat";
 export class ScoutingDirector {
+  private static getFreeRoomTiles(roomName: string): RoomPosition[] {
+    const terrain = Game.map.getRoomTerrain(roomName);
+    return _.range(3, 46)
+      .reduce((acc: RoomPosition[], x) => {
+        return acc.concat(
+          _.range(3, 46).map((y) => {
+            return new RoomPosition(x, y, roomName);
+          })
+        );
+      }, [])
+      .filter((pos) => terrain.get(pos.x, pos.y) !== 1);
+  }
   private static getRoomCenter(roomName: string): RoomPosition {
     return new RoomPosition(25, 25, roomName);
   }
@@ -49,9 +63,7 @@ export class ScoutingDirector {
   }
   private static recordRoom(creep: Creep): void {
     const room = creep.room;
-    const roomExists = Memory.roomStore[creep.memory.homeRoom].scoutingDirector.scoutedRooms
-      .map((r) => r.name)
-      .includes(creep.room.name);
+    const roomExists = Memory.scoutingDirector.scoutedRooms.map((r) => r.name).includes(creep.room.name);
     if (!roomExists) {
       const sources = room.find(FIND_SOURCES).map((s) => {
         return { id: s.id, pos: s.pos };
@@ -84,6 +96,21 @@ export class ScoutingDirector {
       const towers = room.find<StructureTower>(FIND_HOSTILE_STRUCTURES, {
         filter: (s) => s.structureType === STRUCTURE_TOWER
       });
+      const freeTileFilterPositions = sources.map((s) => s.pos);
+      if (mineral) {
+        freeTileFilterPositions.push(mineral.pos);
+      }
+      if (room.controller) {
+        freeTileFilterPositions.push(room.controller.pos);
+      }
+      const filterX = freeTileFilterPositions.map((p) => p.x);
+      const filterY = freeTileFilterPositions.map((p) => p.y);
+      const filterLimits = {
+        xMin: Math.min(...filterX),
+        xMax: Math.max(...filterX),
+        yMin: Math.min(...filterY),
+        yMax: Math.max(...filterY)
+      };
       const record = {
         sources: sources,
         mineral: mineral,
@@ -95,11 +122,17 @@ export class ScoutingDirector {
         towers: towers,
         terrain: {},
         name: room.name,
-        settleable: false
+        settleableTiles: packPosList([]),
+        settlingScanningIndex: 0,
+        freeTiles: packPosList(
+          this.getFreeRoomTiles(room.name).filter(
+            (p) =>
+              p.x > filterLimits.xMin && p.x < filterLimits.xMax && p.y > filterLimits.yMin && p.y < filterLimits.yMax
+          )
+        ),
+        doneScanning: false
       };
-      Memory.roomStore[creep.memory.homeRoom].scoutingDirector.scoutedRooms = Memory.roomStore[
-        creep.memory.homeRoom
-      ].scoutingDirector.scoutedRooms.concat(record);
+      Memory.scoutingDirector.scoutedRooms = Memory.scoutingDirector.scoutedRooms.concat(record);
     }
   }
   private static runScouts(room: Room): void {
@@ -176,14 +209,13 @@ export class ScoutingDirector {
     const spawningScouts = Memory.roomStore[room.name].spawnQueue.filter(
       (c) => c.memory.role === "scout" && c.memory.homeRoom === room.name
     );
-    const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
     const shouldSpawnScout =
       room.controller &&
       room.controller.level > 1 &&
       ((Game.time + Constants.scoutingTimingOffset) %
         (room.controller.level === 2 ? Constants.earlyScoutFrequency : Constants.lateScoutFrequency) ===
         0 ||
-        Memory.roomStore[room.name].scoutingDirector.scoutedRooms === []) &&
+        Memory.scoutingDirector.scoutedRooms === []) &&
       scouts.length + spawningScouts.length === 0;
     if (shouldSpawnScout) {
       const initialTargets = this.getSurroundingRoomNames(room.name);
@@ -196,7 +228,7 @@ export class ScoutingDirector {
           scoutPositions: initialTargets
         }
       });
-      const knownRooms = Memory.roomStore[room.name].scoutingDirector.scoutedRooms
+      const knownRooms = Memory.scoutingDirector.scoutedRooms
         .map((r) => r.name)
         .concat(Object.keys(Memory.roomStore))
         .concat(Memory.roomStore[room.name].remoteDirector.map((r) => r.roomName));
@@ -219,21 +251,50 @@ export class ScoutingDirector {
       }
     }
   }
-  public static updateSettlementIntel(room: Room): void {
-    if ((Game.time + Constants.expansionTimingOffset) % 1000 === 0) {
-      const updatedRooms = Memory.roomStore[room.name].scoutingDirector.scoutedRooms.map((scoutedRoom) => {
-        return {
-          ...scoutedRoom,
-          settleable:
-            (ExpansionScouting.expandable(scoutedRoom) && ExpansionScouting.isExpandableByTerrain(scoutedRoom)) || false
-        };
-      });
-      Memory.roomStore[room.name].scoutingDirector.scoutedRooms = updatedRooms;
+  public static updateSettlementIntel(): boolean {
+    const requiredTiles = 17;
+    const memory = Memory.scoutingDirector;
+    const roomIndex = memory.scanningIndex;
+    const room = memory.scoutedRooms[roomIndex];
+    if (!room) {
+      // room doesn't exist in memory
+      Memory.scoutingDirector.scanningIndex = 0;
+      return false;
+    }
+    const freeTiles = unpackPosList(room.freeTiles);
+    const settleableTiles = unpackPosList(room.settleableTiles);
+    const scanIndex = room.settlingScanningIndex;
+    if (scanIndex === freeTiles.length - 1 || room.doneScanning) {
+      // finished scanning this room
+      Memory.scoutingDirector.scanningIndex += 1;
+      Memory.scoutingDirector.scoutedRooms[roomIndex].doneScanning = true;
+    }
+    const canScan = Game.cpu.bucket > 200;
+    if (canScan) {
+      // scan part of the room
+      const scanningCount = 1;
+      const nextTiles = freeTiles.slice(scanIndex, scanIndex + scanningCount);
+      const newSettleableTiles = settleableTiles.concat(
+        nextTiles.filter((t) => CoreRoomPlanner.straightRun(t, requiredTiles, []).length === requiredTiles)
+      );
+      Memory.scoutingDirector.scoutedRooms[roomIndex].settleableTiles = packPosList(newSettleableTiles);
+      Memory.scoutingDirector.scoutedRooms[roomIndex].settlingScanningIndex += scanningCount;
+    }
+    return true;
+  }
+  private static initMemory(): void {
+    if (!Object.keys(Memory).includes("scoutingDirector")) {
+      Memory.scoutingDirector = {
+        scoutedRooms: [],
+        scoutQueue: [],
+        scanningIndex: 0
+      };
     }
   }
   public static run(room: Room): void {
+    this.initMemory();
     this.spawnScout(room);
     this.runScouts(room);
-    this.updateSettlementIntel(room);
+    this.updateSettlementIntel();
   }
 }
