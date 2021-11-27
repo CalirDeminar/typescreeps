@@ -1,6 +1,27 @@
-import { CreepBase } from "./role.creep";
+import { PositionsUtils } from "rework/utils/positions";
+import { CreepBuilder } from "utils/creepBuilder";
 
-export class Queen extends CreepBase {
+import { CreepBase } from "roles/role.creep";
+import { CreepUtils } from "rework/utils/creepUtils";
+export interface CreepQueenMemory {
+  role: "queen";
+  homeRoom: string;
+  targetRoom: string;
+  targetSource: string;
+  working: boolean;
+  workTarget: string;
+}
+export class LocalRoomCoreQueen {
+  private static getStore(room: Room): StructureContainer | StructureStorage {
+    const anchor = PositionsUtils.getAnchor(room);
+    const container = anchor.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER
+    });
+    const storage = anchor.findInRange<StructureStorage>(FIND_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_STORAGE
+    });
+    return storage[0] || container[0];
+  }
   private static pathColour() {
     return "red";
   }
@@ -41,7 +62,7 @@ export class Queen extends CreepBase {
     if (nearContainer) {
       creep.withdraw(container, RESOURCE_ENERGY);
     } else {
-      this.travelTo(creep, container, this.pathColour());
+      CreepBase.travelTo(creep, container, this.pathColour());
     }
   }
   private static getClosestStructure(
@@ -77,7 +98,7 @@ export class Queen extends CreepBase {
     }
     return "";
   }
-  public static fillCore(creep: Creep): void {
+  private static fillCore(creep: Creep): void {
     let target = Game.getObjectById<StructureSpawn | StructureExtension | null>(creep.memory.workTarget);
     if (!target || target.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
       creep.memory.workTarget = this.findTarget(creep);
@@ -100,13 +121,13 @@ export class Queen extends CreepBase {
           break;
         default:
           if (target) {
-            this.travelTo(creep, target, this.pathColour());
+            CreepBase.travelTo(creep, target, this.pathColour());
           }
           break;
       }
     }
   }
-  public static run(creep: Creep) {
+  private static runQueen(creep: Creep) {
     if (creep.ticksToLive) {
       const room = creep.room;
       const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
@@ -123,6 +144,50 @@ export class Queen extends CreepBase {
             break;
         }
       }
+    }
+  }
+  private static spawnQueen(room: Room, container: StructureContainer | StructureStorage): void {
+    if (container && container.store.getUsedCapacity() > 0) {
+      const activeQueens = CreepUtils.filterCreeps("queen", room.name, room.name);
+      const queuedQueens = CreepUtils.filterQueuedCreeps(room.name, "queen", room.name, room.name);
+      if (
+        activeQueens.length < 1 ||
+        (activeQueens.length === 1 &&
+          activeQueens[0] &&
+          activeQueens[0].ticksToLive &&
+          activeQueens[0].ticksToLive < 100)
+      ) {
+        const optimalEnergy =
+          activeQueens.length === 1
+            ? Math.min(room.energyCapacityAvailable, 1250)
+            : Math.max(room.energyAvailable, 300);
+        const template = {
+          template: CreepBuilder.buildHaulingCreep(optimalEnergy),
+          memory: {
+            ...CreepBase.baseMemory,
+            role: "queen",
+            working: false,
+            homeRoom: room.name,
+            targetRoom: room.name
+          }
+        };
+        if (queuedQueens.length > 0) {
+          const index = CreepUtils.findQueuedCreepIndex(room.name, "queen", room.name, room.name);
+          if (index >= 0) {
+            Memory.roomStore[room.name].spawnQueue[index] = template;
+          }
+        } else {
+          Memory.roomStore[room.name].spawnQueue.push(template);
+        }
+      }
+    }
+  }
+  public static run(room: Room): void {
+    const store = this.getStore(room);
+    this.spawnQueen(room, store);
+    const queen = CreepUtils.filterCreeps("queen", room.name, room.name)[0];
+    if (queen) {
+      this.runQueen(queen);
     }
   }
 }

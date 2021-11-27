@@ -2,24 +2,30 @@ import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
-export class SourceLinkDirector {
-  private static getCreepRoleAt(role: string, sourceId: string, roomName: string): Creep[] {
-    return _.filter(
-      Game.creeps,
-      (c) => c.memory.role === role && c.memory.targetSource === sourceId && c.memory.homeRoom === roomName
-    );
-  }
+import { CreepUtils } from "rework/utils/creepUtils";
+export interface CreepHarvesterStaticLinkMemory {
+  role: "harvesterStatic";
+  homeRoom: string;
+  targetRoom: string;
+  targetSource: string;
+  working: boolean;
+}
+export class LocalRoomEnergyLink {
   private static shouldReplaceCreeps(creeps: Creep[], queuedCreeps: CreepRecipie[], max: number): boolean {
     return (
       creeps.length + queuedCreeps.length < max ||
       (creeps.length + queuedCreeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 150))
     );
   }
-  private static spawnStaticHarvester(room: Room, source: Source, link: StructureLink): boolean {
-    const activeHarvesters = this.getCreepRoleAt("harvesterStatic", source.id, room.name);
-    const queuedHarvesters = Memory.roomStore[room.name].spawnQueue.filter(
-      (c) =>
-        c.memory.role === "harvesterStatic" && c.memory.targetSource === source.id && c.memory.homeRoom === room.name
+  private static spawnStaticHarvester(source: Source, link: StructureLink): boolean {
+    const room = source.room;
+    const activeHarvesters = CreepUtils.filterCreeps("harvesterStatic", room.name, room.name, source.id);
+    const queuedHarvesters = CreepUtils.filterQueuedCreeps(
+      room.name,
+      "harvesterStatic",
+      room.name,
+      room.name,
+      source.id
     );
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, [], Constants.maxStatic);
     const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === source.room.name).length < 4;
@@ -39,14 +45,7 @@ export class SourceLinkDirector {
         }
       };
       if (queuedHarvesters.length > 0) {
-        const index = Memory.roomStore[source.room.name].spawnQueue.findIndex(
-          (c) =>
-            c.memory.role === "harvesterStatic" &&
-            c.memory.targetSource === source.id &&
-            c.memory.homeRoom === room.name &&
-            c.memory.targetRoom === room.name &&
-            c.memory.targetStore === link.id
-        );
+        const index = CreepUtils.findQueuedCreepIndex(room.name, "harvesterStatic", room.name, room.name, source.id);
         if (index >= 0) {
           Memory.roomStore[source.room.name].spawnQueue[index] = template;
         }
@@ -64,7 +63,6 @@ export class SourceLinkDirector {
     const empty = creep.store.getUsedCapacity() === 0;
     if (!working && empty) {
       creep.memory.working = true;
-      creep.memory.dropOffTarget = "";
     } else if (working && full) {
       creep.memory.working = false;
     }
@@ -129,8 +127,8 @@ export class SourceLinkDirector {
         this.runHarvester(c, source);
       });
   }
-  private static runLink(link: StructureLink, anchor: Flag): void {
-    const anchorLink = this.getAnchorLink(link.room, anchor);
+  private static runLink(link: StructureLink, anchor: RoomPosition): void {
+    const anchorLink = this.getAnchorLink(anchor);
     if (link && anchorLink && link.cooldown === 0) {
       const toTransfer = Math.min(800 - anchorLink.store[RESOURCE_ENERGY], link.store[RESOURCE_ENERGY]);
       const transferBoundary = 200;
@@ -139,14 +137,16 @@ export class SourceLinkDirector {
       }
     }
   }
-  private static getAnchorLink(room: Room, anchor: Flag): StructureLink | null {
-    return anchor.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
+  private static getAnchorLink(anchor: RoomPosition): StructureLink | null {
+    return anchor.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
   }
-  public static run(room: Room, source: Source, link: StructureLink, anchor: Flag): void {
+  public static run(source: Source, link: StructureLink): void {
+    const anchor = UtilPosition.getAnchor(source.room);
+
     this.runHarvesters(source);
-    this.spawnStaticHarvester(room, source, link);
+    this.spawnStaticHarvester(source, link);
     this.runLink(link, anchor);
   }
 }

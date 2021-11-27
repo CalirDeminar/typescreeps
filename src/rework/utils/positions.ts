@@ -1,6 +1,9 @@
-export class UtilPosition {
+export class PositionsUtils {
   public static getAnchor(room: Room): RoomPosition {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0].pos;
+  }
+  public static findStructureInRange(pos: RoomPosition, range: number, structureType: BuildableStructureConstant) {
+    return pos.findInRange(FIND_STRUCTURES, range).filter((s) => s.structureType === structureType)[0];
   }
   public static getSurroundingFreeTiles(anchor: RoomPosition): RoomPosition[] {
     const terrain = Game.map.getRoomTerrain(anchor.roomName);
@@ -19,7 +22,7 @@ export class UtilPosition {
     target: RoomPosition,
     avoid: RoomPosition[] = []
   ): RoomPosition {
-    const surroundings = this.getSurroundingFreeTiles(anchor);
+    const surroundings = this.getSurroundingFreeTiles(anchor).filter((t) => !avoid.some((a) => a.isEqualTo(t)));
     const rangeList = surroundings.sort((p1, p2) => {
       const len =
         p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length -
@@ -32,9 +35,6 @@ export class UtilPosition {
     } else {
       return anchor;
     }
-  }
-  public static findByPosition(pos: RoomPosition, type: BuildableStructureConstant, range?: number): Structure | null {
-    return pos.findInRange(FIND_STRUCTURES, range || 1).filter((s) => s.structureType === type)[0];
   }
   public static isBoundary(x: number, y: number): boolean {
     const boundaries = [0, 49];

@@ -1,5 +1,3 @@
-import { UtilPosition } from "utils/util.position";
-
 export class CreepBase {
   private static filterStructures(
     type: STRUCTURE_STORAGE | STRUCTURE_SPAWN | STRUCTURE_EXTENSION | STRUCTURE_CONTAINER,
