@@ -92,4 +92,20 @@ export class PositionsUtils {
         return pos;
     }
   }
+  public static getRoomNeighbors(room: Room): (string | undefined)[] {
+    const roomNames = Object.values(Game.map.describeExits(room.name));
+    const filtered = roomNames.filter((n) => {
+      if (n) {
+        const exitDir = Game.rooms[room.name].findExitTo(n);
+        if (exitDir !== -2 && exitDir !== -10) {
+          const exit = Game.rooms[room.name].find(exitDir, {
+            filter: (p) => p.lookFor(LOOK_STRUCTURES).length === 0
+          });
+          return exit.length > 0;
+        }
+      }
+      return false;
+    });
+    return filtered;
+  }
 }

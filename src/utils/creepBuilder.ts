@@ -44,4 +44,19 @@ export class CreepBuilder {
     const carryParts = thirds * 2;
     return [...new Array(moveParts).fill(MOVE), ...new Array(carryParts).fill(CARRY)];
   }
+  public static createRemoteCreeps(energy: number): { hauler: BodyPartConstant[]; worker: BodyPartConstant[] } {
+    const workerN = 150;
+    const workerOverhead = 50;
+    const haulerN = 500;
+    const scaleBudget = energy;
+    const sectionCount = Math.floor(scaleBudget / haulerN);
+    return {
+      hauler: [...new Array(sectionCount * 5).fill("carry"), ...new Array(sectionCount * 5).fill("move")],
+      worker: [...new Array(sectionCount).fill("work"), ...new Array(sectionCount).fill("move"), "carry"]
+    };
+    // non-overhead = ener
+    // harvester design - N*[WORK, MOVE] + [CARRY]
+    // hauler design - 6N*[MOVE, CARRY]
+    // ONLY spawn hauler if container has been made
+  }
 }
