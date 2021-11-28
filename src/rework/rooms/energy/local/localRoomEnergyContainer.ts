@@ -187,10 +187,12 @@ export class LocalRoomEnergyContainer {
         case withdrawing:
           CreepBase.travelTo(creep, container, "blue");
           break;
-        case !withdrawing && creep.memory.targetStore === "":
+        case !withdrawing &&
+          (creep.memory.targetStore === "" ||
+            (storeTarget && storeTarget.structureType === STRUCTURE_CONTAINER && Game.time % 10 === 0)):
           const target = this.getStoreTarget(creep);
           creep.memory.targetStore = target ? target.id : "";
-          break;
+        // break;
         case storeTarget && creep.pos.isNearTo(storeTarget):
           if (storeTarget) {
             creep.transfer(storeTarget, RESOURCE_ENERGY);

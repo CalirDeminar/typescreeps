@@ -216,6 +216,9 @@ export class LocalRoomConstruction {
     })[0];
     const canHaveLink = Constants.maxLinks[level] >= 4;
     const anchor = UtilPosition.getAnchor(room);
+    if (!anchor) {
+      return false;
+    }
     const anchorContainer = anchor.findInRange(FIND_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER
     });

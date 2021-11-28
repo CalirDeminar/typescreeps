@@ -109,6 +109,10 @@ export class LocalRoomCoreUpgrader {
   public static run(room: Room): void {
     const container = this.getEnergySource(room);
     this.spawnUpgrader(room);
-    CreepUtils.filterCreeps("upgrader", room.name, room.name).forEach((c) => this.runUpgrader(c, container));
+    const builders = CreepUtils.filterCreeps("builder", room.name, room.name);
+    const sites = room.find(FIND_CONSTRUCTION_SITES);
+    if (!sites || (sites && builders.length > 0)) {
+      CreepUtils.filterCreeps("upgrader", room.name, room.name).forEach((c) => this.runUpgrader(c, container));
+    }
   }
 }
