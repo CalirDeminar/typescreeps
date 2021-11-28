@@ -194,12 +194,25 @@ export class CoreRoomPlanner {
       );
     }
   }
+  private static tileRoads(tile: RoomPosition): RoomPosition[] {
+    return [
+      new RoomPosition(tile.x + 2, tile.y, tile.roomName),
+      new RoomPosition(tile.x - 2, tile.y, tile.roomName),
+      new RoomPosition(tile.x, tile.y + 2, tile.roomName),
+      new RoomPosition(tile.x, tile.y - 2, tile.roomName),
+      new RoomPosition(tile.x + 1, tile.y + 1, tile.roomName),
+      new RoomPosition(tile.x - 1, tile.y - 1, tile.roomName),
+      new RoomPosition(tile.x - 1, tile.y + 1, tile.roomName),
+      new RoomPosition(tile.x + 1, tile.y - 1, tile.roomName)
+    ];
+  }
   public static generateStructures(anchor: RoomPosition) {
     const tileCores = this.runWithRetries(anchor, 17);
     const techCore = tileCores[1];
     const extensionTiles = tileCores
       .slice(4, 16)
       .reduce((acc: RoomPosition[], e: RoomPosition) => acc.concat(this.getCrossPlan(e)), []);
+    const extensionRoads = tileCores.reduce((acc: RoomPosition[], t) => acc.concat(this.tileRoads(t)), []);
     const towerTiles = this.getCrossPlan(tileCores[0]);
     const labTiles = [...this.getCrossPlan(tileCores[2]), ...this.getCrossPlan(tileCores[3])];
     const coreLink = new RoomPosition(anchor.x - 1, anchor.y, anchor.roomName);
@@ -214,6 +227,7 @@ export class CoreRoomPlanner {
     const observer = new RoomPosition(tileCores[16].x, tileCores[16].y, tileCores[16].roomName);
     return {
       extensions: extensionTiles,
+      extensionRoads,
       labs: labTiles,
       towers: towerTiles,
       storage,

@@ -79,7 +79,8 @@ export class LocalRoomConstructionPlanner {
       .map((s) => s.pos)
       .concat(room.controller.pos)
       .concat(room.find(FIND_MINERALS).map((m) => m.pos))
-      .reduce((acc: RoomPosition[], pos) => acc.concat(this.runRoad(pos, anchor, avoids)), []);
+      .reduce((acc: RoomPosition[], pos) => acc.concat(this.runRoad(pos, anchor, avoids)), [])
+      .concat(structures.extensionRoads);
     Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = roads;
   }
 }

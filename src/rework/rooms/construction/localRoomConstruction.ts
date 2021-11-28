@@ -215,8 +215,11 @@ export class LocalRoomConstruction {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.findInRange(FIND_SOURCES, 1).length === 0
     })[0];
     const canHaveLink = Constants.maxLinks[level] >= 4;
-    if (!container && level >= 3 && !canHaveLink) {
-      const anchor = UtilPosition.getAnchor(room);
+    const anchor = UtilPosition.getAnchor(room);
+    const anchorContainer = anchor.findInRange(FIND_STRUCTURES, 1, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER
+    });
+    if (!container && level >= 3 && !canHaveLink && !!anchorContainer) {
       const structStore = Memory.roomStore[room.name].constructionDirector;
       const defStore = Memory.roomStore[room.name].defenseDirector;
       const avoids = structStore.extensionTemplate
