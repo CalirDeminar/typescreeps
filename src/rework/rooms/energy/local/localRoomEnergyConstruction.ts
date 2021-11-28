@@ -6,13 +6,14 @@ export class LocalRoomEnergyConstruction {
       pos
         .lookFor(LOOK_STRUCTURES)
         .filter((s) => s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_RAMPART).length === 0;
-    if (validPos) {
+    const buildingThisTick = Memory.roomStore[pos.roomName].buildingThisTick;
+    if (validPos && !buildingThisTick) {
       return pos.createConstructionSite(type) === OK;
     }
     return false;
   }
-  public static getCoreStructures(room: Room) {
-    const anchor = PositionsUtils.getAnchor(room);
+  public static getCoreStructures(room: Room, anchor: RoomPosition) {
+    // const anchor = PositionsUtils.getAnchor(room);
     const container = PositionsUtils.findStructureInRange(anchor, 1, STRUCTURE_CONTAINER);
     const link = PositionsUtils.findStructureInRange(anchor, 1, STRUCTURE_LINK);
     return {
@@ -39,12 +40,12 @@ export class LocalRoomEnergyConstruction {
   }
   public static placeStructures(source: Source): void {
     const room = source.room;
+    const anchor = PositionsUtils.getAnchor(room);
     const controller = room.controller;
-    const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0 || Memory.roomStore[room.name].buildingThisTick;
-    if (controller && !activeSite) {
+    // const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0 || Memory.roomStore[room.name].buildingThisTick;
+    if (controller && anchor) {
       const avoids = this.genreateAvoids(room);
-      const anchor = PositionsUtils.getAnchor(room);
-      const coreStructures = this.getCoreStructures(room);
+      const coreStructures = this.getCoreStructures(room, anchor);
       const sourceStructures = this.getSourceStructures(source);
       const shouldBuildContainer =
         Constants.maxContainers[controller.level] > 0 && !sourceStructures.link && !sourceStructures.container;

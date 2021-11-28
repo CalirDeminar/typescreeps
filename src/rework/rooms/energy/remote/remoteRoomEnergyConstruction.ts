@@ -16,8 +16,9 @@ export class RemoteRoomEnergyConstruction {
             _.range(-1, 2).map((y) => {
               const pos = new RoomPosition(source.pos.x + x, source.pos.y + y, source.pos.roomName);
               if (terrain.get(pos.x, pos.y) !== 1 && !built) {
-                pos.createConstructionSite(STRUCTURE_CONTAINER);
-                built = true;
+                if (pos.createConstructionSite(STRUCTURE_CONTAINER) === OK) {
+                  built = true;
+                }
               }
             });
           });

@@ -65,7 +65,7 @@ export class LocalRoomEnergyShuttle {
       const working = creep.memory.working;
       const storeTarget = working
         ? null
-        : CreepBase.findContainer(creep) || CreepBase.findSpawn(creep) || CreepBase.findExtension(creep, []);
+        : CreepBase.findSpawn(creep) || CreepBase.findContainer(creep) || CreepBase.findExtension(creep, []);
       switch (true) {
         case working && creep.pos.isNearTo(source):
           creep.harvest(source);

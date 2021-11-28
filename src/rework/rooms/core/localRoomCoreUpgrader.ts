@@ -41,21 +41,27 @@ export class LocalRoomCoreUpgrader {
       }
     }
   }
-  public static getEnergySource(room: Room): StructureContainer | StructureLink | undefined {
+  public static getEnergySource(room: Room): StructureContainer | StructureLink | StructureSpawn | undefined {
     const containerHaulers = CreepUtils.filterCreeps("controllerHauler", room.name);
-    const container = room.controller?.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 2, {
+    // const isSpawning = Memory.roomStore[room.name].spawnQueue.length > 0;
+    // if (isSpawning) {
+    //   return undefined;
+    // }
+    const container = room.controller?.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 3, {
       filter: (s) =>
         s.structureType === STRUCTURE_CONTAINER &&
         s.pos.findInRange(FIND_SOURCES, 1).length === 0 &&
-        containerHaulers.length > 0 &&
-        s.store.getUsedCapacity(RESOURCE_ENERGY) > 100
+        containerHaulers.length > 0
     })[0];
     const link = room.controller?.pos.findInRange<StructureLink>(FIND_MY_STRUCTURES, 3, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
     return link || container;
   }
-  public static runUpgrader(creep: Creep, energySource: StructureContainer | StructureLink | undefined): void {
+  public static runUpgrader(
+    creep: Creep,
+    energySource: StructureContainer | StructureLink | StructureSpawn | undefined
+  ): void {
     if (creep.ticksToLive) {
       const controller = Game.getObjectById<StructureController>(creep.memory.upgradeTarget);
       CreepBase.maintainRoad(creep);
@@ -75,7 +81,7 @@ export class LocalRoomCoreUpgrader {
           creep.moveTo(controller, { visualizePathStyle: { stroke: this.pathColour() } });
         }
       } else {
-        const controllerContainer = energySource;
+        const controllerContainer = energySource || CreepBase.getSourceTarget(creep);
         const sourceTarget:
           | StructureContainer
           | StructureLink
@@ -87,7 +93,7 @@ export class LocalRoomCoreUpgrader {
           | null =
           creep.memory.targetStore !== ""
             ? Game.getObjectById<StructureContainer | StructureLink | null>(creep.memory.targetSource)
-            : controllerContainer || energySource;
+            : controllerContainer;
         const sourceEmpty = sourceTarget?.store.energy === 0;
         if (sourceTarget && sourceEmpty) {
           const path = PathFinder.search(creep.pos, { pos: sourceTarget.pos, range: 2 }, { flee: true }).path;

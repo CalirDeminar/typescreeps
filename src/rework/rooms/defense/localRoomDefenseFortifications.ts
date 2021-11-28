@@ -26,11 +26,8 @@ export class LocalRoomDefenseFortifications {
       filter: (s) =>
         (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) && s.hits < Constants.repairLimit
     });
-    const currentAvg = allRamparts.reduce((acc, r) => acc + r.hits, 0) / allRamparts.length;
-    const needsNewMason =
-      activeMasons.length + queuedMasons.length < masonTarget &&
-      storage &&
-      room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART }).length > 0;
+    const currentAvg = allRamparts.reduce((acc, r) => acc + r.hits, 0) / (allRamparts.length || 1);
+    const needsNewMason = activeMasons.length + queuedMasons.length < masonTarget && storage && allRamparts.length > 0;
     const energyBudget =
       currentAvg < 1_000_000 || highAlertLevel
         ? Math.min(room.energyCapacityAvailable, 1250)

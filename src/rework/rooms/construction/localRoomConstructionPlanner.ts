@@ -20,6 +20,9 @@ export class LocalRoomConstructionPlanner {
       return;
     }
     const anchor = PositionsUtils.getAnchor(room);
+    if (!anchor) {
+      return;
+    }
     const structures = CoreRoomPlanner.generateStructures(anchor);
     Memory.roomStore[room.name].constructionDirector.extensionTemplate = structures.extensions;
     Memory.roomStore[room.name].constructionDirector.towerTemplate = structures.towers;

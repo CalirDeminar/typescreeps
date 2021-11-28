@@ -1,6 +1,7 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
 import { Constants } from "utils/constants";
+import { UtilPosition } from "utils/util.position";
 import { LocalRoomConstructionPlanner } from "./localRoomConstructionPlanner";
 
 export interface ConstructionDirector {
@@ -85,6 +86,12 @@ export class LocalRoomConstruction {
     const shouldBuildNuker = currentNuker.length < Constants.maxNukers[level];
     const currentPowerSpawn = structures.filter((s) => s.structureType === STRUCTURE_POWER_SPAWN);
     const shouldBuildPowerSpawn = currentPowerSpawn.length < Constants.maxPowerSpawns[level];
+    const coreLink = structures.filter(
+      (s) =>
+        s.structureType === STRUCTURE_LINK &&
+        s.pos.findInRange(FIND_FLAGS, 1, { filter: (f) => f.name === `${room.name}-Anchor` })
+    );
+    const shouldBuildCoreLink = coreLink.length === 0 && Constants.maxLinks[level] >= 1;
     switch (true) {
       case shouldBuildSpawn: {
         const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
@@ -106,6 +113,17 @@ export class LocalRoomConstruction {
         if (next) {
           return (
             new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_STORAGE) === OK
+          );
+        }
+        break;
+      }
+      case shouldBuildCoreLink: {
+        const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
+          (s) => s.type === STRUCTURE_LINK
+        )[0];
+        if (next) {
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_LINK) === OK
           );
         }
         break;
@@ -180,17 +198,57 @@ export class LocalRoomConstruction {
     }
     return false;
   }
+  private static buildControllerContainer(room: Room, level: number): boolean {
+    const controller = room.controller;
+    if (!controller) {
+      return false;
+    }
+    const container = controller.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 3, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.findInRange(FIND_SOURCES, 1).length === 0
+    })[0];
+    const canHaveLink = Constants.maxLinks[level] >= 4;
+    if (!container && level >= 3 && !canHaveLink) {
+      const anchor = UtilPosition.getAnchor(room);
+      const structStore = Memory.roomStore[room.name].constructionDirector;
+      const defStore = Memory.roomStore[room.name].defenseDirector;
+      const avoids = structStore.extensionTemplate
+        .concat(structStore.towerTemplate)
+        .concat(structStore.labTemplate)
+        .concat(structStore.singleStructures.map((s) => s.pos))
+        .concat(defStore.wallMap);
+      const containerPos = PositionsUtils.getClosestSurroundingTo(
+        PositionsUtils.getClosestSurroundingTo(
+          PositionsUtils.getClosestSurroundingTo(controller.pos, anchor, avoids),
+          anchor,
+          avoids
+        ),
+        anchor,
+        avoids
+      );
+      const rtn = containerPos.createConstructionSite(STRUCTURE_CONTAINER) === OK;
+      if (rtn) {
+        Memory.roomStore[room.name].buildingThisTick = true;
+      }
+      return rtn;
+    }
+    return false;
+  }
   private static nextSite(room: Room): void {
     if (room.controller) {
       const level = room.controller.level;
       const structures = room.find(FIND_MY_STRUCTURES);
       const sites = room.find(FIND_CONSTRUCTION_SITES);
       if (sites.length === 0) {
-        this.nextExtension(room, structures, level) ||
+        const rtn =
+          this.nextExtension(room, structures, level) ||
           this.singleStructures(room, structures, level) ||
           this.nextTower(room, structures, level) ||
+          this.buildControllerContainer(room, level) ||
           this.buildRoads(room, level) ||
           this.nextLab(room, structures, level);
+        if (rtn) {
+          Memory.roomStore[room.name].buildingThisTick = true;
+        }
         // search single buildings
         // search roads
       }

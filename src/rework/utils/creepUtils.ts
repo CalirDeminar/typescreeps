@@ -23,7 +23,7 @@ export class CreepUtils {
       (c) =>
         c.memory.role === role &&
         c.memory.homeRoom === homeRoom &&
-        (!targetRoom || c.memory.targetSource === targetRoom) &&
+        (!targetRoom || c.memory.targetRoom === targetRoom) &&
         (!targetSource || c.memory.targetSource === targetSource)
     );
   }

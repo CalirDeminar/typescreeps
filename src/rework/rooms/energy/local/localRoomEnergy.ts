@@ -9,7 +9,6 @@ export class LocalRoomEnergy {
       .findInRange<StructureContainer>(FIND_STRUCTURES, 2)
       .filter((s) => s.structureType === "container")[0];
     const link = source.pos.findInRange<StructureLink>(FIND_STRUCTURES, 2).filter((s) => s.structureType === "link")[0];
-    LocalRoomEnergyConstruction.placeStructures(source);
     switch (true) {
       case !!link:
         LocalRoomEnergyLink.run(source, link);
@@ -21,6 +20,7 @@ export class LocalRoomEnergy {
         LocalRoomEnergyShuttle.run(source);
         break;
     }
+    LocalRoomEnergyConstruction.placeStructures(source);
   }
   public static run(room: Room): void {
     const sources = room.find(FIND_SOURCES);

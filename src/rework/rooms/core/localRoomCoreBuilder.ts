@@ -89,9 +89,9 @@ export class LocalRoomCoreBuilder {
   private static runBuilders(room: Room): void {
     const hasSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
     const container = LocalRoomCoreUpgrader.getEnergySource(room);
-    _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.homeRoom === room.name).map((c) =>
-      hasSites ? this.runBuilder(c) : LocalRoomCoreUpgrader.runUpgrader(c, container)
-    );
+    _.filter(Game.creeps, (c) => c.memory.role === "builder" && c.memory.homeRoom === room.name).map((c) => {
+      hasSites ? this.runBuilder(c) : LocalRoomCoreUpgrader.runUpgrader(c, container);
+    });
   }
   private static spawnBuilder(room: Room): void {
     const storage = room.storage;

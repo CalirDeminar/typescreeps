@@ -39,7 +39,7 @@ export class Constants {
     { x: 1, y: 1 },
     { x: -1, y: -2 }
   ];
-  public static repairLimit: 2_000_000;
+  public static repairLimit = 2_000_000;
 }
 // [0, 0, 0, 0, 0, 0, 0, 0, 0]
 // Flag Anchor 0,0

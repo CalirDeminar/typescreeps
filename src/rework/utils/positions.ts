@@ -1,6 +1,6 @@
 export class PositionsUtils {
-  public static getAnchor(room: Room): RoomPosition {
-    return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0].pos;
+  public static getAnchor(room: Room): RoomPosition | undefined {
+    return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0]?.pos;
   }
   public static findStructureInRange(pos: RoomPosition, range: number, structureType: BuildableStructureConstant) {
     return pos.findInRange(FIND_STRUCTURES, range).filter((s) => s.structureType === structureType)[0];
@@ -22,7 +22,14 @@ export class PositionsUtils {
     target: RoomPosition,
     avoid: RoomPosition[] = []
   ): RoomPosition {
-    const surroundings = this.getSurroundingFreeTiles(anchor).filter((t) => !avoid.some((a) => a.isEqualTo(t)));
+    const surroundings = this.getSurroundingFreeTiles(anchor).filter(
+      (t) =>
+        !avoid
+          .map((a) => new RoomPosition(a.x, a.y, a.roomName))
+          .some((a) => {
+            return a.isEqualTo(t);
+          })
+    );
     const rangeList = surroundings.sort((p1, p2) => {
       const len =
         p1.findPathTo(target, { ignoreCreeps: true, swampCost: 1, range: 1 }).length -

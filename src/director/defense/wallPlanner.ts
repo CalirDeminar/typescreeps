@@ -126,8 +126,19 @@ export class WallPlanner {
         this.getBoundingRect(memory.internalRoadTemplate),
         this.getBoundingRect(sources)
       ];
+      const monoRect = [
+        this.getBoundingRect([
+          ...memory.extensionTemplate,
+          ...memory.towerTemplate,
+          ...memory.labTemplate,
+          ...structures,
+          ...minerals,
+          ...memory.internalRoadTemplate,
+          ...sources
+        ])
+      ];
       // TODO - write own minCut alg
-      const chokes = util_mincut.GetCutTiles(room.name, rects).map((t) => new RoomPosition(t.x, t.y, room.name));
+      const chokes = util_mincut.GetCutTiles(room.name, monoRect).map((t) => new RoomPosition(t.x, t.y, room.name));
       const exits = this.getRoomExits(room);
       const exitPaths = exits.reduce((acc: RoomPosition[], e: RoomPosition) => {
         return acc.concat(e.findPathTo(anchor.pos).map((p) => new RoomPosition(p.x, p.y, room.name)));
