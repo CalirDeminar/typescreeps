@@ -113,8 +113,10 @@ export class LocalRoomCoreBuilder {
       builders.reduce((acc, creep) => {
         return acc + (creep.memory.working ? 0 : creep.store.getCapacity());
       }, 0) > 250;
+    const roomHostile = Memory.roomStore[room.name].defenseDirector.alertLevel > 0;
     const spawners = room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN });
     if (
+      !roomHostile &&
       spawners.length > 0 &&
       room.controller &&
       room.controller.level < 8 &&

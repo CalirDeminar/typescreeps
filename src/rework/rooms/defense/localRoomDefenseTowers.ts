@@ -45,35 +45,39 @@ export class LocalRoomDefenseTowers {
     }
     return null;
   }
-  public static defendRoom(room: Room, targets: Creep[]): void {
+  public static defendRoom(room: Room, targets: Creep[]): boolean {
     let store = Memory.roomStore[room.name].defenseDirector;
     if (store.alertLevel >= 2) {
       const towers = room.find<StructureTower>(FIND_MY_STRUCTURES, {
         filter: (s) => s.structureType === STRUCTURE_TOWER
       });
       const currentTargetAlive = !!targets.find((t) => t.name === store.activeTarget);
-      if (!currentTargetAlive) {
+      if (!currentTargetAlive || Game.time % 10 === 0) {
         const newTarget = this.getTarget(room, targets, towers);
         if (newTarget) {
+          console.log(`New Target: ${newTarget.name}`);
           Memory.roomStore[room.name].defenseDirector.activeTarget = newTarget.name;
           store = Memory.roomStore[room.name].defenseDirector;
+        } else {
+          Memory.roomStore[room.name].defenseDirector.activeTarget = null;
         }
       }
       const target = targets.find((t) => t.name === store.activeTarget);
       if (target) {
-        towers.map((t) => {
-          if (t.structureType === STRUCTURE_TOWER) {
-            t.attack(target);
-          }
-        });
+        return towers
+          .map((t) => {
+            if (t.structureType === STRUCTURE_TOWER) {
+              t.attack(target);
+              return true;
+            }
+            return false;
+          })
+          .some((t) => t === true);
       }
     }
+    return false;
   }
   public static runTowers(room: Room, targets: Creep[]): void {
-    if (targets.length > 0) {
-      this.defendRoom(room, targets);
-    } else {
-      this.maintainRoom(room);
-    }
+    this.defendRoom(room, targets) || this.maintainRoom(room);
   }
 }

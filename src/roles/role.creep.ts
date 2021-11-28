@@ -24,7 +24,13 @@ export class CreepBase {
     lastPosition: null,
     stuckCounter: 0
   };
-  public static travelTo(creep: Creep, target: RoomPosition | HasPos, pathColour: string, range?: number | 1) {
+  public static travelTo(
+    creep: Creep,
+    target: RoomPosition | HasPos,
+    pathColour: string,
+    range?: number | 1,
+    avoids?: RoomPosition[]
+  ) {
     const targetPos = "pos" in target ? target.pos : target;
     const creepNearby = creep.pos.findInRange(FIND_MY_CREEPS, 1);
     if (creep.fatigue <= 0) {
@@ -33,7 +39,12 @@ export class CreepBase {
         ignoreCreeps: !creepNearby,
         range: range,
         reusePath: creepNearby ? 5 : 20,
-        maxOps: 1000
+        maxOps: 1000,
+        costCallback: (roomName: string, costMatrix: CostMatrix) => {
+          if (roomName === creep.pos.roomName && avoids && avoids.length > 0) {
+            avoids.forEach((p) => costMatrix.set(p.x, p.y, 50));
+          }
+        }
       });
       return rtn;
     }

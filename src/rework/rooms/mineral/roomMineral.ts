@@ -15,11 +15,13 @@ export class RoomMineral {
     );
     const hasConstructionSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
     const creepNearDeath = mineralHarvester.filter((c) => c.ticksToLive && c.ticksToLive < 100).length > 0;
+    const roomHostile = Memory.roomStore[room.name].defenseDirector.alertLevel > 0;
     const shouldSpawnAnother =
       (mineralHarvester.length < Constants.maxMineralHarvester ||
         (mineralHarvester.length === Constants.maxMineralHarvester && creepNearDeath)) &&
       mineral.mineralAmount > 250 &&
-      !hasConstructionSites;
+      !hasConstructionSites &&
+      !roomHostile;
     if (shouldSpawnAnother) {
       const template = {
         template: CreepBuilder.buildMineralHarvester(room.energyCapacityAvailable),
@@ -108,7 +110,13 @@ export class RoomMineral {
       (c) => c.memory.role === "mineralHauler" && c.memory.homeRoom === room.name
     );
     const hasConstructionSites = room.find(FIND_CONSTRUCTION_SITES).length > 0;
-    if (mineralHaulers.length + mineralHaulerQueue.length < 1 && mineral.mineralAmount > 0 && !hasConstructionSites) {
+    const roomHostile = Memory.roomStore[room.name].defenseDirector.alertLevel > 0;
+    if (
+      mineralHaulers.length + mineralHaulerQueue.length < 1 &&
+      mineral.mineralAmount > 0 &&
+      !hasConstructionSites &&
+      !roomHostile
+    ) {
       const template = {
         template: CreepBuilder.buildRoadHauler(room.energyCapacityAvailable / 5),
         memory: {

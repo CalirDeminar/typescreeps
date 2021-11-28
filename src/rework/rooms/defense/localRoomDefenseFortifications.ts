@@ -3,6 +3,7 @@ import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepUtils } from "rework/utils/creepUtils";
 import { Constants } from "utils/constants";
+import { CombatUtils } from "rework/utils/combat";
 export class LocalRoomDefenseFortifications {
   private static findStrategicStructures(room: Room): RoomPosition[] {
     return room
@@ -47,7 +48,7 @@ export class LocalRoomDefenseFortifications {
       });
     }
   }
-  private static runMason(creep: Creep): void {
+  private static runMason(creep: Creep, hostileTiles: RoomPosition[]): void {
     if (creep.ticksToLive) {
       const storage = Game.getObjectById<StructureStorage>(creep.memory.refuelTarget);
       const allRamparts = creep.room.find(FIND_STRUCTURES, {
@@ -69,7 +70,7 @@ export class LocalRoomDefenseFortifications {
             creep.memory.workTarget = "";
             break;
           case creep.store.getUsedCapacity() === 0 && !creep.pos.isNearTo(storage):
-            CreepBase.travelTo(creep, storage, "white");
+            CreepBase.travelTo(creep, storage, "white", 1, hostileTiles);
             break;
           case creep.store.getUsedCapacity() === 0 &&
             creep.pos.isNearTo(storage) &&
@@ -78,7 +79,7 @@ export class LocalRoomDefenseFortifications {
             creep.memory.workTarget = "";
             break;
           case creep.store.getUsedCapacity() > 0 && !creep.pos.inRangeTo(currentTarget, 3):
-            CreepBase.travelTo(creep, currentTarget, "white");
+            CreepBase.travelTo(creep, currentTarget, "white", 3, hostileTiles);
             break;
           case creep.store.getUsedCapacity() > 0 && creep.pos.inRangeTo(currentTarget, 3):
             creep.repair(currentTarget);
@@ -88,7 +89,8 @@ export class LocalRoomDefenseFortifications {
     }
   }
   private static runMasons(room: Room): void {
-    CreepUtils.filterCreeps("mason", room.name, room.name).forEach((c) => this.runMason(c));
+    const hotTiles = CombatUtils.getHostileTiles(room);
+    CreepUtils.filterCreeps("mason", room.name, room.name).forEach((c) => this.runMason(c, hotTiles));
   }
   private static planDefences(room: Room): void {
     const store = Memory.roomStore[room.name].defenseDirector;

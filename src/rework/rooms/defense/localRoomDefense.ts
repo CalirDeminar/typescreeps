@@ -88,7 +88,7 @@ export class LocalRoomDefense {
       const currentRange = Math.min(...targets.map((c) => anchor.pos.getRangeTo(c.pos)));
       const maxTowerDamage = towerCount * 400;
       const currentTowerDamage = towerCount * CombatUtils.towerDamage(currentRange);
-      console.log(`Current Tower Damage: ${currentTowerDamage}`);
+      console.log(`Tower Damage: ${currentTowerDamage} - Hostile Tank: ${hostileTank}`);
       switch (true) {
         case hostileTank < maxTowerDamage && hostileTank > currentTowerDamage:
           console.log("Hold Fire");
@@ -100,12 +100,12 @@ export class LocalRoomDefense {
           Memory.roomStore[room.name].defenseDirector.alertLevel = 2;
           // killable with current towers
           break;
-        case hostileTank <= currentTowerDamage && timeWithHostiles >= refillLimit:
+        case hostileTank < currentTowerDamage && timeWithHostiles >= refillLimit:
           console.log("Engage With Towers - Energy Needed");
           Memory.roomStore[room.name].defenseDirector.alertLevel = 3;
           // killable with current towers, but energy needed
           break;
-        case hostileTank > maxTowerDamage:
+        case hostileTank >= maxTowerDamage || (timeWithHostiles >= refillLimit && hostileTank >= currentTowerDamage):
           console.log("Hold Fire - Creeps Needed");
           Memory.roomStore[room.name].defenseDirector.alertLevel = 4;
           // need to spawn creeps, but energy needed
@@ -144,7 +144,7 @@ export class LocalRoomDefense {
     }
   }
   public static run(room: Room): void {
-    const targets = this.getTargets(room);
+    const targets = CombatUtils.getTargets(room);
     this.setAlertLevel(room, targets);
     this.checkToSafeMode(room);
     LocalRoomDefenseTowers.runTowers(room, targets);

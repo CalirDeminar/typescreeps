@@ -135,4 +135,24 @@ export class CombatUtils {
     var towerFalloffPerTile = TOWER_FALLOFF / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE);
     return (1 - (range - TOWER_OPTIMAL_RANGE) * towerFalloffPerTile) * 600;
   }
+  public static getTargets(room: Room): Creep[] {
+    return room.find(FIND_HOSTILE_CREEPS, {
+      filter: (s) =>
+        s.body.some(
+          (b) => b.type === WORK || b.type === ATTACK || b.type === RANGED_ATTACK || b.type === HEAL || b.type === CLAIM
+        )
+    });
+  }
+  public static getHostileTiles(room: Room): RoomPosition[] {
+    const hostiles = this.getTargets(room);
+    const aggroRange = _.range(-3, 4).reduce(
+      (acc: { x: number; y: number }[], x) => acc.concat(_.range(-3, 4).map((y) => ({ x: x, y: y }))),
+      []
+    );
+    return hostiles.reduce(
+      (acc: RoomPosition[], c: Creep) =>
+        acc.concat(aggroRange.map((r) => new RoomPosition(c.pos.x + r.x, c.pos.y + r.y, c.pos.roomName))),
+      []
+    );
+  }
 }
