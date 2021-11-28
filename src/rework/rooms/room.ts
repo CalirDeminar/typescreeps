@@ -65,6 +65,10 @@ function initMemory(room: Room): void {
       sources: room.find(FIND_SOURCES).map((s: Source): string => s.id),
       minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id)
     };
+    const freshRoom = Object.keys(Game.rooms).length === 1;
+    if (freshRoom) {
+      Memory.scoutingDirector = { scoutedRooms: [], scoutQueue: [], scanningIndex: 0 };
+    }
   }
   // set BuildingThisTick flag
   if (Object.keys(Memory.roomStore).includes(room.name)) {
