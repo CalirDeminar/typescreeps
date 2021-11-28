@@ -4,7 +4,7 @@ import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
 import { LocalRoomConstructionPlanner } from "./localRoomConstructionPlanner";
 
-export interface ConstructionDirector {
+export interface ConstructionDirectorStore {
   internalRoadTemplate: RoomPosition[];
   towerTemplate: RoomPosition[];
   extensionTemplate: RoomPosition[];
@@ -12,6 +12,14 @@ export interface ConstructionDirector {
   singleStructures: { type: BuildableStructureConstant; pos: RoomPosition }[];
   roadsCreated: boolean;
 }
+export const constructionDirectorDefault: ConstructionDirectorStore = {
+  internalRoadTemplate: [],
+  towerTemplate: [],
+  extensionTemplate: [],
+  labTemplate: [],
+  singleStructures: [],
+  roadsCreated: false
+};
 export class LocalRoomConstruction {
   private static createAnchor(room: Room): void {
     const anchor = PositionsUtils.getAnchor(room);

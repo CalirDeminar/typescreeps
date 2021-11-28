@@ -6,6 +6,7 @@ export class LocalRoomConstructionPlanner {
     return from
       .findPathTo(to, {
         ignoreCreeps: true,
+        range: 1,
         swampCost: 1,
         costCallback: (roomName, costMatrix) => {
           avoids.map((av) => costMatrix.set(av.x, av.y, 10));
@@ -77,7 +78,8 @@ export class LocalRoomConstructionPlanner {
       .find(FIND_SOURCES)
       .map((s) => s.pos)
       .concat(room.controller.pos)
-      .reduce((acc: RoomPosition[], pos) => acc.concat(this.runRoad(pos, pos, avoids)), []);
+      .concat(room.find(FIND_MINERALS).map((m) => m.pos))
+      .reduce((acc: RoomPosition[], pos) => acc.concat(this.runRoad(pos, anchor, avoids)), []);
     Memory.roomStore[room.name].constructionDirector.internalRoadTemplate = roads;
   }
 }

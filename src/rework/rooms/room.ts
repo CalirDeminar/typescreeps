@@ -2,10 +2,16 @@ import { RoomEnergy } from "./energy/roomEnergy";
 import { RoomMineral } from "./mineral/roomMineral";
 import { RemoteEnergyMemory, remoteRoomEnergyDefault } from "./energy/remote/remoteRoomEnergy";
 import { LocalRoomCore } from "./core/localRoomCore";
-import { LocalRoomConstruction } from "./construction/localRoomConstruction";
-import { LocalRoomDefense } from "./defense/localRoomDefense";
+import {
+  ConstructionDirectorStore,
+  constructionDirectorDefault,
+  LocalRoomConstruction
+} from "./construction/localRoomConstruction";
+import { defenseDirectorStoreDefault, LocalRoomDefense } from "./defense/localRoomDefense";
 export interface RoomMemory {
   remoteEnergy: RemoteEnergyMemory;
+  defenceDirector: DefenseDirectorStore;
+  constructionDirector: ConstructionDirectorStore;
   nextSpawn: CreepRecipie | null;
   spawnQueue: CreepRecipie[];
   buildingThisTick: boolean;
@@ -13,6 +19,8 @@ export interface RoomMemory {
 }
 export const roomMemoryDefault: RoomMemory = {
   remoteEnergy: remoteRoomEnergyDefault,
+  defenceDirector: defenseDirectorStoreDefault,
+  constructionDirector: constructionDirectorDefault,
   nextSpawn: null,
   spawnQueue: [],
   buildingThisTick: false,

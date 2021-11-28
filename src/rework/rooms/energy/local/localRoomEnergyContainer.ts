@@ -26,22 +26,24 @@ export class LocalRoomEnergyContainer {
       // || (creeps.length + queuedCreeps.length === max && !!creeps.find((c) => c.ticksToLive && c.ticksToLive < 150))
     );
   }
-  private static getStoreTarget(creep: Creep): Structure | null {
+  private static getStoreTarget(
+    creep: Creep
+  ): StructureStorage | StructureContainer | StructureSpawn | StructureExtension | null {
     const anchor = UtilPosition.getAnchor(creep.room);
     if (!anchor) {
       return null;
     }
-    const storage = anchor.findInRange(FIND_MY_STRUCTURES, 1, {
+    const storage = anchor.findInRange<StructureStorage>(FIND_MY_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity() > creep.store.getCapacity()
     })[0];
-    const container = anchor.findInRange(FIND_STRUCTURES, 1, {
+    const container = anchor.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store.getFreeCapacity() > creep.store.getCapacity()
     })[0];
-    const spawn = anchor.findInRange(FIND_MY_STRUCTURES, 1, {
+    const spawn = anchor.findInRange<StructureSpawn>(FIND_MY_STRUCTURES, 1, {
       filter: (s) =>
         s.structureType === STRUCTURE_SPAWN && s.store.getFreeCapacity(RESOURCE_ENERGY) > creep.store.getCapacity()
     })[0];
-    const extension = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    const extension = creep.pos.findClosestByPath<StructureExtension>(FIND_STRUCTURES, {
       filter: (s: AnyStructure) =>
         s.structureType === STRUCTURE_EXTENSION && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
@@ -170,8 +172,12 @@ export class LocalRoomEnergyContainer {
           creep.memory.dropOffTarget = "";
       }
       withdrawing = creep.memory.working;
-      const storeTarget: Structure | null =
-        creep.memory.targetStore !== "" ? Game.getObjectById<Structure>(creep.memory.targetStore) : null;
+      const storeTarget =
+        creep.memory.targetStore !== ""
+          ? Game.getObjectById<StructureContainer | StructureStorage | StructureSpawn | StructureExtension>(
+              creep.memory.targetStore
+            )
+          : null;
       switch (true) {
         case withdrawing && creep.pos.isNearTo(container):
           const resource = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1)[0];
@@ -187,7 +193,8 @@ export class LocalRoomEnergyContainer {
         case withdrawing:
           CreepBase.travelTo(creep, container, "blue");
           break;
-        case !withdrawing && creep.memory.targetStore === "":
+        case (!withdrawing && creep.memory.targetStore === "") ||
+          (storeTarget && storeTarget.store.getFreeCapacity() === 0):
           const target = this.getStoreTarget(creep);
           creep.memory.targetStore = target ? target.id : "";
           break;

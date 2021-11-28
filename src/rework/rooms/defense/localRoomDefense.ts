@@ -22,8 +22,9 @@ export interface DefenseDirectorStore {
   hostileCreeps: CreepCombatSheet[];
   rampartMap: RoomPosition[];
   wallMap: RoomPosition[];
+  activeTarget: string | null;
 }
-export const defaultDefenseDirectorStore = {
+export const defenseDirectorStoreDefault: DefenseDirectorStore = {
   towers: [],
   alertLevel: 0,
   alertStartTimestamp: -1,
