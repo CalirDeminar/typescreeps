@@ -17,12 +17,12 @@ export type CreepMemory =
   | CreepHarvesterStaticContainerMemory
   | CreepHaulerContainerMemory;
 export class CreepUtils {
-  public static filterCreeps(role: string, homeRoom: string, targetRoom?: string, targetSource?: string): Creep[] {
+  public static filterCreeps(role: string, homeRoom?: string, targetRoom?: string, targetSource?: string): Creep[] {
     return _.filter(
       Game.creeps,
       (c) =>
         c.memory.role === role &&
-        c.memory.homeRoom === homeRoom &&
+        (!homeRoom || c.memory.homeRoom === homeRoom) &&
         (!targetRoom || c.memory.targetRoom === targetRoom) &&
         (!targetSource || c.memory.targetSource === targetSource)
     );
@@ -30,16 +30,36 @@ export class CreepUtils {
   public static filterQueuedCreeps(
     roomName: string,
     role: string,
-    homeRoom: string,
+    homeRoom?: string,
     targetRoom?: string,
     targetSource?: string
   ): CreepRecipie[] {
     return Memory.roomStore[roomName].spawnQueue.filter(
       (c) =>
         c.memory.role === role &&
-        c.memory.homeRoom === homeRoom &&
+        (!homeRoom || c.memory.homeRoom === homeRoom) &&
         (!targetRoom || c.memory.targetRoom === targetRoom) &&
         (!targetSource || c.memory.targetSource === targetSource)
+    );
+  }
+  public static filterAllQueuedCreeps(
+    role: string,
+    homeRoom?: string,
+    targetRoom?: string,
+    targetSource?: string
+  ): CreepRecipie[] {
+    return Object.values(Memory.roomStore).reduce(
+      (acc: CreepRecipie[], r) =>
+        acc.concat(
+          r.spawnQueue.filter(
+            (c) =>
+              c.memory.role === role &&
+              (!homeRoom || c.memory.homeRoom === homeRoom) &&
+              (!targetRoom || c.memory.targetRoom === targetRoom) &&
+              (!targetSource || c.memory.targetSource === targetSource)
+          )
+        ),
+      []
     );
   }
   public static findQueuedCreepIndex(
