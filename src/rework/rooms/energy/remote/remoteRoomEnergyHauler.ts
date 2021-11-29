@@ -55,8 +55,13 @@ export class RemoteRoomEnergyHauler {
       );
       const needsHauler = haulers.length + queuedHaulers.length === 0;
       const haulerNearDeath =
-        queuedHaulers.length === 0 && haulers[0] && haulers[0].ticksToLive && haulers[0].ticksToLive < 100;
+        haulers.length === 1 &&
+        queuedHaulers.length === 0 &&
+        haulers[0] &&
+        haulers[0].ticksToLive &&
+        haulers[0].ticksToLive < 100;
       if (needsHauler || haulerNearDeath) {
+        // console.log(queuedHaulers.length);
         const template = {
           template: CreepBuilder.createRemoteCreeps(energyBudget).hauler,
           memory: {

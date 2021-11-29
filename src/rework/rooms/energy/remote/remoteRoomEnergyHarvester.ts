@@ -28,17 +28,15 @@ export class RemoteRoomEnergyHarvester {
       return;
     }
     sources.forEach((s) => {
-      const source = Game.getObjectById<Source>(s.sourceId);
-      if (!source) {
-        return;
-      }
-      const harvesters = CreepUtils.filterCreeps("remoteHarvester", room.homeRoomName, room.roomName, source.id);
+      const sourceId = s.sourceId;
+
+      const harvesters = CreepUtils.filterCreeps("remoteHarvester", room.homeRoomName, room.roomName, sourceId);
       const queuedHarvesters = CreepUtils.filterQueuedCreeps(
         room.homeRoomName,
         "remoteHarvester",
         room.homeRoomName,
         room.roomName,
-        source.id
+        sourceId
       );
       const harvesterNearDeath =
         harvesters.length === 1 &&
@@ -53,7 +51,7 @@ export class RemoteRoomEnergyHarvester {
             ...CreepBase.baseMemory,
             homeRoom: homeRoom.name,
             targetRoom: room.roomName,
-            targetSource: source.id,
+            targetSource: sourceId,
             role: "remoteHarvester",
             working: true
           }
@@ -64,7 +62,7 @@ export class RemoteRoomEnergyHarvester {
             "remoteHarvester",
             room.homeRoomName,
             room.roomName,
-            source.id
+            sourceId
           );
           if (index >= 0) {
             Memory.roomStore[homeRoom.name].spawnQueue[index] = template;
@@ -81,13 +79,14 @@ export class RemoteRoomEnergyHarvester {
     anchor: Flag,
     constructionSite: ConstructionSite | null
   ): void {
-    if (creep.ticksToLive && CreepBase.fleeHostiles(creep)) {
+    if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       CreepBase.maintainRoad(creep);
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
-      if (!source) {
-        return;
-      }
-      const container = source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
+
+      // if (!source) {
+      //   return;
+      // }
+      const container = source?.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_CONTAINER
       })[0];
       const hostileRoom = room.hostileCreepCount > 0;
@@ -99,8 +98,8 @@ export class RemoteRoomEnergyHarvester {
           CreepBase.travelTo(creep, anchor, "orange", 5);
           break;
         }
-        case working && creep.pos.isNearTo(source.pos): {
-          if (source.energy > 0) {
+        case working && source && creep.pos.isNearTo(source.pos): {
+          if (source && source.energy > 0) {
             creep.harvest(source);
           }
           break;
@@ -109,8 +108,10 @@ export class RemoteRoomEnergyHarvester {
           CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
           break;
         }
-        case working && !creep.pos.isNearTo(source.pos): {
-          CreepBase.travelTo(creep, source.pos, "orange", 1);
+        case working && source && !creep.pos.isNearTo(source.pos): {
+          if (source) {
+            CreepBase.travelTo(creep, container?.pos || source.pos, "orange", container ? 0 : 1);
+          }
           break;
         }
         case !working && !!container: {
@@ -123,6 +124,11 @@ export class RemoteRoomEnergyHarvester {
                 break;
               case containerDamage > repairAmount:
                 creep.repair(container);
+                break;
+              case container && creep.pos.isEqualTo(container.pos):
+                if (source && source.energy > 0) {
+                  creep.harvest(source);
+                }
                 break;
               case true:
                 creep.transfer(container, RESOURCE_ENERGY);

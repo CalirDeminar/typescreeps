@@ -39,7 +39,7 @@ export class CreepBase {
         ignoreCreeps: !creepNearby,
         range: range,
         reusePath: creepNearby ? 5 : 20,
-        maxOps: 1000,
+        // maxOps: 2000,
         costCallback: (roomName: string, costMatrix: CostMatrix) => {
           if (roomName === creep.pos.roomName && avoids && avoids.length > 0) {
             avoids.forEach((p) => costMatrix.set(p.x, p.y, 50));

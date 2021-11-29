@@ -1,15 +1,21 @@
+import { GlobalExpansion } from "./expansion/globalExpansion";
+import { GlobalScouting, scoutingDirectorDefault } from "./scouting/globalScouting";
+
 export interface GlobalMemory {
   roomStore: { [roomName: string]: RoomMemory };
   expansionDirector: {};
-  scoutingDirector: {};
+  scoutingDirector: ScoutingDirectorStore;
   defenseDirector: {};
   labDirector: {};
 }
 export const defaultMemory: GlobalMemory = {
   roomStore: {},
   expansionDirector: {},
-  scoutingDirector: {},
+  scoutingDirector: scoutingDirectorDefault,
   defenseDirector: {},
   labDirector: {}
 };
-export function runGlobal(): void {}
+export function runGlobal(): void {
+  GlobalScouting.run();
+  GlobalExpansion.run();
+}

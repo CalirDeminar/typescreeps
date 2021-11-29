@@ -87,10 +87,12 @@ function initMemory(room: Room): void {
   }
 }
 export function runRoom(room: Room): void {
-  initMemory(room);
-  LocalRoomConstruction.run(room);
-  LocalRoomDefense.run(room);
-  RoomEnergy.run(room);
-  RoomMineral.run(room);
-  LocalRoomCore.run(room);
+  if (room.controller && room.controller.my) {
+    initMemory(room);
+    LocalRoomConstruction.run(room);
+    LocalRoomDefense.run(room);
+    RoomEnergy.run(room);
+    RoomMineral.run(room);
+    LocalRoomCore.run(room);
+  }
 }

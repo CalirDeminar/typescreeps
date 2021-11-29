@@ -2,16 +2,11 @@ Immediate-
 
 - Fix expansion locating
   Reduce search area to area within source & controller bounds
-- Split scouting targets between each room's scouts
-- Add Roads around built extension groups
-- Have shuttleHarvesters build their own container when it gets created
-- Add ramparts back into border walls 2W->1R sequence down a wall
 - Ensure border walls have ramparts in the place where remote roads cross
 - Ensure that fleeing Builders / Upgraders do not stand on reserved routes (Source, Controller, Remote)
-- Fix haulers getting stuck when the storage appears
 - Have remote harvesting manager handle walls blocking path to sources
-- attempt at lower level to speed up debugging
-- improved scout pathfinding
+- Fix spawning of Controller Link
+- Look at controller link transfering
 
 Mineral Director - Long Term
 _ Add support to other Directors for spawning boosted creeps

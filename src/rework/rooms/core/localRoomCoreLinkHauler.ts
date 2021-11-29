@@ -20,7 +20,7 @@ export class LocalRoomCoreLinkHauler {
       const onStation = creep.pos.isEqualTo(anchor);
       if (!onStation) {
         const blockingCreep = anchor.lookFor(LOOK_CREEPS);
-        blockingCreep.forEach((c) => CreepBase.flee(c, anchor));
+        blockingCreep.filter((c) => c.memory.role !== "linkHauler").forEach((c) => CreepBase.flee(c, anchor));
         CreepBase.travelTo(creep, anchor, "red");
       }
       const hasCargo = creep.store.getUsedCapacity() > 0;

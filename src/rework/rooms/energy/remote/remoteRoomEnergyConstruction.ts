@@ -10,7 +10,8 @@ export class RemoteRoomEnergyConstruction {
         const container = source.pos.findInRange<StructureContainer>(FIND_STRUCTURES, 1, {
           filter: (s) => s.structureType === STRUCTURE_CONTAINER
         })[0];
-        if (!container) {
+        const site = source.pos.findInRange(FIND_CONSTRUCTION_SITES, 2)[0];
+        if (!container && !site) {
           let built = false;
           _.range(-1, 2).map((x) => {
             _.range(-1, 2).map((y) => {
