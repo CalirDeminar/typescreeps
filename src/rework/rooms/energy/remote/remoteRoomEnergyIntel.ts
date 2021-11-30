@@ -10,18 +10,19 @@ export class RemoteRoomEnergyIntel {
       (r) => r.towers.length === 0 && r.keeperLair.length === 0
     );
     const scoutedRoomNames = intel.map((r) => r.name);
+    const currentRemotes = Object.values(Memory.roomStore).reduce(
+      (acc: string[], s) => acc.concat(s.remoteDirector.map((rd) => rd.roomName)),
+      []
+    );
     const assessmentInterval = Game.time + (Constants.remoteHarvestingTimingOffset % 100) === 0;
-    const initialAssesment = store.length === 0 && borders.every((b) => b && scoutedRoomNames.includes(b));
+    const initialAssesment =
+      store.length === 0 || borders.some((b) => b && scoutedRoomNames.includes(b) && !currentRemotes.includes(b));
     if (assessmentInterval || initialAssesment) {
-      const currentRemotes = Object.values(Memory.roomStore).reduce(
-        (acc: string[], s) => acc.concat(s.remoteDirector.map((rd) => rd.roomName)),
-        []
-      );
       const availableDoubleSourceRooms = intel.filter(
-        (r) => r.sources.length === 2 && !currentRemotes.includes(r.name)
+        (r) => r.sources.length === 2 && !currentRemotes.includes(r.name) && borders.includes(r.name)
       );
       const availableSingleSourceRooms = intel.filter(
-        (r) => r.sources.length === 1 && !currentRemotes.includes(r.name)
+        (r) => r.sources.length === 1 && !currentRemotes.includes(r.name) && borders.includes(r.name)
       );
       const newRoom = availableDoubleSourceRooms[0] || availableSingleSourceRooms[0] || undefined;
       if (newRoom) {
@@ -30,7 +31,7 @@ export class RemoteRoomEnergyIntel {
 
         const sourcesReachable =
           sourceLocations.filter((source) => {
-            const path = PathFinder.search(anchor, { pos: source, range: 1 }, { maxOps: 1000, maxRooms: 2 });
+            const path = PathFinder.search(anchor, { pos: source, range: 1 }, { maxRooms: 3 });
             return !path.incomplete;
           }).length === sourceLocations.length;
         if (sourcesReachable) {

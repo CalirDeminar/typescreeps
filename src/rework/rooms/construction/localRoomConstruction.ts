@@ -258,8 +258,8 @@ export class LocalRoomConstruction {
           this.singleStructures(room, structures, level) ||
           this.nextTower(room, structures, level) ||
           this.buildControllerContainer(room, level) ||
-          this.buildRoads(room, level) ||
-          this.nextLab(room, structures, level);
+          this.buildRoads(room, level);
+        // this.nextLab(room, structures, level);
         if (rtn) {
           Memory.roomStore[room.name].buildingThisTick = true;
         }

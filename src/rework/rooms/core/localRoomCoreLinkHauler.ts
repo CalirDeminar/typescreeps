@@ -45,6 +45,7 @@ export class LocalRoomCoreLinkHauler {
         case controllerLinkNeedsEnergy && hasCargo && !linkFull:
           if (controllerLink) {
             creep.transfer(anchorLink, RESOURCE_ENERGY);
+            anchorLink.transferEnergy(controllerLink);
           }
           break;
         case controllerLinkNeedsEnergy:

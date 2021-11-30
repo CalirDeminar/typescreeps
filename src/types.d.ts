@@ -35,16 +35,6 @@ declare global {
     name: string;
     anchor: RoomPosition;
   }
-  interface CoreDirectorStore {
-    anchorPos: RoomPosition;
-    controllerId: string;
-    containerId: string | null;
-    storageId: string | null;
-    terminalId: string | null;
-    spawnIds: string[];
-    populatorIds: string[];
-    nextSpawn: CreepRecipie;
-  }
   interface ScoutingDirectorStore {
     scoutedRooms: ScoutedRoom[];
     scoutQueue: RoomPosition[];

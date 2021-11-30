@@ -31,7 +31,7 @@ export class LocalRoomDefenseTowers {
       const stat = stats.find((stat) => stat.name === creep.name);
       if (stat) {
         const range = anchor.pos.getRangeTo(creep.pos);
-        const towerDamage = CombatUtils.towerDamage(range);
+        const towerDamage = CombatUtils.towerDamage(range) * towers.length;
         if (towerDamage >= stat.safeBuffer) {
           return { creep: creep, damage: Infinity };
         }

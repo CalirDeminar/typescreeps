@@ -1,5 +1,6 @@
 Immediate-
 
+- Fix remote room spawning if red reserved
 - Fix expansion locating
   Reduce search area to area within source & controller bounds
 - Ensure border walls have ramparts in the place where remote roads cross

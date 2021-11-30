@@ -178,16 +178,18 @@ export class GlobalScouting {
     });
   }
   private static updateLists(): void {
-    const knownRooms = this.scoutedRoomNames();
-    const unscouted = knownRooms
-      .reduce((acc: string[], roomName) => {
-        const exitMap = Game.map.describeExits(roomName);
-        const exits = Object.values(exitMap).filter<string>((c): c is string => !!c);
-        return acc.concat(exits);
-      }, [])
-      .filter((e) => !knownRooms.includes(e))
-      .map((e) => new RoomPosition(25, 25, e));
-    Memory.scoutingDirector.scoutQueue = unscouted;
+    if (Game.time % 10 === 0) {
+      const knownRooms = this.scoutedRoomNames();
+      const unscouted = knownRooms
+        .reduce((acc: string[], roomName) => {
+          const exitMap = Game.map.describeExits(roomName);
+          const exits = Object.values(exitMap).filter<string>((c): c is string => !!c);
+          return acc.concat(exits);
+        }, [])
+        .filter((e) => !knownRooms.includes(e))
+        .map((e) => new RoomPosition(25, 25, e));
+      Memory.scoutingDirector.scoutQueue = unscouted;
+    }
   }
   private static getSpawningRoom(): string | undefined {
     return Object.keys(Memory.roomStore).filter((n) => {

@@ -10,9 +10,6 @@ export class DefenseMason {
           (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) && s.hits < repairLimit
       });
       const currentAvg = allRamparts.reduce((acc, r) => acc + r.hits, 0) / allRamparts.length;
-      if (Game.time % 5 === 0) {
-        console.log(`Avg Fortification HP: ${currentAvg.toPrecision(8)}`);
-      }
       const currentTarget = creep.memory.workTarget
         ? Game.getObjectById<StructureRampart | StructureWall>(creep.memory.workTarget)
         : allRamparts.sort((a, b) => a.hits - b.hits)[0];
