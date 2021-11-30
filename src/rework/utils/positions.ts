@@ -115,4 +115,16 @@ export class PositionsUtils {
     });
     return filtered;
   }
+  public static getRoomAvoids(roomName: string): RoomPosition[] {
+    if (Object.keys(Game.rooms).includes(roomName)) {
+      const structStore = Memory.roomStore[roomName].constructionDirector;
+      const defStore = Memory.roomStore[roomName].defenceDirector;
+      return structStore.extensionTemplate
+        .concat(structStore.towerTemplate)
+        .concat(structStore.labTemplate)
+        .concat(structStore.singleStructures.map((s) => s.pos))
+        .concat(defStore.wallMap);
+    }
+    return [];
+  }
 }

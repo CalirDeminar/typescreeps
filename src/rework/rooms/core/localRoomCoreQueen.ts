@@ -129,6 +129,7 @@ export class LocalRoomCoreQueen {
   }
   private static runQueen(creep: Creep) {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       const room = creep.room;
       const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
       const container = this.getContainer(anchor);
@@ -144,6 +145,8 @@ export class LocalRoomCoreQueen {
             break;
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static spawnQueen(room: Room, container: StructureContainer | StructureStorage): void {

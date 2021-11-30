@@ -22,7 +22,8 @@ export class CreepBase {
     dropOffTarget: "",
     scoutPositions: [],
     lastPosition: null,
-    stuckCounter: 0
+    stuckCounter: 0,
+    performanceHistory: []
   };
   public static travelTo(
     creep: Creep,

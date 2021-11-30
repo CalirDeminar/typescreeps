@@ -2,6 +2,7 @@ import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { LocalRoomCoreUpgrader } from "./localRoomCoreUpgrader";
+import { CreepUtils } from "rework/utils/creepUtils";
 export interface CreepBuilderMemory {
   role: "builder";
   homeRoom: string;
@@ -25,6 +26,7 @@ export class LocalRoomCoreBuilder {
   }
   private static runBuilder(creep: Creep): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
+      const startCpu = Game.cpu.getUsed();
       CreepBase.maintainRoad(creep);
       const working = creep.memory.working;
       const empty = creep.store.getUsedCapacity() === 0;
@@ -84,6 +86,8 @@ export class LocalRoomCoreBuilder {
           }
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runBuilders(room: Room): void {

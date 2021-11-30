@@ -81,6 +81,7 @@ export class RemoteRoomEnergyHarvester {
     constructionSite: ConstructionSite | null
   ): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
+      const startCpu = Game.cpu.getUsed();
       CreepBase.maintainRoad(creep);
       const source = Game.getObjectById<Source>(creep.memory.targetSource);
 
@@ -164,6 +165,8 @@ export class RemoteRoomEnergyHarvester {
           }
           break;
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
       // harvesting
       // construction sites
     }

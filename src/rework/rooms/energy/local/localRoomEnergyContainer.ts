@@ -156,6 +156,7 @@ export class LocalRoomEnergyContainer {
   }
   private static runHauler(creep: Creep, source: Source, container: StructureContainer): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       let withdrawing = creep.memory.working;
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getFreeCapacity() === 0;
@@ -203,10 +204,13 @@ export class LocalRoomEnergyContainer {
             CreepBase.travelTo(creep, storeTarget, "blue");
           }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runHarvester(creep: Creep, source: Source, container: StructureContainer): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       if (container && creep.pos.getRangeTo(container) > 0) {
         // move to source / container
         CreepBase.travelTo(creep, container ? container : source, "orange");
@@ -233,6 +237,8 @@ export class LocalRoomEnergyContainer {
       if (creepFull && !canDropEnergy) {
         creep.transfer(container, RESOURCE_ENERGY);
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runCreeps(source: Source, container: StructureContainer): void {

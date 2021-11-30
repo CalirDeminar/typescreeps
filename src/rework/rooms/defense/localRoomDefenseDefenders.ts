@@ -11,6 +11,7 @@ const defenderTemplate = [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK
 export class LocalRoomDefenseDefenders {
   private static runDefender(creep: Creep, anchor: RoomPosition, targetRoom: RemoteEnergyMemory | undefined): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       switch (true) {
         case !targetRoom:
           CreepBase.travelTo(creep, anchor, "red", 5);
@@ -35,6 +36,8 @@ export class LocalRoomDefenseDefenders {
           }
           break;
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static spawnDefender(room: Room): void {

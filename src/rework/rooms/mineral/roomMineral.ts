@@ -2,6 +2,7 @@ import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { PositionsUtils } from "rework/utils/positions";
+import { CreepUtils } from "rework/utils/creepUtils";
 export class RoomMineral {
   private static spawnMineralHarvester(room: Room, container: StructureContainer, mineral: Mineral): void {
     const mineralHarvester = _.filter(
@@ -54,6 +55,7 @@ export class RoomMineral {
   }
   private static runHarvester(creep: Creep, container: StructureContainer, mineral: Mineral): void {
     if (creep.ticksToLive && container.store.getFreeCapacity() > creep.store.getUsedCapacity()) {
+      const startCpu = Game.cpu.getUsed();
       const full = creep.store.getFreeCapacity() < creep.body.filter((p) => p.type === WORK).length * 1;
       const extractor = mineral.pos.findInRange<StructureExtractor>(FIND_MY_STRUCTURES, 1, {
         filter: (s) => s.structureType === STRUCTURE_EXTRACTOR
@@ -70,6 +72,8 @@ export class RoomMineral {
           creep.harvest(mineral);
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runHauler(
@@ -79,6 +83,7 @@ export class RoomMineral {
     mineralType: MineralConstant
   ): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       const hasCargo = creep.store.getUsedCapacity() > 0;
       if (hasCargo) {
         // dump cargo
@@ -99,6 +104,8 @@ export class RoomMineral {
           CreepBase.travelTo(creep, container.pos, "blue");
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static spawnHauler(room: Room, container: StructureContainer, mineral: Mineral): void {

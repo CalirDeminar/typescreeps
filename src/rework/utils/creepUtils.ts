@@ -101,4 +101,12 @@ export class CreepUtils {
   public static getBodyCost(body: BodyPartConstant[]): number {
     return body.reduce((acc: number, part: BodyPartConstant) => acc + this.getBodyPartCost(part), 0);
   }
+  public static recordCreepPerformance(creep: Creep, timeToRun: number): void {
+    const history = creep.memory.performanceHistory;
+    if (history === undefined) {
+      creep.memory.performanceHistory = [timeToRun];
+    }
+    const sliceLine = history.length >= 50 ? 1 : 0;
+    creep.memory.performanceHistory = history.slice(sliceLine).concat([timeToRun]);
+  }
 }

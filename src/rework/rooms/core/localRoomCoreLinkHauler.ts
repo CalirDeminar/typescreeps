@@ -17,6 +17,7 @@ export class LocalRoomCoreLinkHauler {
     storage: StructureStorage
   ): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       const onStation = creep.pos.isEqualTo(anchor);
       if (!onStation) {
         const blockingCreep = anchor.lookFor(LOOK_CREEPS);
@@ -59,6 +60,8 @@ export class LocalRoomCoreLinkHauler {
       if (controllerLinkNeedsEnergy && controllerLink) {
         anchorLink.transferEnergy(controllerLink);
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runLinkHaulers(room: Room, anchor: RoomPosition, link: StructureLink): void {

@@ -60,6 +60,7 @@ export class LocalRoomEnergyShuttle {
   }
   private static runShuttle(creep: Creep, source: Source, site: ConstructionSite | undefined): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       this.setWorkingState(creep);
       CreepBase.maintainRoad(creep);
       const working = creep.memory.working;
@@ -91,6 +92,8 @@ export class LocalRoomEnergyShuttle {
             CreepBase.travelTo(creep, storeTarget, "orange");
           }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runShuttles(source: Source): void {

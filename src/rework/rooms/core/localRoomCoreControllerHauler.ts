@@ -11,6 +11,7 @@ export interface CreepControllerHaulerMemory {
 }
 export class LocalRoomCoreControllerHauler {
   private static runHauler(creep: Creep, room: Room, container: StructureContainer): void {
+    const startCpu = Game.cpu.getUsed();
     const empty = creep.store.getUsedCapacity() === 0;
     const containerNeedsEnergy =
       container.store.getFreeCapacity() > 500 && Memory.roomStore[room.name].defenceDirector.alertLevel === 0;
@@ -46,6 +47,9 @@ export class LocalRoomCoreControllerHauler {
         break;
       }
     }
+
+    const endCpu = Game.cpu.getUsed();
+    CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
   }
   private static spawnHaulers(room: Room, container: StructureContainer): void {
     const haulers = CreepUtils.filterCreeps("controllerHauler", room.name, room.name);

@@ -91,6 +91,7 @@ export class RemoteRoomEnergyHauler {
   }
   public static run(creep: Creep, anchor: Flag): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
+      const startCpu = Game.cpu.getUsed();
       let withdrawing = creep.memory.working;
       const container = Game.getObjectById<StructureContainer>(creep.memory.targetSource);
       const empty = creep.store.getUsedCapacity() === 0;
@@ -149,6 +150,8 @@ export class RemoteRoomEnergyHauler {
             }
           }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
 }

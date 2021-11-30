@@ -81,6 +81,7 @@ export class LocalRoomEnergyLink {
   }
   private static runHarvester(creep: Creep, source: Source): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       this.setWorkingState(creep);
       const working = creep.memory.working;
       const link = CreepBase.findLink(creep);
@@ -112,6 +113,8 @@ export class LocalRoomEnergyLink {
             CreepBase.travelTo(creep, link, "orange");
           }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runHarvesters(source: Source): void {
