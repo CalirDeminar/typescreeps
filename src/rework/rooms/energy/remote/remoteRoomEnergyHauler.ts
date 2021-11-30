@@ -1,6 +1,7 @@
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyHauler {
   private static getStoreTarget(creep: Creep): Structure | null {
@@ -23,7 +24,7 @@ export class RemoteRoomEnergyHauler {
       })
     );
   }
-  public static spawn(room: RemoteDirectorStore, index: number): void {
+  public static spawn(room: RemoteEnergyMemory, index: number): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const energyBudget =
       room.sources.length > 1
@@ -105,7 +106,7 @@ export class RemoteRoomEnergyHauler {
           creep.memory.dropOffTarget = "";
       }
       withdrawing = creep.memory.working;
-      const remRoom = Memory.roomStore[creep.memory.homeRoom].remoteDirector.find(
+      const remRoom = Memory.roomStore[creep.memory.homeRoom].remoteEnergy.find(
         (r) => r.roomName === creep.memory.targetRoom
       );
       const targetRoomHostile = remRoom ? remRoom.hostileCreepCount > 0 : false;

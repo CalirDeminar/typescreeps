@@ -24,7 +24,7 @@ export class LocalRoomDefenseTowers {
   private static getTarget(room: Room, targets: Creep[], towers: StructureTower[]): Creep | null {
     // check for volleyable targets
     const anchor = room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0];
-    const store = Memory.roomStore[room.name].defenseDirector;
+    const store = Memory.roomStore[room.name].defenceDirector;
     const stats = store.hostileCreeps;
     const totalHealing = stats.reduce((acc, s) => acc + s.maxRawHealing, 0);
     const damagesTaken = targets.map((creep) => {
@@ -46,7 +46,7 @@ export class LocalRoomDefenseTowers {
     return null;
   }
   public static defendRoom(room: Room, targets: Creep[]): boolean {
-    let store = Memory.roomStore[room.name].defenseDirector;
+    let store = Memory.roomStore[room.name].defenceDirector;
     if (store.alertLevel >= 2) {
       const towers = room.find<StructureTower>(FIND_MY_STRUCTURES, {
         filter: (s) => s.structureType === STRUCTURE_TOWER
@@ -56,10 +56,10 @@ export class LocalRoomDefenseTowers {
         const newTarget = this.getTarget(room, targets, towers);
         if (newTarget) {
           console.log(`New Target: ${newTarget.name}`);
-          Memory.roomStore[room.name].defenseDirector.activeTarget = newTarget.name;
-          store = Memory.roomStore[room.name].defenseDirector;
+          Memory.roomStore[room.name].defenceDirector.activeTarget = newTarget.name;
+          store = Memory.roomStore[room.name].defenceDirector;
         } else {
-          Memory.roomStore[room.name].defenseDirector.activeTarget = null;
+          Memory.roomStore[room.name].defenceDirector.activeTarget = null;
         }
       }
       const target = targets.find((t) => t.name === store.activeTarget);

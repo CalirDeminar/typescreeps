@@ -1,6 +1,7 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { UtilPosition } from "utils/util.position";
 import { CreepBase } from "roles/role.creep";
+import { RemoteEnergyMemory } from "../energy/remote/remoteRoomEnergy";
 export interface CreepRemoteDefenderMemory {
   role: "remoteDefender";
   homeRoom: string;
@@ -8,7 +9,7 @@ export interface CreepRemoteDefenderMemory {
 }
 const defenderTemplate = [TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, ATTACK, ATTACK, ATTACK, MOVE];
 export class LocalRoomDefenseDefenders {
-  private static runDefender(creep: Creep, anchor: RoomPosition, targetRoom: RemoteDirectorStore | undefined): void {
+  private static runDefender(creep: Creep, anchor: RoomPosition, targetRoom: RemoteEnergyMemory | undefined): void {
     if (creep.ticksToLive) {
       switch (true) {
         case !targetRoom:
@@ -60,10 +61,10 @@ export class LocalRoomDefenseDefenders {
   }
   public static run(room: Room): void {
     const currentDefenders = CreepUtils.filterCreeps("remoteDefender", room.name);
-    const remotes = Memory.roomStore[room.name].remoteDirector;
-    const remotesToDefend = remotes
-      .filter((r) => (r.hostileCreepCount === 1 || r.hasInvaderCore) && r.hostileTowerCount === 0)
-      .sort((r) => 5 - r.sources.length);
+    const remotes = Memory.roomStore[room.name].remoteEnergy;
+    const remotesToDefend = remotes.filter(
+      (r) => (r.hostileCreepCount === 1 || r.hasInvaderCore) && r.hostileTowerCount === 0
+    );
     if (currentDefenders.length < 1 && remotesToDefend.length > 0) {
       this.spawnDefender(room);
     }

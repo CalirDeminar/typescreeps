@@ -31,7 +31,7 @@ export class LocalRoomEnergyConstruction {
   }
   private static genreateAvoids(room: Room): RoomPosition[] {
     const structStore = Memory.roomStore[room.name].constructionDirector;
-    const defStore = Memory.roomStore[room.name].defenseDirector;
+    const defStore = Memory.roomStore[room.name].defenceDirector;
     return structStore.extensionTemplate
       .concat(structStore.towerTemplate)
       .concat(structStore.labTemplate)

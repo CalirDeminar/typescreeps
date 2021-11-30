@@ -14,7 +14,7 @@ export interface CreepCombatSheet {
   meleePower: number;
   rangedPower: number;
 }
-export interface DefenseDirectorStore {
+export interface DefenceDirectorStore {
   towers: string[];
   alertLevel: 0 | 1 | 2 | 3 | 4;
   alertStartTimestamp: number;
@@ -24,7 +24,7 @@ export interface DefenseDirectorStore {
   wallMap: RoomPosition[];
   activeTarget: string | null;
 }
-export const defenseDirectorStoreDefault: DefenseDirectorStore = {
+export const defenceDirectorStoreDefault: DefenceDirectorStore = {
   towers: [],
   alertLevel: 0,
   alertStartTimestamp: -1,
@@ -45,9 +45,9 @@ export class LocalRoomDefense {
   }
   private static parseHostiles(room: Room, targets: Creep[]): void {
     const incomingNames = targets.map((c) => c.name);
-    const existingNames = Memory.roomStore[room.name].defenseDirector.hostileCreeps.map((c) => c.name);
+    const existingNames = Memory.roomStore[room.name].defenceDirector.hostileCreeps.map((c) => c.name);
     const namesToAdd = incomingNames.filter((n) => !existingNames.includes(n));
-    const baselineSheets = Memory.roomStore[room.name].defenseDirector.hostileCreeps.filter((c) =>
+    const baselineSheets = Memory.roomStore[room.name].defenceDirector.hostileCreeps.filter((c) =>
       incomingNames.includes(c.name)
     );
     const sheetsToAdd = targets
@@ -55,22 +55,22 @@ export class LocalRoomDefense {
       .map((c) => {
         return { ...CombatUtils.getCreepCombatFigures(c.body), name: c.name };
       });
-    Memory.roomStore[room.name].defenseDirector.hostileCreeps = baselineSheets.concat(sheetsToAdd);
+    Memory.roomStore[room.name].defenceDirector.hostileCreeps = baselineSheets.concat(sheetsToAdd);
   }
   private static getMinHostileTank(room: Room): number {
-    const store = Memory.roomStore[room.name].defenseDirector;
+    const store = Memory.roomStore[room.name].defenceDirector;
     const maxMultiplier = Math.min(...store.hostileCreeps.map((c) => c.toughHealMultiplier));
     const totalHealing = store.hostileCreeps.reduce((acc, c) => acc + c.maxRawHealing, 0);
     return maxMultiplier * totalHealing;
   }
 
   private static setAlertLevel(room: Room, targets: Creep[]): void {
-    let store = Memory.roomStore[room.name].defenseDirector;
+    let store = Memory.roomStore[room.name].defenceDirector;
     if (targets.length === 0) {
-      Memory.roomStore[room.name].defenseDirector.alertLevel = 0;
-      Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = -1;
-      Memory.roomStore[room.name].defenseDirector.activeTarget = null;
-      Memory.roomStore[room.name].defenseDirector.hostileCreeps = [];
+      Memory.roomStore[room.name].defenceDirector.alertLevel = 0;
+      Memory.roomStore[room.name].defenceDirector.alertStartTimestamp = -1;
+      Memory.roomStore[room.name].defenceDirector.activeTarget = null;
+      Memory.roomStore[room.name].defenceDirector.hostileCreeps = [];
     } else {
       if (Game.time % 5 === 0) {
         console.log("Hostiles In Room");
@@ -80,9 +80,9 @@ export class LocalRoomDefense {
       const towerCount = towers.length;
       this.parseHostiles(room, targets);
       if (store.alertStartTimestamp === -1) {
-        Memory.roomStore[room.name].defenseDirector.alertStartTimestamp = Game.time;
+        Memory.roomStore[room.name].defenceDirector.alertStartTimestamp = Game.time;
       }
-      store = Memory.roomStore[room.name].defenseDirector;
+      store = Memory.roomStore[room.name].defenceDirector;
       const timeWithHostiles = Game.time - store.alertStartTimestamp;
       const refillLimit = 25;
       const hostileTank = this.getMinHostileTank(room);
@@ -93,22 +93,22 @@ export class LocalRoomDefense {
       switch (true) {
         case hostileTank < maxTowerDamage && hostileTank > currentTowerDamage:
           console.log("Hold Fire");
-          Memory.roomStore[room.name].defenseDirector.alertLevel = 1;
+          Memory.roomStore[room.name].defenceDirector.alertLevel = 1;
           // hold fire for the range to close
           break;
         case hostileTank < currentTowerDamage && timeWithHostiles < refillLimit:
           console.log("Engaging With Towers");
-          Memory.roomStore[room.name].defenseDirector.alertLevel = 2;
+          Memory.roomStore[room.name].defenceDirector.alertLevel = 2;
           // killable with current towers
           break;
         case hostileTank < currentTowerDamage && timeWithHostiles >= refillLimit:
           console.log("Engage With Towers - Energy Needed");
-          Memory.roomStore[room.name].defenseDirector.alertLevel = 3;
+          Memory.roomStore[room.name].defenceDirector.alertLevel = 3;
           // killable with current towers, but energy needed
           break;
         case hostileTank >= maxTowerDamage || (timeWithHostiles >= refillLimit && hostileTank >= currentTowerDamage):
           console.log("Hold Fire - Creeps Needed");
-          Memory.roomStore[room.name].defenseDirector.alertLevel = 4;
+          Memory.roomStore[room.name].defenceDirector.alertLevel = 4;
           // need to spawn creeps, but energy needed
           break;
         default:

@@ -224,7 +224,7 @@ export class LocalRoomConstruction {
     });
     if (!container && level >= 3 && !canHaveLink && !!anchorContainer) {
       const structStore = Memory.roomStore[room.name].constructionDirector;
-      const defStore = Memory.roomStore[room.name].defenseDirector;
+      const defStore = Memory.roomStore[room.name].defenceDirector;
       const avoids = structStore.extensionTemplate
         .concat(structStore.towerTemplate)
         .concat(structStore.labTemplate)

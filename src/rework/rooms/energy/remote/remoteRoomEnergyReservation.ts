@@ -1,8 +1,9 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { CreepBase } from "roles/role.creep";
+import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyReservation {
-  private static spawnReserver(room: RemoteDirectorStore): void {
+  private static spawnReserver(room: RemoteEnergyMemory): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0;
     const enoughSources = room.sources.length >= 2;
@@ -52,7 +53,7 @@ export class RemoteRoomEnergyReservation {
       }
     }
   }
-  private static runReserver(creep: Creep, room: RemoteDirectorStore): void {
+  private static runReserver(creep: Creep, room: RemoteEnergyMemory): void {
     const controller =
       Object.keys(Game.rooms).includes(room.roomName) && Game.rooms[room.roomName]
         ? Game.rooms[room.roomName].controller
@@ -82,7 +83,7 @@ export class RemoteRoomEnergyReservation {
       }
     }
   }
-  public static run(room: RemoteDirectorStore): void {
+  public static run(room: RemoteEnergyMemory): void {
     this.spawnReserver(room);
     const reservers = CreepUtils.filterCreeps("remoteReserver", room.homeRoomName, room.roomName);
     reservers.forEach((c) => this.runReserver(c, room));

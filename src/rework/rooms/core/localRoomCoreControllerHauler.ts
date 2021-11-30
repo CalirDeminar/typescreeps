@@ -13,7 +13,7 @@ export class LocalRoomCoreControllerHauler {
   private static runHauler(creep: Creep, room: Room, container: StructureContainer): void {
     const empty = creep.store.getUsedCapacity() === 0;
     const containerNeedsEnergy =
-      container.store.getFreeCapacity() > 500 && Memory.roomStore[room.name].defenseDirector.alertLevel === 0;
+      container.store.getFreeCapacity() > 500 && Memory.roomStore[room.name].defenceDirector.alertLevel === 0;
     switch (true) {
       case empty && creep.memory.workTarget === "" && containerNeedsEnergy: {
         const target = CreepBase.getSourceTarget(creep);
@@ -55,7 +55,7 @@ export class LocalRoomCoreControllerHauler {
     const spawnHauler =
       (haulers.length < 1 || (haulers.length < neededHaulers && energyBudget < 2000)) &&
       (!sites || sites.length === 0) &&
-      Memory.roomStore[room.name].defenseDirector.alertLevel === 0;
+      Memory.roomStore[room.name].defenceDirector.alertLevel === 0;
     if (spawnHauler) {
       const energyBudget = Math.min(room.energyCapacityAvailable, 2000);
       const template = {

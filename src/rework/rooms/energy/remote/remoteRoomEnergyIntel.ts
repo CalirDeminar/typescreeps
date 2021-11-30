@@ -1,17 +1,18 @@
 import { initial } from "lodash";
 import { PositionsUtils } from "rework/utils/positions";
 import { Constants } from "utils/constants";
+import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyIntel {
   private static addNewRemoteRoom(room: Room): void {
     const borders = PositionsUtils.getRoomNeighbors(room);
-    const store = Memory.roomStore[room.name].remoteDirector;
+    const store = Memory.roomStore[room.name].remoteEnergy;
     const intel = Memory.scoutingDirector.scoutedRooms.filter(
       (r) => r.towers.length === 0 && r.keeperLair.length === 0
     );
     const scoutedRoomNames = intel.map((r) => r.name);
     const currentRemotes = Object.values(Memory.roomStore).reduce(
-      (acc: string[], s) => acc.concat(s.remoteDirector.map((rd) => rd.roomName)),
+      (acc: string[], s) => acc.concat(s.remoteEnergy.map((rd) => rd.roomName)),
       []
     );
     const assessmentInterval = Game.time + (Constants.remoteHarvestingTimingOffset % 100) === 0;
@@ -36,7 +37,7 @@ export class RemoteRoomEnergyIntel {
           }).length === sourceLocations.length;
         if (sourcesReachable) {
           const sources = newRoom.sources.map((s) => ({ sourceId: s.id, targetContainerId: null }));
-          Memory.roomStore[room.name].remoteDirector = store.concat([
+          Memory.roomStore[room.name].remoteEnergy = store.concat([
             {
               roomName: newRoom.name,
               homeRoomName: room.name,
@@ -56,45 +57,40 @@ export class RemoteRoomEnergyIntel {
       }
     }
   }
-  private static updateRoomFromIntel(room: RemoteDirectorStore, index: number): void {
-    const intel = Memory.roomStore[room.homeRoomName].remoteRooms[room.roomName];
+  private static updateRoomFromIntel(room: RemoteEnergyMemory, index: number): void {
+    const intelIndex = Memory.scoutingDirector.scoutedRooms.findIndex((r) => r.name === room.roomName);
+    const intel = Memory.scoutingDirector.scoutedRooms[intelIndex];
     const dueIntelUpdate = Game.time % 10 === 0;
     if (dueIntelUpdate && Object.keys(Game.rooms).includes(room.roomName)) {
       const localRoom = Game.rooms[room.roomName];
       // update remoteDirectorStore
       const hostileCreeps = localRoom.find(FIND_HOSTILE_CREEPS);
-      const hasInvaderCore =
-        localRoom.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE }).length > 0;
-      const hostileTowerCount = localRoom.find(FIND_HOSTILE_STRUCTURES, {
+      const invaderCore = localRoom.find(FIND_STRUCTURES, {
+        filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+      })[0];
+      const hasInvaderCore = !!invaderCore;
+      const towers = localRoom.find(FIND_HOSTILE_STRUCTURES, {
         filter: (s) => s.structureType === STRUCTURE_TOWER
-      }).length;
-      Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
-        ...Memory.roomStore[room.homeRoomName].remoteDirector[index],
+      });
+      const hostileTowerCount = towers.length;
+      Memory.roomStore[room.homeRoomName].remoteEnergy[index] = {
+        ...Memory.roomStore[room.homeRoomName].remoteEnergy[index],
         hasInvaderCore: hasInvaderCore,
         hostileCreepCount: hostileCreeps.length,
         hasHostileCreeps: hostileCreeps.length > 0,
         hostileTowerCount: hostileTowerCount
       };
-      Memory.roomStore[room.homeRoomName].remoteRooms[room.roomName] = {
-        ...Memory.roomStore[room.homeRoomName].remoteRooms[room.roomName],
-        invaderCore: hasInvaderCore,
-        hostileCreepCount: hostileCreeps.length,
-        hostileTowerCount: hostileTowerCount
+      Memory.scoutingDirector.scoutedRooms[intelIndex] = {
+        ...Memory.scoutingDirector.scoutedRooms[intelIndex],
+        invaderCore: hasInvaderCore ? { id: invaderCore.id, pos: invaderCore.pos } : null,
+        towers: towers.map((t) => ({ id: t.id, pos: t.pos }))
       };
       // update remoteRooms store
-    } else if (intel) {
-      Memory.roomStore[room.homeRoomName].remoteDirector[index] = {
-        ...Memory.roomStore[room.homeRoomName].remoteDirector[index],
-        hasInvaderCore: intel.invaderCore,
-        hostileCreepCount: intel.hostileCreepCount,
-        hasHostileCreeps: intel.hostileCreepCount > 0,
-        hostileTowerCount: intel.hostileTowerCount
-      };
     }
   }
   public static run(room: Room): void {
     this.addNewRemoteRoom(room);
-    const remotes = Memory.roomStore[room.name].remoteDirector;
+    const remotes = Memory.roomStore[room.name].remoteEnergy;
     remotes.forEach((r, i) => this.updateRoomFromIntel(r, i));
   }
 }

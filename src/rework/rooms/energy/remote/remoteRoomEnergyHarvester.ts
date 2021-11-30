@@ -2,6 +2,7 @@ import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
+import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyHarvester {
   private static setWorkingState(creep: Creep) {
@@ -16,7 +17,7 @@ export class RemoteRoomEnergyHarvester {
       creep.memory.working = false;
     }
   }
-  public static spawn(room: RemoteDirectorStore, index: number): void {
+  public static spawn(room: RemoteEnergyMemory, index: number): void {
     const homeRoom = Game.rooms[room.homeRoomName];
     const energyBudget =
       room.sources.length > 1
@@ -75,7 +76,7 @@ export class RemoteRoomEnergyHarvester {
   }
   public static run(
     creep: Creep,
-    room: RemoteDirectorStore,
+    room: RemoteEnergyMemory,
     anchor: Flag,
     constructionSite: ConstructionSite | null
   ): void {

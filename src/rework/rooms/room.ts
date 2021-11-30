@@ -7,10 +7,10 @@ import {
   constructionDirectorDefault,
   LocalRoomConstruction
 } from "./construction/localRoomConstruction";
-import { defenseDirectorStoreDefault, LocalRoomDefense } from "./defense/localRoomDefense";
+import { DefenceDirectorStore, defenceDirectorStoreDefault, LocalRoomDefense } from "./defense/localRoomDefense";
 export interface RoomMemory {
-  remoteEnergy: RemoteEnergyMemory;
-  defenceDirector: DefenseDirectorStore;
+  remoteEnergy: RemoteEnergyMemory[];
+  defenceDirector: DefenceDirectorStore;
   constructionDirector: ConstructionDirectorStore;
   nextSpawn: CreepRecipie | null;
   spawnQueue: CreepRecipie[];
@@ -19,40 +19,11 @@ export interface RoomMemory {
 }
 export const roomMemoryDefault: RoomMemory = {
   remoteEnergy: remoteRoomEnergyDefault,
-  defenceDirector: defenseDirectorStoreDefault,
+  defenceDirector: defenceDirectorStoreDefault,
   constructionDirector: constructionDirectorDefault,
   nextSpawn: null,
   spawnQueue: [],
   buildingThisTick: false,
-  helpOtherRoom: false
-};
-const baseMemory: RoomType = {
-  sources: [],
-  minerals: [],
-  controllerId: "",
-  nextSpawn: null,
-  spawnQueue: [],
-  buildingThisTick: false,
-  remoteRooms: {},
-  constructionDirector: {
-    internalRoadTemplate: [],
-    extensionTemplate: [],
-    towerTemplate: [],
-    roadsCreated: false,
-    singleStructures: [],
-    labTemplate: []
-  },
-  remoteDirector: [],
-  defenseDirector: {
-    towers: [],
-    alertLevel: 0,
-    alertStartTimestamp: -1,
-    defenders: [],
-    rampartMap: [],
-    wallMap: [],
-    hostileCreeps: [],
-    activeTarget: null
-  },
   helpOtherRoom: false
 };
 function initMemory(room: Room): void {
@@ -68,11 +39,7 @@ function initMemory(room: Room): void {
   });
   // initial room init
   if (Memory.roomStore[room.name] === undefined) {
-    Memory.roomStore[room.name] = {
-      ...baseMemory,
-      sources: room.find(FIND_SOURCES).map((s: Source): string => s.id),
-      minerals: room.find(FIND_MINERALS).map((m: Mineral): string => m.id)
-    };
+    Memory.roomStore[room.name] = roomMemoryDefault;
     const freshRoom = Object.keys(Game.rooms).length === 1;
     if (freshRoom) {
       Memory.scoutingDirector = { scoutedRooms: [], scoutQueue: [], scanningIndex: 0 };

@@ -1,5 +1,7 @@
+import { RemoteEnergyMemory } from "./remoteRoomEnergy";
+
 export class RemoteRoomEnergyConstruction {
-  private static createContainer(room: RemoteDirectorStore): void {
+  private static createContainer(room: RemoteEnergyMemory): void {
     const homeRoomVisible = Object.keys(Game.rooms).includes(room.homeRoomName);
     const targetRoomVisible = Object.keys(Game.rooms).includes(room.roomName);
     if (targetRoomVisible && homeRoomVisible && Game.rooms[room.homeRoomName].energyCapacityAvailable >= 1_000) {
@@ -27,7 +29,7 @@ export class RemoteRoomEnergyConstruction {
       });
     }
   }
-  public static run(room: RemoteDirectorStore, index: number): void {
+  public static run(room: RemoteEnergyMemory, index: number): void {
     this.createContainer(room);
     // spawn remote containers if home room energyCap > 1k
     // create roads if level > 3

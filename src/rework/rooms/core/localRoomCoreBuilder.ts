@@ -113,7 +113,7 @@ export class LocalRoomCoreBuilder {
       builders.reduce((acc, creep) => {
         return acc + (creep.memory.working ? 0 : creep.store.getCapacity());
       }, 0) > 250;
-    const roomHostile = Memory.roomStore[room.name].defenseDirector.alertLevel > 0;
+    const roomHostile = Memory.roomStore[room.name].defenceDirector.alertLevel > 0;
     const spawners = room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_SPAWN });
     if (
       !roomHostile &&
@@ -126,7 +126,7 @@ export class LocalRoomCoreBuilder {
       !towersNeedEnergy &&
       !buildersNeedEnergy &&
       builders.length < Constants.builders &&
-      Memory.roomStore[room.name].defenseDirector.alertLevel === 0
+      Memory.roomStore[room.name].defenceDirector.alertLevel === 0
     ) {
       Memory.roomStore[room.name].spawnQueue.push({
         template: CreepBuilder.buildScaledBalanced(Math.min(room.energyCapacityAvailable, 2500)),

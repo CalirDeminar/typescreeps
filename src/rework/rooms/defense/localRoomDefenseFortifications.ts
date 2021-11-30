@@ -16,7 +16,7 @@ export class LocalRoomDefenseFortifications {
       .map((s) => s.pos);
   }
   private static spawnMasons(room: Room): void {
-    const highAlertLevel = Memory.roomStore[room.name].defenseDirector.alertLevel >= 2;
+    const highAlertLevel = Memory.roomStore[room.name].defenceDirector.alertLevel >= 2;
     const masonTarget = highAlertLevel ? 2 : 1;
     const activeMasons = CreepUtils.filterCreeps("mason", room.name, room.name);
     const queuedMasons = CreepUtils.filterQueuedCreeps(room.name, "mason", room.name, room.name);
@@ -90,11 +90,11 @@ export class LocalRoomDefenseFortifications {
     CreepUtils.filterCreeps("mason", room.name, room.name).forEach((c) => this.runMason(c, hotTiles));
   }
   private static planDefences(room: Room): void {
-    const store = Memory.roomStore[room.name].defenseDirector;
+    const store = Memory.roomStore[room.name].defenceDirector;
     if (store.rampartMap.length === 0 || store.wallMap.length === 0) {
       // TODO - Move WallPlanner into rework
       const defences = WallPlanner.getPerimeter(room);
-      Memory.roomStore[room.name].defenseDirector = {
+      Memory.roomStore[room.name].defenceDirector = {
         ...store,
         rampartMap: defences.ramparts,
         wallMap: defences.walls
@@ -107,7 +107,7 @@ export class LocalRoomDefenseFortifications {
   private static makeDefences(room: Room): void {
     const controller = room.controller;
     const terrian = room.getTerrain();
-    const store = Memory.roomStore[room.name].defenseDirector;
+    const store = Memory.roomStore[room.name].defenceDirector;
     const storage = room.find<StructureStorage>(FIND_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_STORAGE
     })[0];

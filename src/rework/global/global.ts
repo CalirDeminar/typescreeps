@@ -1,5 +1,5 @@
 import { GlobalExpansion } from "./expansion/globalExpansion";
-import { GlobalScouting, scoutingDirectorDefault } from "./scouting/globalScouting";
+import { GlobalScouting, scoutingDirectorDefault, ScoutingDirectorStore } from "./scouting/globalScouting";
 
 export interface GlobalMemory {
   roomStore: { [roomName: string]: RoomMemory };

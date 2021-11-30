@@ -6,25 +6,25 @@ import { RemoteRoomEnergyIntel } from "./remoteRoomEnergyIntel";
 import { RemoteRoomEnergyReservation } from "./remoteRoomEnergyReservation";
 
 export interface RemoteEnergyMemory {
-  remotes: {
-    roomName: string;
-    homeRoomName: string;
-    controllerId: string;
-    sourceIds: string[];
-    roadQueue: RoomPosition[];
-    roadsPathed: boolean;
-    roadsConstructed: boolean;
-    hasInvaderCore: boolean;
-    hasHostileCreeps: boolean;
-    hostileCreepCount: number;
-    hostileTowerCount: number;
+  roomName: string;
+  homeRoomName: string;
+  controllerId: string;
+  anchorId: string;
+  sources: {
+    sourceId: string;
+    targetContainerId: string | null;
   }[];
+  roadQueue: RoomPosition[];
+  roadsPathed: boolean;
+  roadsConstructed: boolean;
+  hasInvaderCore: boolean;
+  hasHostileCreeps: boolean;
+  hostileCreepCount: number;
+  hostileTowerCount: number;
 }
-export const remoteRoomEnergyDefault: RemoteEnergyMemory = {
-  remotes: []
-};
+export const remoteRoomEnergyDefault: RemoteEnergyMemory[] = [];
 export class RemoteRoomEnergy {
-  private static runRoom(room: RemoteDirectorStore, index: number): void {
+  private static runRoom(room: RemoteEnergyMemory, index: number): void {
     const remRoomVisible = Object.keys(Game.rooms).includes(room.roomName);
     const remRoom = remRoomVisible ? Game.rooms[room.roomName] : null;
     const anchor = Game.flags[room.anchorId];
@@ -44,6 +44,6 @@ export class RemoteRoomEnergy {
   }
   public static run(room: Room): void {
     RemoteRoomEnergyIntel.run(room);
-    Memory.roomStore[room.name].remoteDirector.forEach((r, i) => this.runRoom(r, i));
+    Memory.roomStore[room.name].remoteEnergy.forEach((r, i) => this.runRoom(r, i));
   }
 }
