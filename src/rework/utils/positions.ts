@@ -116,7 +116,7 @@ export class PositionsUtils {
     return filtered;
   }
   public static getRoomAvoids(roomName: string): RoomPosition[] {
-    if (Object.keys(Game.rooms).includes(roomName)) {
+    if (Object.keys(Memory.roomStore).includes(roomName)) {
       const structStore = Memory.roomStore[roomName].constructionDirector;
       const defStore = Memory.roomStore[roomName].defenceDirector;
       return structStore.extensionTemplate

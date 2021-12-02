@@ -221,7 +221,7 @@ export class LocalRoomConstruction {
     }
     const anchorContainer = anchor.findInRange(FIND_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_CONTAINER
-    });
+    })[0];
     if (!container && level >= 3 && !canHaveLink && !!anchorContainer) {
       const structStore = Memory.roomStore[room.name].constructionDirector;
       const defStore = Memory.roomStore[room.name].defenceDirector;

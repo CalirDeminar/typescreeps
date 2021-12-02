@@ -20,6 +20,19 @@ export interface CreepHaulerContainerMemory {
   dropOfTarget: string;
 }
 export class LocalRoomEnergyContainer {
+  private static deadRoom(room: Room): boolean {
+    const energyStorage = room.find<StructureStorage | StructureContainer>(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_STORAGE
+    });
+    const totalEnergy = energyStorage.reduce((acc: number, store) => store.store.getUsedCapacity() + acc, 0);
+    const energyToFill = totalEnergy >= room.energyCapacityAvailable;
+    const canHarvest = CreepUtils.filterCreeps("staticHarvester", room.name, room.name).length > 0;
+    const canMoveEnergy =
+      CreepUtils.filterCreeps("hauler", room.name, room.name).length +
+        CreepUtils.filterCreeps("queen", room.name, room.name).length >
+      0;
+    return !((energyToFill && canMoveEnergy) || (canHarvest && canMoveEnergy));
+  }
   private static shouldReplaceCreeps(creeps: Creep[], queuedCreeps: CreepRecipie[], max: number): boolean {
     return (
       creeps.length + queuedCreeps.length < max
@@ -32,10 +45,10 @@ export class LocalRoomEnergyContainer {
       return null;
     }
     const storage = anchor.findInRange(FIND_MY_STRUCTURES, 1, {
-      filter: (s) => s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity() > creep.store.getCapacity()
+      filter: (s) => s.structureType === STRUCTURE_STORAGE && s.store.getFreeCapacity()
     })[0];
     const container = anchor.findInRange(FIND_STRUCTURES, 1, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store.getFreeCapacity() > creep.store.getCapacity()
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store.getFreeCapacity()
     })[0];
     const spawn = anchor.findInRange(FIND_MY_STRUCTURES, 1, {
       filter: (s) =>
@@ -59,11 +72,7 @@ export class LocalRoomEnergyContainer {
     );
     const hasHarvesterActive = !!activeHarvesters.find((c) => !!c.ticksToLive);
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, [], Constants.maxStatic);
-    const deadRoom =
-      _.filter(
-        Game.creeps,
-        (c) => c.memory.homeRoom === room.name && ["staticHarvester", "queen", "hauler"].includes(c.memory.role)
-      ).length < 4;
+    const deadRoom = this.deadRoom(source.room);
     // clean up old shuttles
     if (hasHarvesterActive) {
       CreepUtils.filterCreeps("harvesterShuttle", room.name, room.name, source.id).map((c) => c.suicide());
@@ -107,11 +116,7 @@ export class LocalRoomEnergyContainer {
     // console.log(`Range: ${range}  Capacity: ${currentCarry}   Throughput: ${currentThroughput}`);
     const queuedHaulers = CreepUtils.filterQueuedCreeps(room.name, "hauler", room.name, room.name, container.id);
     const maxHaulers = room.energyCapacityAvailable > 1000 ? 1 : Constants.maxHaulers;
-    const deadRoom =
-      _.filter(
-        Game.creeps,
-        (c) => c.memory.homeRoom === room.name && ["staticHarvester", "queen", "hauler"].includes(c.memory.role)
-      ).length < 4;
+    const deadRoom = this.deadRoom(source.room);
     const shouldReplaceHauler = this.shouldReplaceCreeps(activeHaulers, queuedHaulers, maxHaulers);
     // (activeHaulers.length < maxHaulers + 1 && currentThroughput < 10);
     if (shouldReplaceHauler) {
@@ -188,9 +193,7 @@ export class LocalRoomEnergyContainer {
         case withdrawing:
           CreepBase.travelTo(creep, container, "blue");
           break;
-        case !withdrawing &&
-          (creep.memory.targetStore === "" ||
-            (storeTarget && storeTarget.structureType === STRUCTURE_CONTAINER && Game.time % 10 === 0)):
+        case !withdrawing && (creep.memory.targetStore === "" || (storeTarget && Game.time % 10 === 0)):
           const target = this.getStoreTarget(creep);
           creep.memory.targetStore = target ? target.id : "";
         // break;

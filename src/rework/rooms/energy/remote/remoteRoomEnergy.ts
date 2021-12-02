@@ -14,6 +14,7 @@ export interface RemoteEnergyMemory {
   sources: {
     sourceId: string;
     targetContainerId: string | null;
+    path?: RoomPosition[];
   }[];
   roadQueue: RoomPosition[];
   roadsPathed: boolean;

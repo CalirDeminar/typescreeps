@@ -19,10 +19,8 @@ export class RemoteRoomEnergyHarvester {
   }
   public static spawn(room: RemoteEnergyMemory, index: number): void {
     const homeRoom = Game.rooms[room.homeRoomName];
-    const energyBudget =
-      room.sources.length > 1
-        ? Math.min(homeRoom.energyCapacityAvailable, 2500)
-        : Math.min(homeRoom.energyCapacityAvailable, 1500);
+    const cap = Math.max(homeRoom.energyCapacityAvailable, 200);
+    const energyBudget = room.sources.length > 1 ? Math.min(cap, 2500) : Math.min(cap, 1500);
     const sources = room.sources;
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0 || room.hasInvaderCore;
     if (hostile) {
