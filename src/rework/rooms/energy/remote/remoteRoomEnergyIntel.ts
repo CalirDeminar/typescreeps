@@ -1,6 +1,7 @@
 import { initial } from "lodash";
 import { PositionsUtils } from "rework/utils/positions";
 import { Constants } from "utils/constants";
+import { packPosList } from "utils/packrat";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyIntel {
@@ -8,7 +9,7 @@ export class RemoteRoomEnergyIntel {
     const borders = PositionsUtils.getRoomNeighbors(room);
     const store = Memory.roomStore[room.name].remoteEnergy;
     const intel = Memory.scoutingDirector.scoutedRooms.filter(
-      (r) => r.towers.length === 0 && r.keeperLair.length === 0
+      (r) => r.towers.length === 0 && r.keeperLair.length === 0 && borders.includes(r.name)
     );
     const scoutedRoomNames = intel.map((r) => r.name);
     const currentRemotes = Object.values(Memory.roomStore).reduce(
@@ -19,12 +20,12 @@ export class RemoteRoomEnergyIntel {
     const initialAssesment =
       store.length === 0 || borders.some((b) => b && scoutedRoomNames.includes(b) && !currentRemotes.includes(b));
     if (assessmentInterval || initialAssesment) {
-      const availableDoubleSourceRooms = intel.filter(
-        (r) => r.sources.length === 2 && !currentRemotes.includes(r.name) && borders.includes(r.name)
-      );
-      const availableSingleSourceRooms = intel.filter(
-        (r) => r.sources.length === 1 && !currentRemotes.includes(r.name) && borders.includes(r.name)
-      );
+      const availableDoubleSourceRooms = intel
+        .filter((r) => r.sources.length === 2 && !currentRemotes.includes(r.name))
+        .sort(() => Math.random() - 0.5);
+      const availableSingleSourceRooms = intel
+        .filter((r) => r.sources.length === 1 && !currentRemotes.includes(r.name))
+        .sort(() => Math.random() - 0.5);
       const newRoom = availableDoubleSourceRooms[0] || availableSingleSourceRooms[0] || undefined;
       if (newRoom) {
         const anchor = PositionsUtils.getAnchor(room);
@@ -36,7 +37,13 @@ export class RemoteRoomEnergyIntel {
             return !path.incomplete;
           }).length === sourceLocations.length;
         if (sourcesReachable) {
-          const sources = newRoom.sources.map((s) => ({ sourceId: s.id, targetContainerId: null }));
+          const sources = newRoom.sources.map((s) => {
+            return {
+              sourceId: s.id,
+              targetContainerId: null,
+              path: packPosList([])
+            };
+          });
           Memory.roomStore[room.name].remoteEnergy = store.concat([
             {
               roomName: newRoom.name,

@@ -93,6 +93,11 @@ export class CreepBase {
         s.structureType === STRUCTURE_CONTAINER && !ignore.includes(s.id) && s.store.energy < s.store.getCapacity()
     });
   }
+  public static findStorageContainer(creep: Creep): Structure | null {
+    return creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.findInRange(FIND_FLAGS, 1).length > 1
+    });
+  }
   public static findSpawn(creep: Creep, ignore: string[] = []): Structure | null {
     return creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_SPAWN && !ignore.includes(s.id) && s.store.energy < s.energyCapacity
@@ -179,6 +184,35 @@ export class CreepBase {
         return null;
       }
       return null;
+    }
+  }
+  public static travelByPath(creep: Creep, target: RoomPosition, path: RoomPosition[], range?: number | 1): void {
+    if (creep.fatigue <= 0) {
+      path = path.map((p) => new RoomPosition(p.x, p.y, p.roomName));
+      target = new RoomPosition(target.x, target.y, target.roomName);
+      const targetIndex = path.findIndex((p) => p.isEqualTo(target));
+      const creepIndex = path.findIndex((p) => p.isEqualTo(creep.pos));
+      const shouldReversePath = creepIndex > targetIndex;
+      if (creepIndex === -1 || targetIndex === -1 || creep.pos.findInRange(FIND_CREEPS, 1).length > 0) {
+        this.travelTo(creep, target, "", range);
+        return;
+      }
+      const shortPath = !shouldReversePath
+        ? path.slice(creepIndex, targetIndex + 1)
+        : path.slice(targetIndex, creepIndex + 1);
+      if (shouldReversePath) {
+        shortPath.reverse();
+      }
+      if (
+        shortPath[1]
+          .lookFor(LOOK_STRUCTURES)
+          .filter((s) => s.structureType !== STRUCTURE_ROAD && s.structureType !== STRUCTURE_RAMPART).length > 0
+      ) {
+        this.travelTo(creep, target, "", range);
+        return;
+      }
+      // console.log(`Creep: ${creep.name} - Travel By Path`);
+      creep.moveByPath(shortPath);
     }
   }
 }

@@ -21,6 +21,8 @@ export class LocalRoomCoreControllerHauler {
         if (target) {
           creep.memory.workTarget = target.id;
           CreepBase.travelTo(creep, target, "orange");
+        } else if (creep.pos.getRangeTo(container) < 2) {
+          CreepBase.flee(creep, container.pos);
         }
         break;
       }

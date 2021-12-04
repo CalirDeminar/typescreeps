@@ -36,7 +36,7 @@ export class SourceDirector {
     const activeSite = room.find(FIND_CONSTRUCTION_SITES).length > 0 || Memory.roomStore[room.name].buildingThisTick;
     if (controller && !activeSite) {
       const structStore = Memory.roomStore[room.name].constructionDirector;
-      const defStore = Memory.roomStore[room.name].defenseDirector;
+      const defStore = Memory.roomStore[room.name].defenceDirector;
       const avoids = structStore.extensionTemplate
         .concat(structStore.towerTemplate)
         .concat(structStore.labTemplate)
@@ -80,7 +80,7 @@ export class SourceDirector {
           }
         }
         if (link && container) {
-          container.destroy();
+          // container.destroy();
         }
       }
     }

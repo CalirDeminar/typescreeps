@@ -2,8 +2,57 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
 import { CreepUtils } from "rework/utils/creepUtils";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
+import { PositionsUtils } from "rework/utils/positions";
+import { packPosList, unpackPosList } from "utils/packrat";
 
 export class RemoteRoomEnergyHauler {
+  private static getPath(creep: Creep, room: RemoteEnergyMemory, anchor: Flag): RoomPosition[] {
+    const sourceRecord = room.sources.find((s) => s.sourceId === creep.memory.targetSource);
+    const sourceRecordIndex = room.sources.findIndex((s) => s.sourceId === creep.memory.targetSource);
+    const roomIndex = Memory.roomStore[room.homeRoomName].remoteEnergy.findIndex((r) => r.roomName === room.roomName);
+    if (
+      !sourceRecord ||
+      (creep.pos.roomName !== room.roomName && sourceRecord && sourceRecord.path && sourceRecord.path.length === 0)
+    ) {
+      return [];
+    }
+    const source = Game.getObjectById<Source>(sourceRecord.sourceId);
+    if (!source) {
+      return [];
+    }
+    if (sourceRecord.path && sourceRecord.path.length > 0) {
+      return unpackPosList(sourceRecord.path);
+    }
+    const targetRoomStructures = creep.room
+      .find(FIND_STRUCTURES, {
+        filter: (s) => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD
+      })
+      .map((s) => s.pos);
+    const route = PathFinder.search(
+      anchor.pos,
+      {
+        pos: new RoomPosition(source.pos.x, source.pos.y, source.pos.roomName),
+        range: 1
+      },
+      {
+        roomCallback: (roomName) => {
+          const cm = PositionsUtils.getRoomTerrainCostMatrix(roomName);
+          const isTargetRoom = roomName === room.roomName;
+          const localAvoids = PositionsUtils.getRoomAvoids(roomName).concat(isTargetRoom ? targetRoomStructures : []);
+          localAvoids.forEach((a) => cm.set(a.x, a.y, 255));
+          return cm;
+        },
+        maxRooms: 3
+      }
+    );
+    if (route.incomplete) {
+      return [];
+    }
+    Memory.roomStore[room.homeRoomName].remoteEnergy[roomIndex].sources[sourceRecordIndex].path = packPosList(
+      route.path
+    );
+    return route.path;
+  }
   private static getStoreTarget(creep: Creep): Structure | null {
     return (
       creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -46,13 +95,13 @@ export class RemoteRoomEnergyHauler {
       if (!container) {
         return;
       }
-      const haulers = CreepUtils.filterCreeps("remoteHauler", room.homeRoomName, room.roomName, container.id);
+      const haulers = CreepUtils.filterCreeps("remoteHauler", room.homeRoomName, room.roomName, s.sourceId);
       const queuedHaulers = CreepUtils.filterQueuedCreeps(
         room.homeRoomName,
         "remoteHauler",
         room.homeRoomName,
         room.roomName,
-        container.id
+        s.sourceId
       );
       const needsHauler = haulers.length + queuedHaulers.length === 0;
       const haulerNearDeath =
@@ -69,7 +118,8 @@ export class RemoteRoomEnergyHauler {
             ...CreepBase.baseMemory,
             homeRoom: homeRoom.name,
             targetRoom: room.roomName,
-            targetSource: container.id,
+            targetSource: source.id,
+            workTarget: container.id,
             role: "remoteHauler",
             working: true
           }
@@ -79,7 +129,7 @@ export class RemoteRoomEnergyHauler {
           "remoteHauler",
           room.homeRoomName,
           room.roomName,
-          container.id
+          s.sourceId
         );
         if (index >= 0) {
           Memory.roomStore[homeRoom.name].spawnQueue[index] = template;
@@ -93,7 +143,7 @@ export class RemoteRoomEnergyHauler {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {
       const startCpu = Game.cpu.getUsed();
       let withdrawing = creep.memory.working;
-      const container = Game.getObjectById<StructureContainer>(creep.memory.targetSource);
+      const container = Game.getObjectById<StructureContainer>(creep.memory.workTarget);
       const empty = creep.store.getUsedCapacity() === 0;
       const full = creep.store.getFreeCapacity() === 0;
       const nearDeath = creep.ticksToLive < 100;
@@ -111,13 +161,19 @@ export class RemoteRoomEnergyHauler {
         (r) => r.roomName === creep.memory.targetRoom
       );
       const targetRoomHostile = remRoom ? remRoom.hostileCreepCount > 0 : false;
+      const path = remRoom ? this.getPath(creep, remRoom, anchor) : [];
+      const validPath = path.length > 0;
       switch (true) {
         case targetRoomHostile:
-          CreepBase.travelTo(creep, anchor, "orange", 5);
+          validPath
+            ? CreepBase.travelByPath(creep, anchor.pos, path, 5)
+            : CreepBase.travelTo(creep, anchor, "orange", 5);
           break;
         case withdrawing && creep.room.name !== creep.memory.targetRoom:
           // move to target room
-          CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.targetRoom), "black", 20);
+          validPath
+            ? CreepBase.travelByPath(creep, path[path.length - 1], path)
+            : CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.targetRoom), "black", 20);
           break;
         case withdrawing && creep.room.name === creep.memory.targetRoom:
           if (
@@ -128,11 +184,15 @@ export class RemoteRoomEnergyHauler {
           ) {
             creep.withdraw(container, RESOURCE_ENERGY);
           } else if (container) {
-            CreepBase.travelTo(creep, container, "black", 1);
+            validPath
+              ? CreepBase.travelByPath(creep, container.pos, path, 1)
+              : CreepBase.travelTo(creep, container, "black", 1);
           }
           break;
         case !withdrawing && creep.room.name !== creep.memory.homeRoom:
-          CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.homeRoom), "black", 20);
+          validPath
+            ? CreepBase.travelByPath(creep, anchor.pos, path, 5)
+            : CreepBase.travelTo(creep, new RoomPosition(25, 25, creep.memory.homeRoom), "black", 20);
           break;
         case !withdrawing && creep.room.name === creep.memory.homeRoom:
           const storeTarget =

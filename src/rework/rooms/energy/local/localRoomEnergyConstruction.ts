@@ -22,7 +22,7 @@ export class LocalRoomEnergyConstruction {
     };
   }
   public static getSourceStructures(source: Source) {
-    const container = PositionsUtils.findStructureInRange(source.pos, 2, STRUCTURE_CONTAINER);
+    const container = PositionsUtils.findStructureInRange(source.pos, 1, STRUCTURE_CONTAINER);
     const link = PositionsUtils.findStructureInRange(source.pos, 2, STRUCTURE_LINK);
     return {
       container,

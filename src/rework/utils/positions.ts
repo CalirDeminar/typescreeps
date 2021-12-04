@@ -127,4 +127,16 @@ export class PositionsUtils {
     }
     return [];
   }
+  public static getRoomTerrainCostMatrix(roomName: string): CostMatrix {
+    const terrain = Game.map.getRoomTerrain(roomName);
+    let costMatrix = new PathFinder.CostMatrix();
+    _.range(0, 50).forEach((x) => {
+      _.range(0, 50).forEach((y) => {
+        const terrainValue = terrain.get(x, y);
+        const terrainWeight = terrainValue === 1 ? 255 : terrainValue === 2 ? 2 : 1;
+        costMatrix.set(x, y, terrainWeight);
+      });
+    });
+    return costMatrix;
+  }
 }

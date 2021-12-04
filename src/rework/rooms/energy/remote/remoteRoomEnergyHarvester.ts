@@ -2,6 +2,8 @@ import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
+import { unpackPosList, packPosList } from "utils/packrat";
+import { UtilPosition } from "utils/util.position";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyHarvester {
@@ -72,6 +74,53 @@ export class RemoteRoomEnergyHarvester {
       }
     });
   }
+  private static getPath(creep: Creep, room: RemoteEnergyMemory, anchor: Flag): RoomPosition[] {
+    const sourceRecord = room.sources.find((s) => s.sourceId === creep.memory.targetSource);
+    const sourceRecordIndex = room.sources.findIndex((s) => s.sourceId === creep.memory.targetSource);
+    const roomIndex = Memory.roomStore[room.homeRoomName].remoteEnergy.findIndex((r) => r.roomName === room.roomName);
+    if (
+      !sourceRecord ||
+      (creep.pos.roomName !== room.roomName && sourceRecord && sourceRecord.path && sourceRecord.path.length === 0)
+    ) {
+      return [];
+    }
+    const source = Game.getObjectById<Source>(sourceRecord.sourceId);
+    if (!source) {
+      return [];
+    }
+    if (sourceRecord.path && sourceRecord.path.length > 0) {
+      return unpackPosList(sourceRecord.path);
+    }
+    const targetRoomStructures = creep.room
+      .find(FIND_STRUCTURES, {
+        filter: (s) => s.structureType !== STRUCTURE_CONTAINER && s.structureType !== STRUCTURE_ROAD
+      })
+      .map((s) => s.pos);
+    const route = PathFinder.search(
+      anchor.pos,
+      {
+        pos: new RoomPosition(source.pos.x, source.pos.y, source.pos.roomName),
+        range: 1
+      },
+      {
+        roomCallback: (roomName) => {
+          const cm = PositionsUtils.getRoomTerrainCostMatrix(roomName);
+          const isTargetRoom = roomName === room.roomName;
+          const localAvoids = PositionsUtils.getRoomAvoids(roomName).concat(isTargetRoom ? targetRoomStructures : []);
+          localAvoids.forEach((a) => cm.set(a.x, a.y, 255));
+          return cm;
+        },
+        maxRooms: 3
+      }
+    );
+    if (route.incomplete) {
+      return [];
+    }
+    Memory.roomStore[room.homeRoomName].remoteEnergy[roomIndex].sources[sourceRecordIndex].path = packPosList(
+      route.path
+    );
+    return route.path;
+  }
   public static run(
     creep: Creep,
     room: RemoteEnergyMemory,
@@ -93,9 +142,11 @@ export class RemoteRoomEnergyHarvester {
       this.setWorkingState(creep);
       const working = creep.memory.working;
       const inTargetRoom = creep.pos.roomName === creep.memory.targetRoom;
+      const path = this.getPath(creep, room, anchor);
+      const validPath = path.length > 0;
       switch (true) {
         case hostileRoom: {
-          CreepBase.travelTo(creep, anchor, "orange", 5);
+          validPath ? CreepBase.travelByPath(creep, anchor.pos, path) : CreepBase.travelTo(creep, anchor, "orange", 5);
           break;
         }
         case working && source && creep.pos.isNearTo(source.pos): {
@@ -105,12 +156,17 @@ export class RemoteRoomEnergyHarvester {
           break;
         }
         case working && !inTargetRoom: {
-          CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
+          validPath
+            ? CreepBase.travelByPath(creep, path[path.length - 1], path)
+            : CreepBase.travelToRoom(creep, "orange", creep.memory.targetRoom);
+
           break;
         }
         case working && source && !creep.pos.isNearTo(source.pos): {
           if (source) {
-            CreepBase.travelTo(creep, container?.pos || source.pos, "orange", container ? 0 : 1);
+            validPath
+              ? CreepBase.travelByPath(creep, source.pos, path)
+              : CreepBase.travelTo(creep, container?.pos || source.pos, "orange", container ? 0 : 1);
           }
           break;
         }
@@ -145,11 +201,14 @@ export class RemoteRoomEnergyHarvester {
               CreepBase.travelTo(creep, constructionSite, "orange", 2);
             }
           } else {
-            CreepBase.travelTo(creep, anchor, "orange", 5);
+            validPath
+              ? CreepBase.travelByPath(creep, anchor.pos, path)
+              : CreepBase.travelTo(creep, anchor, "orange", 5);
           }
           break;
         case !working && creep.pos.roomName === creep.memory.homeRoom:
           const storeTarget =
+            CreepBase.findStorageContainer(creep) ||
             CreepBase.findStorage(creep) ||
             CreepBase.findContainer(creep) ||
             CreepBase.findSpawn(creep) ||
