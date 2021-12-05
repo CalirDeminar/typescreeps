@@ -63,6 +63,7 @@ export class LocalRoomCoreUpgrader {
     energySource: StructureContainer | StructureLink | StructureSpawn | undefined
   ): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       const controller = Game.getObjectById<StructureController>(creep.memory.upgradeTarget);
       CreepBase.maintainRoad(creep);
       const working = creep.memory.working;
@@ -104,6 +105,8 @@ export class LocalRoomCoreUpgrader {
           });
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   public static run(room: Room): void {
@@ -111,7 +114,7 @@ export class LocalRoomCoreUpgrader {
     this.spawnUpgrader(room);
     const builders = CreepUtils.filterCreeps("builder", room.name, room.name);
     const sites = room.find(FIND_CONSTRUCTION_SITES);
-    if (!sites || (sites && builders.length > 0)) {
+    if (sites.length === 0 || (sites && builders.length > 0)) {
       CreepUtils.filterCreeps("upgrader", room.name, room.name).forEach((c) => this.runUpgrader(c, container));
     }
   }

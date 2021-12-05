@@ -25,6 +25,14 @@ export class CreepBuilder {
       return this.buildShuttleCreep(energy);
     }
   }
+  public static buildStaticLinkHarvester(energy: number): (WORK | CARRY | MOVE)[] {
+    const workParts = Math.min(Math.floor((energy - 200) / 100), 6);
+    if (workParts >= 4) {
+      return [...new Array(workParts).fill(WORK), CARRY, CARRY, MOVE, MOVE];
+    } else {
+      return this.buildShuttleCreep(energy);
+    }
+  }
   public static buildScaledBalanced(energy: number): (WORK | CARRY | MOVE)[] {
     const noParts = Math.min(Math.floor(energy / 200), 16);
     if (noParts > 0) {
@@ -33,13 +41,13 @@ export class CreepBuilder {
     return [];
   }
   public static buildMineralHarvester(energy: number): (WORK | CARRY | MOVE)[] {
-    const moveParts = Math.ceil((energy - 50) / 1000);
-    const workParts = Math.min(Math.floor((energy - 50 - moveParts * 50) / 100), 43);
+    const moveParts = Math.min(Math.ceil((energy - 50) / 1000), 7);
+    const workParts = Math.min(Math.floor((energy - 50 - moveParts * 50) / 100), 42);
 
     return [CARRY, ...new Array(moveParts).fill(MOVE), ...new Array(workParts).fill(WORK)];
   }
   public static buildRoadHauler(energy: number): (WORK | CARRY | MOVE)[] {
-    const thirds = Math.floor(energy / 3 / 50);
+    const thirds = Math.min(Math.floor(energy / 3 / 50), 15);
     const moveParts = thirds;
     const carryParts = thirds * 2;
     return [...new Array(moveParts).fill(MOVE), ...new Array(carryParts).fill(CARRY)];

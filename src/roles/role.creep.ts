@@ -39,7 +39,7 @@ export class CreepBase {
         visualizePathStyle: { stroke: pathColour },
         ignoreCreeps: !creepNearby,
         range: range,
-        reusePath: creepNearby ? 5 : 20,
+        reusePath: creepNearby ? 5 : 40,
         // maxOps: 2000,
         costCallback: (roomName: string, costMatrix: CostMatrix) => {
           if (roomName === creep.pos.roomName && avoids && avoids.length > 0) {

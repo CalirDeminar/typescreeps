@@ -148,17 +148,6 @@ export class LocalRoomConstruction {
         }
         break;
       }
-      case shouldBuildFactory: {
-        const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
-          (s) => s.type === STRUCTURE_FACTORY
-        )[0];
-        if (next) {
-          return (
-            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_FACTORY) === OK
-          );
-        }
-        break;
-      }
       case shouldBuildObserver: {
         const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
           (s) => s.type === STRUCTURE_OBSERVER
@@ -171,13 +160,24 @@ export class LocalRoomConstruction {
         }
         break;
       }
-      case shouldBuildObserver: {
+      case shouldBuildNuker: {
         const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
           (s) => s.type === STRUCTURE_NUKER
         )[0];
         if (next) {
           return (
             new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_NUKER) === OK
+          );
+        }
+        break;
+      }
+      case shouldBuildFactory: {
+        const next = Memory.roomStore[room.name].constructionDirector.singleStructures.filter(
+          (s) => s.type === STRUCTURE_FACTORY
+        )[0];
+        if (next) {
+          return (
+            new RoomPosition(next.pos.x, next.pos.y, next.pos.roomName).createConstructionSite(STRUCTURE_FACTORY) === OK
           );
         }
         break;

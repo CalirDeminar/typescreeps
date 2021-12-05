@@ -23,15 +23,15 @@ export class LocalRoomDefenseDefenders {
           }
           break;
         case targetRoom && creep.pos.roomName === targetRoom.roomName:
-          const target =
-            creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS) ||
-            creep.room.find<StructureInvaderCore>(FIND_STRUCTURES, {
-              filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
-            })[0];
+          const targetCore = creep.room.find<StructureInvaderCore>(FIND_STRUCTURES, {
+            filter: (s) => s.structureType === STRUCTURE_INVADER_CORE
+          })[0];
+          const targetCreep = targetCore ? undefined : creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
+          const target = targetCreep || targetCore;
           if (target && creep.pos.getRangeTo(target) <= 2) {
             creep.attack(target);
           }
-          if (target) {
+          if (target && (creep.pos.getRangeTo(target) > 1 || targetCreep)) {
             CreepBase.travelTo(creep, target, "red", 0);
           }
           break;

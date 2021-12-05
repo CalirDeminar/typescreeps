@@ -16,6 +16,7 @@ export interface RoomMemory {
   spawnQueue: CreepRecipie[];
   buildingThisTick: boolean;
   helpOtherRoom: boolean;
+  visualBuffer: string;
 }
 export const roomMemoryDefault: RoomMemory = {
   remoteEnergy: remoteRoomEnergyDefault,
@@ -24,7 +25,8 @@ export const roomMemoryDefault: RoomMemory = {
   nextSpawn: null,
   spawnQueue: [],
   buildingThisTick: false,
-  helpOtherRoom: false
+  helpOtherRoom: false,
+  visualBuffer: ""
 };
 function initMemory(room: Room): void {
   if (!Memory.roomStore) {

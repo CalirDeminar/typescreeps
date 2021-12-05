@@ -30,8 +30,9 @@ export class LocalRoomEnergyLink {
     const shouldReplaceHarvester = this.shouldReplaceCreeps(activeHarvesters, [], Constants.maxStatic);
     const deadRoom = _.filter(Game.creeps, (c) => c.memory.homeRoom === source.room.name).length < 4;
     if (shouldReplaceHarvester) {
+      const budget = deadRoom ? source.room.energyAvailable : source.room.energyCapacityAvailable;
       const template = {
-        template: CreepBuilder.buildStaticHarvester(
+        template: CreepBuilder.buildStaticLinkHarvester(
           deadRoom ? source.room.energyAvailable : source.room.energyCapacityAvailable
         ),
         memory: {
@@ -85,19 +86,17 @@ export class LocalRoomEnergyLink {
       this.setWorkingState(creep);
       const working = creep.memory.working;
       const link = CreepBase.findLink(creep);
-      const spot = this.getHarvestSpot(creep.room, link, source);
-      // console.log(`Harvester: ${creep.name} - Spot: ${JSON.stringify(spot)}`);
       switch (true) {
         case working && creep.pos.isNearTo(source) && link && creep.pos.isNearTo(link):
           creep.harvest(source);
           break;
-        case working && spot !== null:
+        case working:
+          const spot = this.getHarvestSpot(creep.room, link, source);
           if (spot) {
             CreepBase.travelTo(creep, spot, "orange");
+          } else {
+            CreepBase.travelTo(creep, source, "orange");
           }
-          break;
-        case working:
-          CreepBase.travelTo(creep, source, "orange");
           break;
         case !working && link && creep.pos.isNearTo(link):
           if (link) {

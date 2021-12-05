@@ -1,3 +1,35 @@
+const sections = ["Status (time & resources)", "Creep Counts & Performance", "Performance Breakdown"];
+const creepRoles = [
+  "shuttleHarvester",
+  "staticHarvester",
+  "hauler",
+  "controllerHauler",
+  "remoteHauler",
+  "remoteHarvester",
+  "upgrader",
+  "builder",
+  "queen",
+  "linkHauler",
+  "mason",
+  "mineralHarvester",
+  "mineralHauler",
+  "pathfinder",
+  "patrol",
+  "remoteDefender"
+];
+//  status
+//    roomName
+//    tick
+//    execTime
+//    bucket
+//  creeps per role
+//    live count
+//    queued count
+//    avg cpu cost
+//  resources
+//    energy
+//    minerals
+
 export class Logger {
   private static logCreepPerformance(): void {
     const creeps = Object.values(Game.creeps);
@@ -21,10 +53,15 @@ export class Logger {
       []
     );
     let output = "Creep Perf: ";
+    const totalCreeps = creeps.filter((c) => c.memory.performanceHistory.length > 0).length;
+    const totalCreepTime = vals.filter((c) => c.performance > 0).reduce((acc: number, p) => acc + p.performance, 0);
     roleMap
       .sort((a, b) => a.performance - b.performance)
       .forEach((r) => (output += ` ${r.role}: ${r.performance.toFixed(5)} - `));
     console.log(output);
+    console.log(
+      `Creeps Total: ${totalCreepTime.toFixed(5)} of ${Game.cpu.getUsed().toFixed(5)} over ${totalCreeps} creeps`
+    );
   }
   static log(game: Game) {
     Object.values(Game.rooms).forEach((room: Room) => {

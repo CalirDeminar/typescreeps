@@ -207,6 +207,7 @@ export class LocalRoomEnergyContainer {
             CreepBase.travelTo(creep, storeTarget, "blue");
           }
       }
+
       const endCpu = Game.cpu.getUsed();
       CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }

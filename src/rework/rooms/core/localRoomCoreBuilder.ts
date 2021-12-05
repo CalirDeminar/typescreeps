@@ -123,7 +123,7 @@ export class LocalRoomCoreBuilder {
       !roomHostile &&
       spawners.length > 0 &&
       room.controller &&
-      room.controller.level < 8 &&
+      (room.controller.level < 8 || room.find(FIND_CONSTRUCTION_SITES).length > 0) &&
       energyFull &&
       storageHasBuffer &&
       Memory.roomStore[room.name].spawnQueue.length === 0 &&

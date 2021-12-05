@@ -54,6 +54,8 @@ export class GlobalScouting {
   }
   private static scoutRoom(creep: Creep): void {
     const room = creep.room;
+    const recordIndex = Memory.scoutingDirector.scoutedRooms.findIndex((r) => r.name === room.name);
+    const oldRecord = Memory.scoutingDirector.scoutedRooms[recordIndex];
     const sources = room.find(FIND_SOURCES).map((s) => {
       return { id: s.id, pos: s.pos };
     });
@@ -85,53 +87,64 @@ export class GlobalScouting {
     const towers = room.find<StructureTower>(FIND_HOSTILE_STRUCTURES, {
       filter: (s) => s.structureType === STRUCTURE_TOWER
     });
-    const freeTileFilterPositions = sources.map((s) => s.pos);
-    if (mineral) {
-      freeTileFilterPositions.push(mineral.pos);
-    }
-    if (room.controller) {
-      freeTileFilterPositions.push(room.controller.pos);
-    }
-    const filterX = freeTileFilterPositions.map((p) => p.x);
-    const filterY = freeTileFilterPositions.map((p) => p.y);
-    const filterLimits = {
-      xMin: Math.min(...filterX),
-      xMax: Math.max(...filterX),
-      yMin: Math.min(...filterY),
-      yMax: Math.max(...filterY)
-    };
-    const record = {
-      sources: sources,
-      mineral: mineral,
-      controller: controller,
-      deposit: deposit,
-      powerBank: powerBank,
-      keeperLair: keeperLair,
-      invaderCore: invaderCore,
-      towers: towers,
-      terrain: {},
-      name: room.name,
-      settleableTiles: packPosList([]),
-      settlingScanningIndex: 0,
-      freeTiles: packPosList(
-        this.getFreeRoomTiles(room.name).filter(
-          (p) =>
-            p.x > filterLimits.xMin && p.x < filterLimits.xMax && p.y > filterLimits.yMin && p.y < filterLimits.yMax
-        )
-      ),
-      doneScanning: false
-    };
-    const index = Memory.scoutingDirector.scoutedRooms.findIndex((r) => r.name === room.name);
-    if (index >= 0) {
-      Memory.scoutingDirector.scoutedRooms[index] = record;
+    if (recordIndex >= 0) {
+      Memory.scoutingDirector.scoutedRooms[recordIndex] = {
+        ...oldRecord,
+        sources: sources,
+        mineral: mineral,
+        controller: controller,
+        deposit: deposit,
+        powerBank: powerBank,
+        keeperLair: keeperLair,
+        invaderCore: invaderCore,
+        towers: towers
+      };
     } else {
+      const freeTileFilterPositions = sources.map((s) => s.pos);
+      if (mineral) {
+        freeTileFilterPositions.push(mineral.pos);
+      }
+      if (room.controller) {
+        freeTileFilterPositions.push(room.controller.pos);
+      }
+      const filterX = freeTileFilterPositions.map((p) => p.x);
+      const filterY = freeTileFilterPositions.map((p) => p.y);
+      const filterLimits = {
+        xMin: Math.min(...filterX),
+        xMax: Math.max(...filterX),
+        yMin: Math.min(...filterY),
+        yMax: Math.max(...filterY)
+      };
+      const record = {
+        sources: sources,
+        mineral: mineral,
+        controller: controller,
+        deposit: deposit,
+        powerBank: powerBank,
+        keeperLair: keeperLair,
+        invaderCore: invaderCore,
+        towers: towers,
+        terrain: {},
+        name: room.name,
+        settleableTiles: packPosList([]),
+        settlingScanningIndex: 0,
+        freeTiles: packPosList(
+          this.getFreeRoomTiles(room.name).filter(
+            (p) =>
+              p.x > filterLimits.xMin && p.x < filterLimits.xMax && p.y > filterLimits.yMin && p.y < filterLimits.yMax
+          )
+        ),
+        doneScanning: false
+      };
       Memory.scoutingDirector.scoutedRooms = Memory.scoutingDirector.scoutedRooms.concat(record);
     }
   }
   private static runScouts(): void {
     const inhabitedRooms = Object.keys(Memory.roomStore);
-    CreepUtils.filterCreeps("scout").forEach((creep) => {
+    const scouts = [...CreepUtils.filterCreeps("pathfinder"), ...CreepUtils.filterCreeps("patrol")];
+    scouts.forEach((creep) => {
       if (creep.ticksToLive) {
+        const startCpu = Game.cpu.getUsed();
         const queue = creep.memory.scoutPositions;
         const staleNext = queue[0];
         const next = staleNext ? new RoomPosition(staleNext.x, staleNext.y, staleNext.roomName) : undefined;
@@ -154,7 +167,7 @@ export class GlobalScouting {
             if (!next) {
               break;
             }
-            CreepBase.travelTo(creep, next, "blue", 10);
+            CreepBase.travelTo(creep, next, "blue", 20);
             // detect if stuck
             let lastPos = creep.memory.lastPosition;
             creep.memory.lastPosition = creep.pos;
@@ -174,6 +187,8 @@ export class GlobalScouting {
             }
           }
         }
+        const endCpu = Game.cpu.getUsed();
+        CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
       }
     });
   }
@@ -201,17 +216,47 @@ export class GlobalScouting {
       return room.controller && room.controller.level > 1;
     })[0];
   }
-  private static spawnScouts(): void {
+  private static getCorridorPatrolRoute(): RoomPosition[] {
+    const maxDistance = 10;
+    const occupiedRooms = Object.keys(Memory.roomStore);
+    const nearbyCorridors = Memory.scoutingDirector.scoutedRooms
+      .filter(
+        (s) =>
+          s.sources.length === 0 &&
+          s.mineral === null &&
+          occupiedRooms.some((o) => Game.map.getRoomLinearDistance(s.name, o) < maxDistance)
+      )
+      .sort((a) => Math.random() - 0.5);
+    return nearbyCorridors.map((c) => new RoomPosition(25, 25, c.name));
+  }
+  private static spawnPatrol(): void {
     const spawningRoom = this.getSpawningRoom();
-    const scouts = CreepUtils.filterCreeps("scout");
-    const queuedScouts = CreepUtils.filterAllQueuedCreeps("scout");
+    const scouts = CreepUtils.filterCreeps("patrol");
+    const queuedScouts = CreepUtils.filterAllQueuedCreeps("patrol");
     const canSpawnScout = !!spawningRoom && scouts.length + queuedScouts.length === 0;
     if (canSpawnScout && spawningRoom) {
       Memory.roomStore[spawningRoom].spawnQueue.push({
         template: [MOVE],
         memory: {
           ...CreepBase.baseMemory,
-          role: "scout",
+          role: "patrol",
+          homeRoom: spawningRoom,
+          scoutPositions: this.getCorridorPatrolRoute()
+        }
+      });
+    }
+  }
+  private static spawnPathfinder(): void {
+    const spawningRoom = this.getSpawningRoom();
+    const scouts = CreepUtils.filterCreeps("pathfinder");
+    const queuedScouts = CreepUtils.filterAllQueuedCreeps("pathfinder");
+    const canSpawnScout = !!spawningRoom && scouts.length + queuedScouts.length === 0;
+    if (canSpawnScout && spawningRoom) {
+      Memory.roomStore[spawningRoom].spawnQueue.push({
+        template: [MOVE],
+        memory: {
+          ...CreepBase.baseMemory,
+          role: "pathfinder",
           homeRoom: spawningRoom,
           scoutPositions: Memory.scoutingDirector.scoutQueue.sort(() => Math.random() - 0.5)
         }
@@ -220,7 +265,8 @@ export class GlobalScouting {
   }
   public static run(): void {
     this.updateLists();
-    this.spawnScouts();
+    this.spawnPathfinder();
+    this.spawnPatrol();
     this.runScouts();
     // update settlement data - move to expansion class
   }

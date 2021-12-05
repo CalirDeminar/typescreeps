@@ -199,16 +199,26 @@ export class RemoteRoomEnergyHauler {
             creep.memory.targetStore !== ""
               ? Game.getObjectById<StructureContainer>(creep.memory.targetStore)
               : this.getStoreTarget(creep);
+          const storeNearAnchor = storeTarget?.pos.findInRange(FIND_FLAGS, 1, {
+            filter: (f) => f.name === `${storeTarget.pos.roomName}-Anchor`
+          });
           if (storeTarget) {
-            if (creep.pos.isNearTo(storeTarget)) {
-              const rtn = creep.transfer(storeTarget, RESOURCE_ENERGY);
-              if (rtn === OK) {
-                creep.memory.targetStore = "";
-              }
-            } else {
-              CreepBase.travelTo(creep, storeTarget, "black", 1);
+            switch (true) {
+              case creep.pos.isNearTo(storeTarget):
+                const rtn = creep.transfer(storeTarget, RESOURCE_ENERGY);
+                if (rtn === OK) {
+                  creep.memory.targetStore = "";
+                }
+                break;
+              case creep.pos.getRangeTo(anchor.pos) > 4:
+                CreepBase.travelByPath(creep, anchor.pos, path);
+                break;
+              default:
+                CreepBase.travelTo(creep, storeTarget, "black", 1);
+                break;
             }
           }
+          break;
       }
       const endCpu = Game.cpu.getUsed();
       CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);

@@ -106,7 +106,7 @@ export class CreepUtils {
     if (history === undefined) {
       creep.memory.performanceHistory = [timeToRun];
     }
-    const sliceLine = history.length >= 50 ? 1 : 0;
+    const sliceLine = history.length >= 100 ? 1 : 0;
     creep.memory.performanceHistory = history.slice(sliceLine).concat([timeToRun]);
   }
 }

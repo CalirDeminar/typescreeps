@@ -50,6 +50,7 @@ export class LocalRoomDefenseFortifications {
   }
   private static runMason(creep: Creep, hostileTiles: RoomPosition[]): void {
     if (creep.ticksToLive) {
+      const startCpu = Game.cpu.getUsed();
       const storage = Game.getObjectById<StructureStorage>(creep.memory.refuelTarget);
       const allRamparts = creep.room.find(FIND_STRUCTURES, {
         filter: (s) =>
@@ -83,6 +84,8 @@ export class LocalRoomDefenseFortifications {
             break;
         }
       }
+      const endCpu = Game.cpu.getUsed();
+      CreepUtils.recordCreepPerformance(creep, endCpu - startCpu);
     }
   }
   private static runMasons(room: Room): void {
