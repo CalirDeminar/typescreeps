@@ -3,6 +3,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 export interface CreepHarvesterStaticLinkMemory {
   role: "harvesterStatic";
   homeRoom: string;
@@ -145,10 +146,13 @@ export class LocalRoomEnergyLink {
     })[0];
   }
   public static run(source: Source, link: StructureLink): void {
+    const startCpu = Game.cpu.getUsed();
     const anchor = UtilPosition.getAnchor(source.room);
 
-    this.runHarvesters(source);
     this.spawnStaticHarvester(source, link);
     this.runLink(link, anchor);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(source.room.name, "roomLocalEnergyLink", usedCpu);
+    this.runHarvesters(source);
   }
 }

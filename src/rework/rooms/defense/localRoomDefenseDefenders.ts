@@ -2,6 +2,7 @@ import { CreepUtils } from "rework/utils/creepUtils";
 import { UtilPosition } from "utils/util.position";
 import { CreepBase } from "roles/role.creep";
 import { RemoteEnergyMemory } from "../energy/remote/remoteRoomEnergy";
+import { RoomUtils } from "rework/utils/roomUtils";
 export interface CreepRemoteDefenderMemory {
   role: "remoteDefender";
   homeRoom: string;
@@ -63,6 +64,7 @@ export class LocalRoomDefenseDefenders {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const currentDefenders = CreepUtils.filterCreeps("remoteDefender", room.name);
     const remotes = Memory.roomStore[room.name].remoteEnergy;
     const remotesToDefend = remotes.filter(
@@ -74,7 +76,12 @@ export class LocalRoomDefenseDefenders {
     const targetRoom = remotesToDefend[0];
     if (!!targetRoom) {
       const anchor = UtilPosition.getAnchor(room);
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomDefenceDefenders", usedCpu);
       currentDefenders.forEach((c) => this.runDefender(c, anchor, targetRoom));
+    } else {
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomDefenceDefenders", usedCpu);
     }
   }
 }

@@ -4,6 +4,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { CreepUtils } from "rework/utils/creepUtils";
 import { Constants } from "utils/constants";
 import { CombatUtils } from "rework/utils/combat";
+import { RoomUtils } from "rework/utils/roomUtils";
 export class LocalRoomDefenseFortifications {
   private static findStrategicStructures(room: Room): RoomPosition[] {
     return room
@@ -148,9 +149,12 @@ export class LocalRoomDefenseFortifications {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     this.planDefences(room);
     this.makeDefences(room);
     this.spawnMasons(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomDefenseFortifications", usedCpu);
     this.runMasons(room);
   }
 }

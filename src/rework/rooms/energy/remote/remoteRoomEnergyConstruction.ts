@@ -1,3 +1,4 @@
+import { RoomUtils } from "rework/utils/roomUtils";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyConstruction {
@@ -30,7 +31,10 @@ export class RemoteRoomEnergyConstruction {
     }
   }
   public static run(room: RemoteEnergyMemory, index: number): void {
+    const startCpu = Game.cpu.getUsed();
     this.createContainer(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.homeRoomName, "roomRemoteEnergyConstruction", usedCpu);
     // spawn remote containers if home room energyCap > 1k
     // create roads if level > 3
   }

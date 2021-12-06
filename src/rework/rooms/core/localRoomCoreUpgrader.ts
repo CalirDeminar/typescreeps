@@ -1,4 +1,5 @@
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { CreepBase } from "roles/role.creep";
 import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
@@ -110,11 +111,14 @@ export class LocalRoomCoreUpgrader {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const container = this.getEnergySource(room);
     this.spawnUpgrader(room);
     const builders = CreepUtils.filterCreeps("builder", room.name, room.name);
     const sites = room.find(FIND_CONSTRUCTION_SITES);
     if (sites.length === 0 || (sites && builders.length > 0)) {
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomUpgrading", usedCpu);
       CreepUtils.filterCreeps("upgrader", room.name, room.name).forEach((c) => this.runUpgrader(c, container));
     }
   }

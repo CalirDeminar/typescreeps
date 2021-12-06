@@ -1,5 +1,6 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { Constants } from "utils/constants";
 import { UtilPosition } from "utils/util.position";
 import { LocalRoomConstructionPlanner } from "./localRoomConstructionPlanner";
@@ -300,9 +301,12 @@ export class LocalRoomConstruction {
     });
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     this.createAnchor(room);
     LocalRoomConstructionPlanner.run(room);
     this.nextSite(room);
     this.buildSites(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomConstruction", usedCpu);
   }
 }

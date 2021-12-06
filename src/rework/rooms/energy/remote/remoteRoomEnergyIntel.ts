@@ -1,5 +1,6 @@
 import { initial } from "lodash";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { Constants } from "utils/constants";
 import { packPosList } from "utils/packrat";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
@@ -8,24 +9,24 @@ export class RemoteRoomEnergyIntel {
   private static addNewRemoteRoom(room: Room): void {
     const borders = PositionsUtils.getRoomNeighbors(room);
     const store = Memory.roomStore[room.name].remoteEnergy;
-    const intel = Memory.scoutingDirector.scoutedRooms.filter(
-      (r) => r.towers.length === 0 && r.keeperLair.length === 0 && borders.includes(r.name)
-    );
-    const scoutedRoomNames = intel.map((r) => r.name);
     const currentRemotes = Object.values(Memory.roomStore).reduce(
       (acc: string[], s) => acc.concat(s.remoteEnergy.map((rd) => rd.roomName)),
       []
     );
+    const intel = Memory.scoutingDirector.scoutedRooms.filter(
+      (r) =>
+        borders.includes(r.name) &&
+        !currentRemotes.includes(r.name) &&
+        r.towers.length === 0 &&
+        r.keeperLair.length === 0
+    );
+    const scoutedRoomNames = intel.map((r) => r.name);
     const assessmentInterval = Game.time + (Constants.remoteHarvestingTimingOffset % 100) === 0;
     const initialAssesment =
       store.length === 0 || borders.some((b) => b && scoutedRoomNames.includes(b) && !currentRemotes.includes(b));
     if (assessmentInterval || initialAssesment) {
-      const availableDoubleSourceRooms = intel
-        .filter((r) => r.sources.length === 2 && !currentRemotes.includes(r.name))
-        .sort(() => Math.random() - 0.5);
-      const availableSingleSourceRooms = intel
-        .filter((r) => r.sources.length === 1 && !currentRemotes.includes(r.name))
-        .sort(() => Math.random() - 0.5);
+      const availableDoubleSourceRooms = intel.filter((r) => r.sources.length === 2).sort(() => Math.random() - 0.5);
+      const availableSingleSourceRooms = intel.filter((r) => r.sources.length === 1).sort(() => Math.random() - 0.5);
       const newRoom = availableDoubleSourceRooms[0] || availableSingleSourceRooms[0] || undefined;
       if (newRoom) {
         const anchor = PositionsUtils.getAnchor(room);
@@ -66,7 +67,6 @@ export class RemoteRoomEnergyIntel {
   }
   private static updateRoomFromIntel(room: RemoteEnergyMemory, index: number): void {
     const intelIndex = Memory.scoutingDirector.scoutedRooms.findIndex((r) => r.name === room.roomName);
-    const intel = Memory.scoutingDirector.scoutedRooms[intelIndex];
     const dueIntelUpdate = Game.time % 10 === 0;
     if (dueIntelUpdate && Object.keys(Game.rooms).includes(room.roomName)) {
       const localRoom = Game.rooms[room.roomName];
@@ -96,8 +96,11 @@ export class RemoteRoomEnergyIntel {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     this.addNewRemoteRoom(room);
     const remotes = Memory.roomStore[room.name].remoteEnergy;
     remotes.forEach((r, i) => this.updateRoomFromIntel(r, i));
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomRemoteEnergyIntel", usedCpu);
   }
 }

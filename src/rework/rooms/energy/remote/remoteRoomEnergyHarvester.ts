@@ -1,5 +1,6 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { CreepBase } from "roles/role.creep";
 import { CreepBuilder } from "utils/creepBuilder";
 import { unpackPosList, packPosList } from "utils/packrat";
@@ -20,6 +21,7 @@ export class RemoteRoomEnergyHarvester {
     }
   }
   public static spawn(room: RemoteEnergyMemory, index: number): void {
+    const startCpu = Game.cpu.getUsed();
     const homeRoom = Game.rooms[room.homeRoomName];
     const cap = Math.max(homeRoom.energyCapacityAvailable, 200);
     const energyBudget = room.sources.length > 1 ? Math.min(cap, 2500) : Math.min(cap, 1500);
@@ -45,7 +47,7 @@ export class RemoteRoomEnergyHarvester {
         harvesters[0].ticksToLive &&
         harvesters[0].ticksToLive < 100;
       const lowHarvesters = harvesters.length + queuedHarvesters.length === 0;
-      if (harvesterNearDeath || lowHarvesters) {
+      if ((harvesterNearDeath || lowHarvesters) && energyBudget >= 500) {
         const template = {
           template: CreepBuilder.createRemoteCreeps(energyBudget).worker,
           memory: {
@@ -73,6 +75,8 @@ export class RemoteRoomEnergyHarvester {
         }
       }
     });
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.homeRoomName, "roomRemoteEnergyHarvesting", usedCpu);
   }
   private static getPath(creep: Creep, room: RemoteEnergyMemory, anchor: Flag): RoomPosition[] {
     const sourceRecord = room.sources.find((s) => s.sourceId === creep.memory.targetSource);

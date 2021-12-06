@@ -1,4 +1,5 @@
 import { CombatUtils } from "rework/utils/combat";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { LocalRoomDefenseDefenders } from "./localRoomDefenseDefenders";
 import { LocalRoomDefenseFortifications } from "./localRoomDefenseFortifications";
 import { LocalRoomDefenseTowers } from "./localRoomDefenseTowers";
@@ -145,9 +146,12 @@ export class LocalRoomDefense {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const targets = CombatUtils.getTargets(room);
     this.setAlertLevel(room, targets);
     this.checkToSafeMode(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomDefenceBase", usedCpu);
     LocalRoomDefenseTowers.runTowers(room, targets);
     LocalRoomDefenseFortifications.run(room);
     LocalRoomDefenseDefenders.run(room);

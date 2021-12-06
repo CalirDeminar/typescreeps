@@ -2,6 +2,7 @@ import { CreepUtils } from "rework/utils/creepUtils";
 import { UtilPosition } from "utils/util.position";
 import { CreepBuilder } from "utils/creepBuilder";
 import { CreepBase } from "roles/role.creep";
+import { RoomUtils } from "rework/utils/roomUtils";
 export interface CreepControllerHaulerMemory {
   role: "controllerHauler";
   homeRoom: string;
@@ -83,6 +84,7 @@ export class LocalRoomCoreControllerHauler {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const controller = room.controller;
     if (!controller) {
       return;
@@ -102,6 +104,8 @@ export class LocalRoomCoreControllerHauler {
       return;
     }
     this.spawnHaulers(room, container);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomControllerHauling", usedCpu);
     CreepUtils.filterCreeps("controllerHauler", room.name, room.name).forEach((c) =>
       this.runHauler(c, room, container)
     );

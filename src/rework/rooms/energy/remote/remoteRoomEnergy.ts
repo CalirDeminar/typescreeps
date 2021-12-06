@@ -1,5 +1,6 @@
 import path from "path";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { RemoteRoomEnergyConstruction } from "./remoteRoomEnergyConstruction";
 import { RemoteRoomEnergyHarvester } from "./remoteRoomEnergyHarvester";
 import { RemoteRoomEnergyHauler } from "./remoteRoomEnergyHauler";

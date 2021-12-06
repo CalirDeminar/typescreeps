@@ -3,6 +3,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 
 import { CreepBase } from "roles/role.creep";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 export interface CreepQueenMemory {
   role: "queen";
   homeRoom: string;
@@ -186,10 +187,13 @@ export class LocalRoomCoreQueen {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const store = this.getStore(room);
     this.spawnQueen(room, store);
     const queen = CreepUtils.filterCreeps("queen", room.name, room.name)[0];
     if (queen) {
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomQueen", usedCpu);
       this.runQueen(queen);
     }
   }

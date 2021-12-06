@@ -1,3 +1,5 @@
+import { RoomUtils } from "rework/utils/roomUtils";
+
 export class LocalRoomCoreSpawning {
   private static getRoleScore(
     role: string,
@@ -77,6 +79,7 @@ export class LocalRoomCoreSpawning {
     }, 0);
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const freeSpawn = room.find(FIND_MY_SPAWNS, { filter: (s) => !s.spawning })[0];
     if (freeSpawn) {
       const spawnQueue = Memory.roomStore[room.name].spawnQueue;
@@ -113,6 +116,8 @@ export class LocalRoomCoreSpawning {
           Memory.roomStore[room.name].spawnQueue = sortedQueue.slice(1);
         }
       }
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomSpawning", usedCpu);
     }
   }
 }

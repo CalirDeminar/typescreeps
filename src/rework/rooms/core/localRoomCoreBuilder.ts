@@ -3,6 +3,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { LocalRoomCoreUpgrader } from "./localRoomCoreUpgrader";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 export interface CreepBuilderMemory {
   role: "builder";
   homeRoom: string;
@@ -145,7 +146,10 @@ export class LocalRoomCoreBuilder {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     this.spawnBuilder(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomBuilder", usedCpu);
     this.runBuilders(room);
   }
 }

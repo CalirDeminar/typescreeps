@@ -234,7 +234,8 @@ export class GlobalScouting {
     const scouts = CreepUtils.filterCreeps("patrol");
     const queuedScouts = CreepUtils.filterAllQueuedCreeps("patrol");
     const canSpawnScout = !!spawningRoom && scouts.length + queuedScouts.length === 0;
-    if (canSpawnScout && spawningRoom) {
+    const route = this.getCorridorPatrolRoute();
+    if (canSpawnScout && spawningRoom && route.length > 0) {
       Memory.roomStore[spawningRoom].spawnQueue.push({
         template: [MOVE],
         memory: {

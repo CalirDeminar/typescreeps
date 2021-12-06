@@ -1,4 +1,5 @@
 import { CombatUtils } from "rework/utils/combat";
+import { RoomUtils } from "rework/utils/roomUtils";
 
 export class LocalRoomDefenseTowers {
   public static maintainRoom(room: Room): void {
@@ -78,6 +79,9 @@ export class LocalRoomDefenseTowers {
     return false;
   }
   public static runTowers(room: Room, targets: Creep[]): void {
+    const startCpu = Game.cpu.getUsed();
     this.defendRoom(room, targets) || this.maintainRoom(room);
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.name, "roomDefenceTowers", usedCpu);
   }
 }

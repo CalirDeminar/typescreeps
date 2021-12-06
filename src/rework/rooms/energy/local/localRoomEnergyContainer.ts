@@ -1,5 +1,6 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { CreepBase } from "roles/role.creep";
 import { Constants } from "utils/constants";
 import { CreepBuilder } from "utils/creepBuilder";
@@ -105,13 +106,13 @@ export class LocalRoomEnergyContainer {
     return false;
   }
   private static spawnHaulers(source: Source, container: StructureContainer): boolean {
-    const anchor = UtilPosition.getAnchor(source.room);
+    // const anchor = UtilPosition.getAnchor(source.room);
     const room = source.room;
-    const range = anchor.findPathTo(source.pos, { ignoreCreeps: true }).length;
+    // const range = anchor.findPathTo(source.pos, { ignoreCreeps: true }).length;
     const allHaulers = CreepUtils.filterCreeps("hauler", room.name, room.name);
     const activeHaulers = CreepUtils.filterCreeps("hauler", room.name, room.name, container.id);
-    const currentCarry = _.reduce(activeHaulers, (acc, c) => acc + c.store.getCapacity(), 0);
-    const currentThroughput = ((currentCarry / (range + range * 2)) * (1500 - range)) / 1500;
+    // const currentCarry = _.reduce(activeHaulers, (acc, c) => acc + c.store.getCapacity(), 0);
+    // const currentThroughput = ((currentCarry / (range + range * 2)) * (1500 - range)) / 1500;
     // console.log("----------------------");
     // console.log(`Range: ${range}  Capacity: ${currentCarry}   Throughput: ${currentThroughput}`);
     const queuedHaulers = CreepUtils.filterQueuedCreeps(room.name, "hauler", room.name, room.name, container.id);
@@ -262,10 +263,13 @@ export class LocalRoomEnergyContainer {
     haulers.forEach((creep) => this.runHauler(creep, source, container));
   }
   public static run(source: Source): void {
+    const startCpu = Game.cpu.getUsed();
     const container = PositionsUtils.findStructureInRange(source.pos, 1, STRUCTURE_CONTAINER);
     if (container && container.structureType === STRUCTURE_CONTAINER) {
-      this.runCreeps(source, container);
       this.spawnCreeps(source, container);
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(source.room.name, "roomLocalEnergyContainer", usedCpu);
+      this.runCreeps(source, container);
     }
   }
 }

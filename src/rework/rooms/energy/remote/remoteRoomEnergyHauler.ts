@@ -4,6 +4,7 @@ import { CreepUtils } from "rework/utils/creepUtils";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 import { PositionsUtils } from "rework/utils/positions";
 import { packPosList, unpackPosList } from "utils/packrat";
+import { RoomUtils } from "rework/utils/roomUtils";
 
 export class RemoteRoomEnergyHauler {
   private static getPath(creep: Creep, room: RemoteEnergyMemory, anchor: Flag): RoomPosition[] {
@@ -74,6 +75,7 @@ export class RemoteRoomEnergyHauler {
     );
   }
   public static spawn(room: RemoteEnergyMemory, index: number): void {
+    const startCpu = Game.cpu.getUsed();
     const homeRoom = Game.rooms[room.homeRoomName];
     const energyBudget =
       room.sources.length > 1
@@ -138,6 +140,8 @@ export class RemoteRoomEnergyHauler {
         }
       }
     });
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.homeRoomName, "roomRemoteEnergyHauling", usedCpu);
   }
   public static run(creep: Creep, anchor: Flag): void {
     if (creep.ticksToLive && !CreepBase.fleeHostiles(creep)) {

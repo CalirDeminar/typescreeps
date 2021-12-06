@@ -1,5 +1,6 @@
 import { Constants } from "utils/constants";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 export class LocalRoomEnergyConstruction {
   private static doPlaceStructure(pos: RoomPosition, type: BuildableStructureConstant): boolean {
     const validPos =
@@ -39,6 +40,7 @@ export class LocalRoomEnergyConstruction {
       .concat(defStore.wallMap);
   }
   public static placeStructures(source: Source): void {
+    const startCpu = Game.cpu.getUsed();
     const room = source.room;
     const anchor = PositionsUtils.getAnchor(room);
     const controller = room.controller;
@@ -71,6 +73,8 @@ export class LocalRoomEnergyConstruction {
       if (sourceStructures.link && sourceStructures.container) {
         sourceStructures.container.destroy();
       }
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomLocalEnergyConstruction", usedCpu);
     }
   }
 }

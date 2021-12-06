@@ -1,5 +1,6 @@
 import { CreepUtils } from "rework/utils/creepUtils";
 import { PositionsUtils } from "rework/utils/positions";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { CreepBase } from "roles/role.creep";
 export interface CreepLinkHaulerMemory {
   role: "linkHauler";
@@ -109,12 +110,15 @@ export class LocalRoomCoreLinkHauler {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const anchor = PositionsUtils.getAnchor(room);
     const anchorLink = anchor.findInRange<StructureLink>(FIND_MY_STRUCTURES, 1, {
       filter: (s) => s.structureType === STRUCTURE_LINK
     })[0];
     if (anchorLink) {
       this.spawnLinkHauler(room, anchorLink);
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomLinkHauling", usedCpu);
       this.runLinkHaulers(room, anchor, anchorLink);
     }
   }

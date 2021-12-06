@@ -1,9 +1,11 @@
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 import { CreepBase } from "roles/role.creep";
 import { RemoteEnergyMemory } from "./remoteRoomEnergy";
 
 export class RemoteRoomEnergyReservation {
   private static spawnReserver(room: RemoteEnergyMemory): void {
+    const startCpu = Game.cpu.getUsed();
     const homeRoom = Game.rooms[room.homeRoomName];
     const hostile = room.hostileCreepCount > 0 || room.hostileTowerCount > 0;
     const enoughSources = room.sources.length >= 2;
@@ -52,6 +54,8 @@ export class RemoteRoomEnergyReservation {
         }
       }
     }
+    const usedCpu = Game.cpu.getUsed() - startCpu;
+    RoomUtils.recordFilePerformance(room.homeRoomName, "roomRemoteEnergyReservation", usedCpu);
   }
   private static runReserver(creep: Creep, room: RemoteEnergyMemory): void {
     const controller =

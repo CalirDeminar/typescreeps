@@ -3,6 +3,7 @@ import { CreepBuilder } from "utils/creepBuilder";
 import { Constants } from "utils/constants";
 import { PositionsUtils } from "rework/utils/positions";
 import { CreepUtils } from "rework/utils/creepUtils";
+import { RoomUtils } from "rework/utils/roomUtils";
 export class RoomMineral {
   private static spawnMineralHarvester(room: Room, container: StructureContainer, mineral: Mineral): void {
     const mineralHarvester = _.filter(
@@ -274,6 +275,7 @@ export class RoomMineral {
     }
   }
   public static run(room: Room): void {
+    const startCpu = Game.cpu.getUsed();
     const correctLevel = room.controller && room.controller.level >= 6;
     if (correctLevel) {
       const terminal = this.getTerminal(room);
@@ -284,6 +286,8 @@ export class RoomMineral {
       if (terminal && Game.time % 10 === 0) {
         this.runTerminalOrders(terminal);
       }
+      const usedCpu = Game.cpu.getUsed() - startCpu;
+      RoomUtils.recordFilePerformance(room.name, "roomMineral", usedCpu);
       if (terminal && extractor && mineral && container && terminal.store.getFreeCapacity() > 25_000) {
         this.operateCreeps(room, terminal, mineral, container);
       }
