@@ -18,8 +18,8 @@ export class LocalRoomEnergyConstruction {
     const container = PositionsUtils.findStructureInRange(anchor, 1, STRUCTURE_CONTAINER);
     const link = PositionsUtils.findStructureInRange(anchor, 1, STRUCTURE_LINK);
     return {
-      container,
-      link
+      container: container?.pos,
+      link: link?.pos
     };
   }
   public static getSourceStructures(source: Source) {
@@ -52,26 +52,30 @@ export class LocalRoomEnergyConstruction {
       const shouldBuildContainer =
         Constants.maxContainers[controller.level] > 0 && !sourceStructures.link && !sourceStructures.container;
       const shouldBuildLink = Constants.maxLinks[controller.level] && !!coreStructures.link && !sourceStructures.link;
-      if (!coreStructures.container && Constants.maxContainers[controller.level] > 0) {
-        if (this.doPlaceStructure(anchor, STRUCTURE_CONTAINER)) {
-          Memory.roomStore[room.name].buildingThisTick = true;
-        }
-      }
-      if (shouldBuildContainer) {
-        const pos = PositionsUtils.getClosestSurroundingTo(source.pos, anchor, avoids);
-        if (this.doPlaceStructure(pos, STRUCTURE_CONTAINER)) {
-          Memory.roomStore[room.name].buildingThisTick = true;
-        }
-      }
-      if (shouldBuildLink) {
-        const creepPos = PositionsUtils.getClosestSurroundingTo(source.pos, anchor, avoids);
-        const linkPos = PositionsUtils.getClosestSurroundingTo(creepPos, anchor, avoids);
-        if (this.doPlaceStructure(linkPos, STRUCTURE_LINK)) {
-          Memory.roomStore[room.name].buildingThisTick = true;
-        }
-      }
-      if (sourceStructures.link && sourceStructures.container) {
-        sourceStructures.container.destroy();
+      switch (true) {
+        case !coreStructures.container && Constants.maxContainers[controller.level] > 0:
+          if (coreStructures.container && this.doPlaceStructure(coreStructures.container, STRUCTURE_CONTAINER)) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+        case shouldBuildContainer:
+          const pos = PositionsUtils.getClosestSurroundingTo(source.pos, anchor, avoids);
+          if (this.doPlaceStructure(pos, STRUCTURE_CONTAINER)) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+        case shouldBuildLink:
+          const creepPos = PositionsUtils.getClosestSurroundingTo(source.pos, anchor, avoids);
+          const linkPos = PositionsUtils.getClosestSurroundingTo(creepPos, anchor, avoids);
+          if (this.doPlaceStructure(linkPos, STRUCTURE_LINK)) {
+            Memory.roomStore[room.name].buildingThisTick = true;
+          }
+          break;
+        case !!sourceStructures.link && !!sourceStructures.container:
+          if (sourceStructures.container) {
+            sourceStructures.container.destroy();
+          }
+          break;
       }
       const usedCpu = Game.cpu.getUsed() - startCpu;
       RoomUtils.recordFilePerformance(room.name, "roomLocalEnergyConstruction", usedCpu);

@@ -135,6 +135,16 @@ export class CombatUtils {
     var towerFalloffPerTile = TOWER_FALLOFF / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE);
     return (1 - (range - TOWER_OPTIMAL_RANGE) * towerFalloffPerTile) * 600;
   }
+  public static towerHeal(range: number): number {
+    if (range <= TOWER_OPTIMAL_RANGE) {
+      return 1 * 400;
+    }
+    if (range >= TOWER_FALLOFF_RANGE) {
+      return (1 - TOWER_FALLOFF) * 400;
+    }
+    var towerFalloffPerTile = TOWER_FALLOFF / (TOWER_FALLOFF_RANGE - TOWER_OPTIMAL_RANGE);
+    return (1 - (range - TOWER_OPTIMAL_RANGE) * towerFalloffPerTile) * 400;
+  }
   public static getTargets(room: Room): Creep[] {
     return room.find(FIND_HOSTILE_CREEPS, {
       filter: (s) =>

@@ -24,6 +24,8 @@ export interface DefenceDirectorStore {
   rampartMap: RoomPosition[];
   wallMap: RoomPosition[];
   activeTarget: string | null;
+  towerRepairTarget: string | null;
+  towerHealTarget: string | null;
 }
 export const defenceDirectorStoreDefault: DefenceDirectorStore = {
   towers: [],
@@ -33,7 +35,9 @@ export const defenceDirectorStoreDefault: DefenceDirectorStore = {
   rampartMap: [],
   wallMap: [],
   hostileCreeps: [],
-  activeTarget: null
+  activeTarget: null,
+  towerRepairTarget: null,
+  towerHealTarget: null
 };
 export class LocalRoomDefense {
   private static getTargets(room: Room): Creep[] {

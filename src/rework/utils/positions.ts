@@ -2,7 +2,11 @@ export class PositionsUtils {
   public static getAnchor(room: Room): RoomPosition {
     return room.find(FIND_FLAGS, { filter: (f) => f.name === `${room.name}-Anchor` })[0]?.pos;
   }
-  public static findStructureInRange(pos: RoomPosition, range: number, structureType: BuildableStructureConstant) {
+  public static findStructureInRange(
+    pos: RoomPosition,
+    range: number,
+    structureType: BuildableStructureConstant
+  ): AnyStructure | undefined {
     return pos.findInRange(FIND_STRUCTURES, range).filter((s) => s.structureType === structureType)[0];
   }
   public static getSurroundingFreeTiles(anchor: RoomPosition): RoomPosition[] {
